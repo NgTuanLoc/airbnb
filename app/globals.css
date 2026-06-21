@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+
+  /* Brand & accent */
+  --color-rausch: #ff385c;
+  --color-rausch-active: #e00b41;
+  --color-rausch-disabled: #ffd1da;
+  --color-error: #c13515;
+  --color-error-hover: #b32505;
+  --color-luxe: #460479;
+  --color-plus: #92174d;
+
+  /* Text */
+  --color-ink: #222222;
+  --color-body: #3f3f3f;
+  --color-muted: #6a6a6a;
+  --color-muted-soft: #929292;
+  --color-on-primary: #ffffff;
+  --color-legal-link: #428bff;
+
+  /* Lines & surfaces */
+  --color-hairline: #dddddd;
+  --color-hairline-soft: #ebebeb;
+  --color-border-strong: #c1c1c1;
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-strong: #f2f2f2;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Spacing additions (Tailwind keeps its numeric scale; these are named aliases) */
+  --spacing-section: 64px;
+
+  /* Single shadow tier */
+  --shadow-airbnb: rgba(0,0,0,0.02) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 6px 0, rgba(0,0,0,0.1) 0 4px 8px 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Type-scale utilities (size / weight / line-height / tracking from DESIGN.md) */
+@layer components {
+  .text-display-xl { font-size: 28px; font-weight: 700; line-height: 1.40; letter-spacing: 0; }
+  .text-display-lg { font-size: 22px; font-weight: 500; line-height: 1.16; letter-spacing: -0.44px; }
+  .text-display-md { font-size: 21px; font-weight: 700; line-height: 1.40; letter-spacing: 0; }
+  .text-display-sm { font-size: 20px; font-weight: 600; line-height: 1.18; letter-spacing: -0.18px; }
+  .text-rating { font-size: 64px; font-weight: 700; line-height: 1.1; letter-spacing: -1px; }
+  .text-title-md { font-size: 16px; font-weight: 600; line-height: 1.25; }
+  .text-title-sm { font-size: 16px; font-weight: 500; line-height: 1.25; }
+  .text-body-md { font-size: 16px; font-weight: 400; line-height: 1.5; }
+  .text-body-sm { font-size: 14px; font-weight: 400; line-height: 1.43; }
+  .text-caption { font-size: 14px; font-weight: 500; line-height: 1.29; }
+  .text-caption-sm { font-size: 13px; font-weight: 400; line-height: 1.23; }
+  .text-badge { font-size: 11px; font-weight: 600; line-height: 1.18; }
+  .text-micro { font-size: 12px; font-weight: 700; line-height: 1.33; }
+  .text-uppercase-tag { font-size: 8px; font-weight: 700; line-height: 1.25; letter-spacing: 0.32px; text-transform: uppercase; }
+  .text-button-md { font-size: 16px; font-weight: 500; line-height: 1.25; }
+  .text-button-sm { font-size: 14px; font-weight: 500; line-height: 1.29; }
+  .text-nav-link { font-size: 16px; font-weight: 600; line-height: 1.25; }
 }
