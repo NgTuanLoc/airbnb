@@ -13,6 +13,13 @@ const sample: Listing = {
   isGuestFavorite: true,
   hostId: "h1",
   category: "Cabins",
+  description: "A cozy cabin in the mountains.",
+  propertyType: "Entire cabin",
+  maxGuests: 4,
+  bedrooms: 2,
+  beds: 2,
+  baths: 1,
+  amenities: ["Wifi", "Kitchen"],
 };
 
 function mockFetch(body: unknown, ok = true) {
