@@ -14,6 +14,13 @@ const exp: Listing = {
   isGuestFavorite: false,
   hostId: "h2",
   category: "Experiences",
+  description: "Learn to make authentic Italian pasta.",
+  propertyType: "Experience",
+  maxGuests: 12,
+  bedrooms: 0,
+  beds: 0,
+  baths: 0,
+  amenities: ["Materials included", "Expert instructor"],
 };
 
 describe("ExperienceCard", () => {

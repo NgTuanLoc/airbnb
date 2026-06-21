@@ -10,6 +10,13 @@ const make = (id: string, category: string, title: string): Listing => ({
   id, title, location: { city: "Aspen", country: "USA", lat: 39, lng: -106 },
   photos: ["https://example.com/p.jpg"], pricePerNight: 200, rating: 4.9, reviewCount: 10,
   isGuestFavorite: false, hostId: "h1", category,
+  description: "A lovely place to stay.",
+  propertyType: "Entire home",
+  maxGuests: 4,
+  bedrooms: 2,
+  beds: 2,
+  baths: 1,
+  amenities: ["Wifi", "Kitchen"],
 });
 
 function renderWithClient(ui: ReactNode) {
