@@ -44,7 +44,7 @@ export function PropertyCard({ listing }: { listing: Listing }) {
         className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden
-          fill={saved ? "var(--color-rausch)" : "rgba(0,0,0,0.5)"}
+          fill={saved ? "var(--color-rausch)" : "var(--color-icon-scrim)"}
           stroke="white" strokeWidth="2">
           <path d="M12 21s-7-4.35-9.5-8.5C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 7-2.5 4.15-9.5 8.5-9.5 8.5z" />
         </svg>

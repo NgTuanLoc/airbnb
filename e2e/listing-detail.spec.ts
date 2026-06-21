@@ -15,7 +15,6 @@ test("navigates from the homepage to a listing detail and selects dates", async 
   await expect(reserve).toBeDisabled();
 
   // Select two enabled day cells, then Reserve enables and a total appears.
-  const enabledDays = page.locator('button', { hasText: /^\d+$/ }).filter({ hasNot: page.locator('[disabled]') });
   const dayButtons = page.getByRole('button').filter({ hasText: /^\d+$/ });
   const count = await dayButtons.count();
   // Click the last two day buttons (always within the displayed month and enabled if in the future).
