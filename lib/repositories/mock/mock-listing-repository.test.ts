@@ -26,3 +26,29 @@ describe("mockListingRepository", () => {
     expect(await mockListingRepository.findById("does-not-exist")).toBeNull();
   });
 });
+
+describe("mockListingRepository.findAll filters", () => {
+  test("filters by city (case-insensitive), skipping 'anywhere'", async () => {
+    const aspen = await mockListingRepository.findAll({ location: "aspen" });
+    expect(aspen.length).toBeGreaterThan(0);
+    expect(aspen.every((l) => l.location.city === "Aspen")).toBe(true);
+    const all = await mockListingRepository.findAll({ location: "anywhere" });
+    expect(all.length).toBe((await mockListingRepository.findAll()).length);
+  });
+
+  test("filters by price range", async () => {
+    const result = await mockListingRepository.findAll({ minPrice: 200, maxPrice: 300 });
+    expect(result.length).toBeGreaterThan(0);
+    expect(result.every((l) => l.pricePerNight >= 200 && l.pricePerNight <= 300)).toBe(true);
+  });
+
+  test("filters by minimum guests and bedrooms", async () => {
+    const result = await mockListingRepository.findAll({ guests: 4, bedrooms: 2 });
+    expect(result.every((l) => l.maxGuests >= 4 && l.bedrooms >= 2)).toBe(true);
+  });
+
+  test("combines filters (city + category)", async () => {
+    const result = await mockListingRepository.findAll({ location: "Aspen", category: "Cabins" });
+    expect(result.every((l) => l.location.city === "Aspen" && l.category === "Cabins")).toBe(true);
+  });
+});
