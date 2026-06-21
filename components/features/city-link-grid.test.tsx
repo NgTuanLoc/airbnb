@@ -21,4 +21,9 @@ describe("CityLinkGrid", () => {
     expect(screen.getByText("Aspen").className).toContain("text-title-md");
     expect(screen.getByText("Cabin rentals").className).toContain("text-muted");
   });
+
+  test("links each city to its search page", () => {
+    render(<CityLinkGrid cities={cities} />);
+    expect(screen.getByRole("link", { name: /aspen/i })).toHaveAttribute("href", "/s/Aspen");
+  });
 });
