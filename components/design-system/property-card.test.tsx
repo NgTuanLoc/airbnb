@@ -14,6 +14,13 @@ const listing: Listing = {
   isGuestFavorite: true,
   hostId: "h1",
   category: "Cabins",
+  description: "A cozy cabin in the mountains.",
+  propertyType: "Entire cabin",
+  maxGuests: 4,
+  bedrooms: 2,
+  beds: 2,
+  baths: 1,
+  amenities: ["Wifi", "Kitchen"],
 };
 
 describe("PropertyCard", () => {
@@ -35,4 +42,15 @@ describe("PropertyCard", () => {
     await userEvent.click(heart);
     expect(screen.getByRole("button", { name: /remove from wishlist/i })).toBeInTheDocument();
   });
+});
+
+test("links to the listing detail page", () => {
+  const listing: Listing = {
+    id: "l1", title: "Cozy cabin", location: { city: "Aspen", country: "USA", lat: 0, lng: 0 },
+    photos: ["/a.jpg"], pricePerNight: 220, rating: 4.92, reviewCount: 88,
+    isGuestFavorite: false, hostId: "h1", category: "Cabins",
+    description: "x", propertyType: "Entire cabin", maxGuests: 2, bedrooms: 1, beds: 1, baths: 1, amenities: ["Wifi"],
+  };
+  render(<PropertyCard listing={listing} />);
+  expect(screen.getByRole("link", { name: /cozy cabin/i })).toHaveAttribute("href", "/rooms/l1");
 });

@@ -7,6 +7,13 @@ const listing: Listing = {
   id: "l1", title: "Cozy cabin", location: { city: "Aspen", country: "USA", lat: 39, lng: -106 },
   photos: ["https://example.com/p.jpg"], pricePerNight: 220, rating: 4.92, reviewCount: 88,
   isGuestFavorite: true, hostId: "h1", category: "Cabins",
+  description: "A lovely place to stay.",
+  propertyType: "Entire home",
+  maxGuests: 4,
+  bedrooms: 2,
+  beds: 2,
+  baths: 1,
+  amenities: ["Wifi", "Kitchen"],
 };
 
 describe("PropertyGrid", () => {

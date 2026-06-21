@@ -9,6 +9,32 @@ export interface Listing {
   isGuestFavorite: boolean;
   hostId: string;
   category: string;
+  description: string;
+  propertyType: string;
+  maxGuests: number;
+  bedrooms: number;
+  beds: number;
+  baths: number;
+  amenities: string[];
+}
+
+export interface Host {
+  id: string;
+  name: string;
+  avatar: string;
+  isSuperhost: boolean;
+  responseRate: number;
+  joinedYear: number;
+}
+
+export interface Review {
+  id: string;
+  listingId: string;
+  authorName: string;
+  authorAvatar: string;
+  date: string;
+  rating: number;
+  body: string;
 }
 
 export interface City {

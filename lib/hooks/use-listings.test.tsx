@@ -9,6 +9,13 @@ import type { Listing } from "@/lib/types";
 const sample: Listing = {
   id: "l1", title: "Cabin", location: { city: "Aspen", country: "USA", lat: 39, lng: -106 },
   photos: ["x"], pricePerNight: 220, rating: 4.9, reviewCount: 10, isGuestFavorite: true, hostId: "h1", category: "Cabins",
+  description: "A lovely place to stay.",
+  propertyType: "Entire home",
+  maxGuests: 4,
+  bedrooms: 2,
+  beds: 2,
+  baths: 1,
+  amenities: ["Wifi", "Kitchen"],
 };
 
 function wrapper({ children }: { children: ReactNode }) {
