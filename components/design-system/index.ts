@@ -8,3 +8,4 @@ export { PropertyCard } from "./property-card";
 export { ExperienceCard } from "./experience-card";
 export { TopNav } from "./top-nav";
 export { Footer } from "./footer";
+export { HostCard } from "./host-card";
