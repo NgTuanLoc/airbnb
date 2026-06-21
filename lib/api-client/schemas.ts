@@ -16,6 +16,13 @@ export const listingSchema = z.object({
   isGuestFavorite: z.boolean(),
   hostId: z.string(),
   category: z.string(),
+  description: z.string(),
+  propertyType: z.string(),
+  maxGuests: z.number().int().positive(),
+  bedrooms: z.number().int().nonnegative(),
+  beds: z.number().int().nonnegative(),
+  baths: z.number().nonnegative(),
+  amenities: z.array(z.string()),
 });
 
 export const listingsEnvelopeSchema = z.object({
