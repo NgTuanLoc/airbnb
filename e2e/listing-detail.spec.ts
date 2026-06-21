@@ -4,10 +4,12 @@ test("navigates from the homepage to a listing detail and selects dates", async 
   await page.goto("/");
   // Click the first property card link (title links carry /rooms/).
   await page.locator('a[href^="/rooms/"]').first().click();
-  await expect(page).toHaveURL(/\/rooms\//);
+  // First navigation to /rooms/[id] triggers the dev server's on-demand compile,
+  // which can exceed the default assertion timeout under full-suite compile contention.
+  await expect(page).toHaveURL(/\/rooms\//, { timeout: 30000 });
 
   // Detail content is present.
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
   await expect(page.getByRole("heading", { name: /what this place offers/i })).toBeVisible();
 
   // Reserve starts disabled.
