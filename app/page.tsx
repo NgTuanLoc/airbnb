@@ -1,16 +1,18 @@
-import Link from "next/link";
-import { TopNav, Footer, SearchBar } from "@/components/design-system";
+import { TopNav, SearchBar, Footer } from "@/components/design-system";
+import { HomeListings } from "@/components/features/home-listings";
+import { CityLinkGrid } from "@/components/features/city-link-grid";
+import { cities } from "@/lib/data/cities";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <TopNav active="homes" />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center gap-8 px-10 py-16">
-        <h1 className="text-display-xl text-ink">Find places to stay on Airbnb</h1>
+      <div className="flex justify-center border-b border-hairline px-6 pb-6">
         <SearchBar />
-        <Link href="/design-system" className="text-body-md text-rausch underline">
-          View the design system
-        </Link>
+      </div>
+      <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-12 px-6 py-8">
+        <HomeListings />
+        <CityLinkGrid cities={cities} />
       </main>
       <Footer />
     </div>
