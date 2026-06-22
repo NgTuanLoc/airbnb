@@ -6,6 +6,7 @@ export { DatePickerDay } from "./date-picker-day";
 export { SearchBar } from "./search-bar";
 export { PropertyCard } from "./property-card";
 export { ExperienceCard } from "./experience-card";
+export { ServiceCard } from "./service-card";
 export { TopNav } from "./top-nav";
 export { Footer } from "./footer";
 export { HostCard } from "./host-card";
