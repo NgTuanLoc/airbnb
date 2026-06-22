@@ -1,26 +1,64 @@
 import { cn } from "@/lib/utils";
 
-export interface SearchBarProps {
-  onSearch?: () => void;
+export type SearchSegment = "where" | "when" | "who";
+
+export interface SearchValues {
+  where: string;
+  when: string;
+  who: string;
 }
 
-function Segment({ label, placeholder }: { label: string; placeholder: string }) {
+export interface SearchBarProps {
+  values: SearchValues;
+  activeSegment: SearchSegment | null;
+  onSegmentClick: (segment: SearchSegment) => void;
+  onSearch: () => void;
+}
+
+const SEGMENTS: { key: SearchSegment; label: string }[] = [
+  { key: "where", label: "Where" },
+  { key: "when", label: "When" },
+  { key: "who", label: "Who" },
+];
+
+function Segment({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex flex-col px-6 py-2 text-left">
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={cn("flex flex-col rounded-full px-6 py-2 text-left", active && "bg-surface-strong")}
+    >
       <span className="text-caption text-ink">{label}</span>
-      <span className="text-body-sm text-muted">{placeholder}</span>
-    </div>
+      <span className="text-body-sm text-muted">{value}</span>
+    </button>
   );
 }
 
-export function SearchBar({ onSearch }: SearchBarProps) {
+export function SearchBar({ values, activeSegment, onSegmentClick, onSearch }: SearchBarProps) {
   return (
     <div className="flex h-16 items-center rounded-full border border-hairline bg-canvas pr-2 shadow-airbnb">
-      <Segment label="Where" placeholder="Search destinations" />
-      <span className="h-8 w-px bg-hairline" aria-hidden />
-      <Segment label="When" placeholder="Add dates" />
-      <span className="h-8 w-px bg-hairline" aria-hidden />
-      <Segment label="Who" placeholder="Add guests" />
+      {SEGMENTS.map((segment, index) => (
+        <div key={segment.key} className="flex items-center">
+          {index > 0 && <span className="h-8 w-px bg-hairline" aria-hidden />}
+          <Segment
+            label={segment.label}
+            value={values[segment.key]}
+            active={activeSegment === segment.key}
+            onClick={() => onSegmentClick(segment.key)}
+          />
+        </div>
+      ))}
       <button
         type="button"
         aria-label="Search"
