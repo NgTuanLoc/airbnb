@@ -80,3 +80,8 @@
 .search-pop-in {
   animation: searchPopIn 150ms ease-out;
 }
+
+button:not(:disabled),
+[role="button"] {
+  cursor: pointer;
+}
