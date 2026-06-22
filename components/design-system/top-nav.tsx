@@ -36,14 +36,14 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
         <Link href="/host" className="text-title-sm text-ink">
           Become a host
         </Link>
-        <button
-          type="button"
+        <Link
+          href="/login"
           aria-label="Account menu"
           className="flex h-10 items-center gap-2 rounded-full border border-hairline px-3"
         >
           <Menu aria-hidden className="size-4 text-ink" />
           <UserCircle aria-hidden className="size-7 text-muted" />
-        </button>
+        </Link>
       </div>
     </header>
   );

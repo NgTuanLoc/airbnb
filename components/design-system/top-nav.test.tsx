@@ -16,14 +16,20 @@ describe("TopNav", () => {
     expect(tab.className).toContain("border-ink");
   });
 
-  test("renders the account menu button", () => {
+  test("renders the account menu link", () => {
     render(<TopNav active="homes" />);
-    expect(screen.getByRole("button", { name: /account menu/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /account menu/i })).toBeInTheDocument();
   });
 
-  test("renders menu and account icons inside the account button", () => {
+  test("renders menu and account icons inside the account link", () => {
     render(<TopNav active="homes" />);
-    const button = screen.getByRole("button", { name: /account menu/i });
-    expect(button.querySelectorAll("svg.lucide")).toHaveLength(2);
+    const link = screen.getByRole("link", { name: /account menu/i });
+    expect(link.querySelectorAll("svg.lucide")).toHaveLength(2);
+  });
+
+  test("the account control links to the login page", () => {
+    render(<TopNav active="homes" />);
+    const account = screen.getByRole("link", { name: "Account menu" });
+    expect(account).toHaveAttribute("href", "/login");
   });
 });
