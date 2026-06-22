@@ -29,9 +29,13 @@ export function LoginForm() {
     }
     setErrors({});
     setSubmitting(true);
-    // Mock auth: simulate a request, then route home.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    router.push("/");
+    try {
+      // Mock auth: simulate a request, then route home.
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      router.push("/");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
