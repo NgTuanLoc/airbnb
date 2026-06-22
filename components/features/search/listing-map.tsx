@@ -4,7 +4,7 @@ import Map, { Marker } from "react-map-gl/maplibre";
 import type { Listing } from "@/lib/types";
 import { PriceMarker } from "./price-marker";
 
-const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
+export const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
 export interface ListingMapProps {
   listings: Listing[];

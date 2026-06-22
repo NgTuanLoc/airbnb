@@ -7,7 +7,7 @@ vi.mock("react-map-gl/maplibre", () => ({
   Marker: ({ children }: { children?: ReactNode }) => <div data-testid="marker">{children}</div>,
 }));
 
-import { ListingMap } from "./listing-map";
+import { ListingMap, MAP_STYLE } from "./listing-map";
 import type { Listing } from "@/lib/types";
 
 function make(id: string, price: number, lng: number, lat: number): Listing {
@@ -38,5 +38,9 @@ describe("ListingMap", () => {
     expect(screen.getAllByTestId("marker")).toHaveLength(2);
     expect(screen.getByText("$220")).toBeInTheDocument();
     expect(screen.getByText("$540")).toBeInTheDocument();
+  });
+
+  test("uses the CARTO no-key basemap style", () => {
+    expect(MAP_STYLE).toBe("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json");
   });
 });
