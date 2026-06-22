@@ -25,4 +25,9 @@ describe("ListingOverview", () => {
     expect(screen.getByText(/88 reviews/i)).toBeInTheDocument();
     expect(screen.getByText(/aspen, usa/i)).toBeInTheDocument();
   });
+
+  test("renders an icon for each of the four stats", () => {
+    const { container } = render(<ListingOverview listing={listing} />);
+    expect(container.querySelectorAll("svg.lucide")).toHaveLength(4);
+  });
 });

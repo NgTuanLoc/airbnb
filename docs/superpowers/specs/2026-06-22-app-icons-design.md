@@ -119,7 +119,8 @@ export function getCategoryIcon(name: string): LucideIcon;
 
 ## Risks
 
-- A second agent is working in the repo concurrently. Mitigation: keep changes
-  scoped to the files listed above, commit only intended files (no `git add -A`),
-  and rebase/merge carefully if overlap appears.
+- A second agent is working in the repo concurrently. Mitigation: this work runs
+  in an isolated git worktree on its own branch (`worktree-app-icons`), based off
+  `origin/master`, so it cannot collide with the concurrent branch's working
+  tree or commits.
 - Icon picks are subjective; the map is centralized so swaps are one-line edits.

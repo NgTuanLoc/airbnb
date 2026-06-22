@@ -22,4 +22,11 @@ describe("CategoryStrip", () => {
     await userEvent.click(screen.getByRole("button", { name: "Beachfront" }));
     expect(onSelect).toHaveBeenCalledWith("Beachfront");
   });
+
+  test("renders an icon for each category", () => {
+    const { container } = render(
+      <CategoryStrip categories={categories} active="All" onSelect={() => {}} />,
+    );
+    expect(container.querySelectorAll("svg.lucide")).toHaveLength(categories.length);
+  });
 });

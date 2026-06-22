@@ -10,4 +10,9 @@ describe("AmenityList", () => {
     expect(screen.getByText("Kitchen")).toBeInTheDocument();
     expect(screen.getByText("Washer")).toBeInTheDocument();
   });
+
+  test("renders an icon for each amenity", () => {
+    const { container } = render(<AmenityList amenities={["Wifi", "Kitchen", "Washer"]} />);
+    expect(container.querySelectorAll("svg.lucide")).toHaveLength(3);
+  });
 });

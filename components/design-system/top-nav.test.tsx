@@ -20,4 +20,10 @@ describe("TopNav", () => {
     render(<TopNav active="homes" />);
     expect(screen.getByRole("button", { name: /account menu/i })).toBeInTheDocument();
   });
+
+  test("renders menu and account icons inside the account button", () => {
+    render(<TopNav active="homes" />);
+    const button = screen.getByRole("button", { name: /account menu/i });
+    expect(button.querySelectorAll("svg.lucide")).toHaveLength(2);
+  });
 });

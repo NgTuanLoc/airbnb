@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Menu, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewBadge } from "./badges";
 
@@ -40,8 +41,8 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
           aria-label="Account menu"
           className="flex h-10 items-center gap-2 rounded-full border border-hairline px-3"
         >
-          <span aria-hidden>☰</span>
-          <span aria-hidden className="h-7 w-7 rounded-full bg-surface-strong" />
+          <Menu aria-hidden className="size-4 text-ink" />
+          <UserCircle aria-hidden className="size-7 text-muted" />
         </button>
       </div>
     </header>
