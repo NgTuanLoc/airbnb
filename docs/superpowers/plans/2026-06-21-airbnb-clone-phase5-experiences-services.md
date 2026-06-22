@@ -186,7 +186,29 @@ describe("services data", () => {
 });
 ```
 
-(If `data.test.ts` does not already `import { describe, expect, test } from "vitest"`, add it. Keep its existing tests.)
+(`data.test.ts` already imports `{ describe, expect, test } from "vitest"`; place the three new `import` lines at the TOP of the file with the others, then add the `describe` blocks. Keep its existing tests.)
+
+Also update the existing review-invariant test in `data.test.ts` so seeded experience reviews (Step 6) don't break it. Replace:
+
+```ts
+  test("every review references an existing listing", () => {
+    const listingIds = new Set(listings.map((l) => l.id));
+    for (const r of reviews) {
+      expect(listingIds.has(r.listingId)).toBe(true);
+    }
+  });
+```
+
+with:
+
+```ts
+  test("every review references an existing listing or experience", () => {
+    const ids = new Set([...listings.map((l) => l.id), ...experiences.map((e) => e.id)]);
+    for (const r of reviews) {
+      expect(ids.has(r.listingId)).toBe(true);
+    }
+  });
+```
 
 - [ ] **Step 3: Run the test to verify it fails**
 
@@ -248,9 +270,9 @@ export const services: Service[] = [
 In `lib/data/reviews.ts`, append entries to the exported `reviews` array (match the existing `Review` shape — `id`, `listingId`, `authorName`, `authorAvatar`, `date`, `rating`, `body`; read the file to copy the exact field names and an existing avatar URL host):
 
 ```ts
-  { id: "re1", listingId: "e1", authorName: "Priya", authorAvatar: "https://i.pravatar.cc/120?img=21", date: "March 2026", rating: 5, body: "The nonna was wonderful and the pasta was unreal. A highlight of the trip." },
-  { id: "re2", listingId: "e1", authorName: "Marcus", authorAvatar: "https://i.pravatar.cc/120?img=22", date: "February 2026", rating: 5, body: "Hands-on, warm, and delicious. Booking again next time." },
-  { id: "re3", listingId: "e2", authorName: "Sofia", authorAvatar: "https://i.pravatar.cc/120?img=23", date: "January 2026", rating: 5, body: "The caves at sunrise were magic and our guide was so calm and safe." },
+  { id: "re1", listingId: "e1", authorName: "Priya", authorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80", date: "March 2026", rating: 5, body: "The nonna was wonderful and the pasta was unreal. A highlight of the trip." },
+  { id: "re2", listingId: "e1", authorName: "Marcus", authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80", date: "February 2026", rating: 5, body: "Hands-on, warm, and delicious. Booking again next time." },
+  { id: "re3", listingId: "e2", authorName: "Sofia", authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80", date: "January 2026", rating: 5, body: "The caves at sunrise were magic and our guide was so calm and safe." },
 ```
 
 (If `reviews.ts` uses a different avatar host or date format, match it exactly; the keys above must match the `Review` interface in `lib/types.ts`.)
@@ -1353,7 +1375,7 @@ git commit -m "feat: add ExperienceListings and ServiceListings islands"
 - Consumes: `TopNav`, `Footer`, `ExperienceListings`/`ServiceListings` (Task 9).
 - Produces: default-exported `ExperiencesPage`/`ServicesPage` server components rendering `TopNav active="experiences"|"services"` + an `<h1>` heading + the listings island + `Footer`.
 
-> Note: `TopNav` accepts an `active` prop. Read `components/design-system/top-nav.tsx` to confirm the accepted values (the homepage uses `active="homes"`). Use the value matching the experiences/services tabs. If `TopNav`'s `active` type does NOT include `"experiences"`/`"services"`, widen that prop's union in `top-nav.tsx` to include them (and highlight the matching tab) as part of Step 3/4, then re-run.
+> Note: `TopNav` already accepts `active?: "homes" | "experiences" | "services"` (verified in `components/design-system/top-nav.tsx`), so `active="experiences"` / `active="services"` highlight the matching tab with no change to `top-nav.tsx`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1451,12 +1473,12 @@ export default function ServicesPage() {
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `npm test -- "experiences/page" "services/page"`
-Expected: PASS. (If `TopNav`'s `active` type rejects `"experiences"`/`"services"`, widen the union per the Step note and re-run.)
+Expected: PASS. (`TopNav.active` already includes `"experiences"`/`"services"`, so no change to `top-nav.tsx` is needed.)
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "app/experiences/page.tsx" "app/experiences/page.test.tsx" "app/services/page.tsx" "app/services/page.test.tsx" components/design-system/top-nav.tsx
+git add "app/experiences/page.tsx" "app/experiences/page.test.tsx" "app/services/page.tsx" "app/services/page.test.tsx"
 git commit -m "feat: add /experiences and /services browse pages"
 ```
 
@@ -1761,7 +1783,7 @@ git commit -m "feat: link vertical cards to detail pages and add verticals e2e"
 - Interactive category filtering (user decision) → Tasks 6–9. Dedicated `ServiceCard` (user decision) → Task 8. Browse + detail (user decision) → Tasks 10–11. ✔
 - Fixes the dead `TopNav` links to `/experiences` and `/services` → Tasks 10, 12. ✔
 
-**2. Placeholder scan:** No "TBD"/"add error handling"/"similar to Task N" — every code step is complete. Steps that depend on existing code (review field names in Task 2; `TopNav.active` union in Task 10; the detail-atom signatures in Task 11) carry an explicit "read the file / widen the union" instruction with the concrete fallback action inline. ✔
+**2. Placeholder scan:** No "TBD"/"add error handling"/"similar to Task N" — every code step is complete. Steps that depend on existing code (review field names in Task 2; the detail-atom signatures in Task 11) carry an explicit "read the file" instruction with the concrete fallback action inline. ✔
 
 **3. Type consistency:** `Experience`/`Service` (Task 1) are consumed unchanged by data (Task 2), repositories (Tasks 3–4), schemas (Task 5), api-client+hooks (Tasks 6–7), cards (Task 8), grids+islands (Task 9), and pages (Tasks 10–11). `ExperienceFilters`/`ServiceFilters` use `{ category?: string }` consistently. Hook query keys (`["experiences", …]`, `["services", …]`) are unique and distinct from Homes' `["listings", …]`. `ExperienceCard({ experience })` / `ServiceCard({ service })` prop names match between Task 8 and Task 9; the link wrapper in Task 12 preserves them. Detail pages reuse `ListingGallery({photos,title})`, `ReviewsGrid({reviews})`, `HostCard({host})` with the exact signatures confirmed from `app/rooms/[id]/page.tsx`. The `service-grid` skeleton/empty/link changes keep `ServiceGridProps` intact. ✔
 
