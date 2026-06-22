@@ -28,3 +28,19 @@ test("search orb routes to the search page", async ({ page }) => {
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page).toHaveURL(/\/s\/anywhere/);
 });
+
+test("uses the search popover to route with a destination and guests", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Where" }).click();
+  await page.getByRole("button", { name: "Lisbon" }).click();
+
+  await page.getByRole("button", { name: "Who" }).click();
+  await page.getByRole("button", { name: "Increase adults" }).click();
+
+  await page.getByRole("button", { name: "Search" }).click();
+
+  // First navigation to /s/[location] can trigger an on-demand dev compile.
+  await expect(page).toHaveURL(/\/s\/Lisbon\?guests=1/, { timeout: 30000 });
+  await expect(page.getByTestId("map-panel")).toBeAttached();
+});
