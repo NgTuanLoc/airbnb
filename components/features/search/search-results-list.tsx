@@ -1,4 +1,4 @@
-import { PropertyCard } from "@/components/design-system";
+import { PropertyCard, Skeleton } from "@/components/design-system";
 import type { Listing } from "@/lib/types";
 
 export interface SearchResultsListProps {
@@ -13,11 +13,11 @@ function placeLabel(location: string): string {
   return location && location.toLowerCase() !== "anywhere" ? location : "your search";
 }
 
-function Skeleton() {
+function ResultSkeleton() {
   return (
     <div data-testid="result-skeleton" className="flex flex-col gap-2">
-      <div className="aspect-square w-full animate-pulse rounded-md bg-surface-strong" />
-      <div className="h-4 w-3/4 animate-pulse rounded-xs bg-surface-strong" />
+      <Skeleton radius="md" className="aspect-square w-full" />
+      <Skeleton radius="xs" className="h-4 w-3/4" />
     </div>
   );
 }
@@ -29,7 +29,7 @@ export function SearchResultsList({ listings, isLoading, location }: SearchResul
     return (
       <div className={gridClass}>
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} />
+          <ResultSkeleton key={i} />
         ))}
       </div>
     );

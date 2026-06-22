@@ -1,4 +1,5 @@
 export { Button } from "./button";
+export { Skeleton } from "./skeleton";
 export { TextInput } from "./text-input";
 export { NewBadge, GuestFavoriteBadge } from "./badges";
 export { RatingDisplay } from "./rating-display";
