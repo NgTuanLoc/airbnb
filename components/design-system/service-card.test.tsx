@@ -20,4 +20,11 @@ describe("ServiceCard", () => {
     render(<ServiceCard service={service} />);
     expect(screen.getByText("Portrait session").className).toContain("text-title-md");
   });
+
+  test("the photo zooms on hover without resizing the card", () => {
+    render(<ServiceCard service={service} />);
+    const img = screen.getByRole("img", { name: service.title });
+    expect(img.className).toContain("group-hover:scale-105");
+    expect(img.className).toContain("transition-transform");
+  });
 });

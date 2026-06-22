@@ -9,7 +9,7 @@ import { GuestFavoriteBadge } from "./badges";
 export function PropertyCard({ listing }: { listing: Listing }) {
   const [saved, setSaved] = useState(false);
   return (
-    <article className="relative flex flex-col gap-2">
+    <article className="group relative flex flex-col gap-2">
       <Link href={`/rooms/${listing.id}`} className="flex flex-col gap-2">
         <div className="relative aspect-square w-full overflow-hidden rounded-md">
           <Image
@@ -17,7 +17,7 @@ export function PropertyCard({ listing }: { listing: Listing }) {
             alt={listing.title}
             fill
             sizes="(max-width: 744px) 100vw, 25vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           />
           {listing.isGuestFavorite && (
             <div className="absolute left-3 top-3">

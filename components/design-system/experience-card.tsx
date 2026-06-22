@@ -4,14 +4,14 @@ import { NewBadge } from "./badges";
 
 export function ExperienceCard({ experience }: { experience: Experience }) {
   return (
-    <article className="flex flex-col gap-2">
+    <article className="group flex flex-col gap-2">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-md">
         <Image
           src={experience.photos[0]}
           alt={experience.title}
           fill
           sizes="(max-width: 744px) 100vw, 25vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
         />
         {experience.isNew && (
           <div className="absolute left-3 top-3">

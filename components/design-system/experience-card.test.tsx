@@ -26,4 +26,11 @@ describe("ExperienceCard", () => {
     render(<ExperienceCard experience={exp} />);
     expect(screen.getByText("Pasta with a nonna").className).toContain("text-title-md");
   });
+
+  test("the photo zooms on hover without resizing the card", () => {
+    render(<ExperienceCard experience={exp} />);
+    const img = screen.getByRole("img", { name: exp.title });
+    expect(img.className).toContain("group-hover:scale-105");
+    expect(img.className).toContain("transition-transform");
+  });
 });

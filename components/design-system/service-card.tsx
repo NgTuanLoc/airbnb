@@ -3,14 +3,14 @@ import type { Service } from "@/lib/types";
 
 export function ServiceCard({ service }: { service: Service }) {
   return (
-    <article className="flex flex-col gap-2">
+    <article className="group flex flex-col gap-2">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-md">
         <Image
           src={service.photos[0]}
           alt={service.title}
           fill
           sizes="(max-width: 744px) 100vw, 25vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
         />
       </div>
       <h3 className="text-title-md text-ink">{service.title}</h3>

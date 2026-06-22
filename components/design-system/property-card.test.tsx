@@ -42,6 +42,13 @@ describe("PropertyCard", () => {
     await userEvent.click(heart);
     expect(screen.getByRole("button", { name: /remove from wishlist/i })).toBeInTheDocument();
   });
+
+  test("the photo zooms on hover without resizing the card", () => {
+    render(<PropertyCard listing={listing} />);
+    const img = screen.getByRole("img", { name: listing.title });
+    expect(img.className).toContain("group-hover:scale-105");
+    expect(img.className).toContain("transition-transform");
+  });
 });
 
 test("links to the listing detail page", () => {
