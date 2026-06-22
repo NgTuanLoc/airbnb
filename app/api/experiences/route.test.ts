@@ -9,6 +9,7 @@ describe("GET /api/experiences", () => {
     expect(body.success).toBe(true);
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.meta.total).toBe(body.data.length);
+    expect(body.meta.page).toBe(1);
   });
 
   test("filters by the category query param", async () => {

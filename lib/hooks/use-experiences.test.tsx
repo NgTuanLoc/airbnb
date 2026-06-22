@@ -14,6 +14,22 @@ function make(id: string): Experience {
 }
 
 describe("useExperiences", () => {
+  test("requests no category param when called with no argument", async () => {
+    const original = globalThis.fetch;
+    let requestedUrl = "";
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      requestedUrl = String(input);
+      return new Response(JSON.stringify({ success: true, data: [make("e1")] }), { headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    try {
+      const { result } = renderHook(() => useExperiences(), { wrapper });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(requestedUrl).not.toContain("category=");
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
   test("fetches experiences for a category", async () => {
     const original = globalThis.fetch;
     globalThis.fetch = (async () =>
