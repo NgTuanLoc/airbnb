@@ -33,4 +33,16 @@ describe("ExperienceListings", () => {
     render(<ExperienceListings />);
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
   });
+
+  test("shows 8 skeletons while loading", () => {
+    useExperiences.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    render(<ExperienceListings />);
+    expect(screen.getAllByTestId("experience-skeleton")).toHaveLength(8);
+  });
+
+  test("shows the empty state when no experiences are returned", () => {
+    useExperiences.mockReturnValue({ data: [], isLoading: false, isError: false });
+    render(<ExperienceListings />);
+    expect(screen.getByText(/no experiences match/i)).toBeInTheDocument();
+  });
 });

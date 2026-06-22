@@ -33,4 +33,16 @@ describe("ServiceListings", () => {
     render(<ServiceListings />);
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
   });
+
+  test("shows 8 skeletons while loading", () => {
+    useServices.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+    render(<ServiceListings />);
+    expect(screen.getAllByTestId("service-skeleton")).toHaveLength(8);
+  });
+
+  test("shows the empty state when no services are returned", () => {
+    useServices.mockReturnValue({ data: [], isLoading: false, isError: false });
+    render(<ServiceListings />);
+    expect(screen.getByText(/no services match/i)).toBeInTheDocument();
+  });
 });
