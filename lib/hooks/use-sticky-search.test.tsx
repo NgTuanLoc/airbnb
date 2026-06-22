@@ -26,8 +26,10 @@ afterEach(() => {
 
 function useHarness() {
   const ref = useRef<HTMLDivElement>(null);
-  // Attach a node so the effect runs its observe path.
-  if (!ref.current) ref.current = document.createElement("div");
+  // Lazily attach a node once so the effect runs its observe path.
+  if (ref.current == null) {
+    ref.current = document.createElement("div");
+  }
   return useStickySearch(ref);
 }
 

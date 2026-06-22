@@ -27,7 +27,7 @@ export function StickyHomeSearch() {
   return (
     <>
       <div ref={sentinelRef} aria-hidden className="h-px w-full" />
-      <div className="sticky top-0 z-40 flex justify-center border-b border-hairline bg-canvas px-6 py-4 transition-shadow">
+      <div className="sticky top-0 z-40 flex justify-center border-b border-hairline bg-canvas px-6 py-4">
         {showPill ? (
           <button
             type="button"
