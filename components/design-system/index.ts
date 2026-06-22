@@ -12,3 +12,4 @@ export { ServiceCard } from "./service-card";
 export { TopNav } from "./top-nav";
 export { Footer } from "./footer";
 export { HostCard } from "./host-card";
+export { AuthCard } from "./auth-card";
