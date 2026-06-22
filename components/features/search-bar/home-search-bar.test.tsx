@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
-import { render, screen, userEvent } from "@/lib/test-utils";
+import { render, screen, userEvent, fireEvent } from "@/lib/test-utils";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -55,5 +55,61 @@ describe("HomeSearchBar", () => {
     await userEvent.click(screen.getByRole("button", { name: "Increase adults" }));
     await userEvent.click(screen.getByRole("button", { name: "Search" }));
     expect(push).toHaveBeenCalledWith("/s/Lisbon?guests=1");
+  });
+
+  test("date range selection appends checkIn and checkOut to the pushed URL", async () => {
+    render(<HomeSearchBar />);
+    await userEvent.click(screen.getByRole("button", { name: "When" }));
+
+    // Navigate to next month so all days are safely past today's minDate
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+
+    // Determine the month we navigated to from the calendar heading
+    const monthHeading = screen.getByText(/\w+ \d{4}/);
+    const [monthName, yearStr] = monthHeading.textContent!.split(" ");
+    const year = parseInt(yearStr, 10);
+    const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+
+    // Select day 10 then day 20 (both are in a future month, so enabled)
+    await userEvent.click(screen.getByRole("button", { name: "10" }));
+    await userEvent.click(screen.getByRole("button", { name: "20" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(push).toHaveBeenCalledTimes(1);
+
+    const checkInISO = `${year}-${String(monthIndex + 1).padStart(2, "0")}-10`;
+    const checkOutISO = `${year}-${String(monthIndex + 1).padStart(2, "0")}-20`;
+    expect(push).toHaveBeenCalledWith(
+      `/s/anywhere?checkIn=${checkInISO}&checkOut=${checkOutISO}`,
+    );
+  });
+
+  test("selecting only a check-in appends checkIn but not checkOut", async () => {
+    render(<HomeSearchBar />);
+    await userEvent.click(screen.getByRole("button", { name: "When" }));
+
+    // Navigate to next month so all days are safely past today's minDate
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+
+    // Click a single day — no second selection
+    await userEvent.click(screen.getByRole("button", { name: "15" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(push).toHaveBeenCalledTimes(1);
+    const url = push.mock.calls[0][0] as string;
+    expect(url).toContain("checkIn=");
+    expect(url).not.toContain("checkOut=");
+  });
+
+  test("mousedown outside the search bar closes an open panel", async () => {
+    render(<HomeSearchBar />);
+    await userEvent.click(screen.getByRole("button", { name: "Where" }));
+    expect(screen.getByRole("textbox", { name: "Where to?" })).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    expect(screen.queryByRole("textbox", { name: "Where to?" })).not.toBeInTheDocument();
   });
 });
