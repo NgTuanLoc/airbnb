@@ -33,4 +33,17 @@ describe("StickyHomeSearch", () => {
     await userEvent.click(screen.getByTestId("search-pill"));
     expect(screen.getByRole("button", { name: "Where" })).toBeInTheDocument();
   });
+
+  test("stays expanded (no pill) while a search panel is open, even when collapsed", async () => {
+    collapsed.value = false;
+    const { rerender } = render(<StickyHomeSearch />);
+    // Open a panel via the full bar.
+    await userEvent.click(screen.getByRole("button", { name: "Where" }));
+    // Now the user incidentally scrolls -> hook reports collapsed.
+    collapsed.value = true;
+    rerender(<StickyHomeSearch />);
+    // The full bar must remain (segments present), not the pill.
+    expect(screen.queryByTestId("search-pill")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Who" })).toBeInTheDocument();
+  });
 });

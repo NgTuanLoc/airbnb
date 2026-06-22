@@ -1,18 +1,24 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useStickySearch } from "@/lib/hooks/use-sticky-search";
+import type { SearchSegment } from "@/components/design-system";
 import { HomeSearchBar } from "./home-search-bar";
 
 export function StickyHomeSearch() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const collapsed = useStickySearch(sentinelRef);
   const [expandedWhileCollapsed, setExpandedWhileCollapsed] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
+  const handleActiveChange = useCallback(
+    (active: SearchSegment | null) => setIsInteracting(active !== null),
+    [],
+  );
 
   // `expanded` is only relevant when the bar is collapsed.
   // When the sentinel re-enters the viewport (collapsed → false), the expansion resets naturally.
-  const showPill = collapsed && !expandedWhileCollapsed;
+  const showPill = collapsed && !expandedWhileCollapsed && !isInteracting;
 
   function expandFromPill() {
     setExpandedWhileCollapsed(true);
@@ -46,7 +52,7 @@ export function StickyHomeSearch() {
           </button>
         ) : (
           <div className="search-morph-in">
-            <HomeSearchBar />
+            <HomeSearchBar onActiveChange={handleActiveChange} />
           </div>
         )}
       </div>

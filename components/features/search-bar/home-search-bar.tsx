@@ -32,7 +32,11 @@ function buildSearchUrl(destination: string, guests: GuestCounts, checkIn: Date 
   return qs ? `/s/${dest}?${qs}` : `/s/${dest}`;
 }
 
-export function HomeSearchBar() {
+interface HomeSearchBarProps {
+  onActiveChange?: (active: SearchSegment | null) => void;
+}
+
+export function HomeSearchBar({ onActiveChange }: HomeSearchBarProps = {}) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<SearchSegment | null>(null);
@@ -40,6 +44,10 @@ export function HomeSearchBar() {
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [guests, setGuests] = useState<GuestCounts>({ adults: 0, children: 0 });
+
+  useEffect(() => {
+    onActiveChange?.(active);
+  }, [active, onActiveChange]);
 
   useEffect(() => {
     if (!active) return;
