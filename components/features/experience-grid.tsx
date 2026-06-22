@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ExperienceCard } from "@/components/design-system";
 import type { Experience } from "@/lib/types";
 
@@ -35,7 +36,9 @@ export function ExperienceGrid({ experiences, isLoading }: ExperienceGridProps) 
   return (
     <div className={gridClass}>
       {experiences.map((experience) => (
-        <ExperienceCard key={experience.id} experience={experience} />
+        <Link key={experience.id} href={`/experiences/${experience.id}`}>
+          <ExperienceCard experience={experience} />
+        </Link>
       ))}
     </div>
   );

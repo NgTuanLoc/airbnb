@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ServiceCard } from "@/components/design-system";
 import type { Service } from "@/lib/types";
 
@@ -35,7 +36,9 @@ export function ServiceGrid({ services, isLoading }: ServiceGridProps) {
   return (
     <div className={gridClass}>
       {services.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+        <Link key={service.id} href={`/services/${service.id}`}>
+          <ServiceCard service={service} />
+        </Link>
       ))}
     </div>
   );
