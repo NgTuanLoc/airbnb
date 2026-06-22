@@ -1,0 +1,18 @@
+import type { Service } from "@/lib/types";
+
+const photo = (id: string) => `https://images.unsplash.com/${id}?w=800&q=80`;
+
+export const services: Service[] = [
+  { id: "s1", title: "Portrait photography session", provider: "Mara Lensworth", serviceCategory: "Photography", photos: [photo("photo-1554048612-b6a482bc67e5")], price: 180, rating: 4.94, reviewCount: 88, city: "Lisbon", description: "A 90-minute golden-hour shoot with 30 edited photos delivered." },
+  { id: "s2", title: "Private dinner by a local chef", provider: "Chef Tomas Reis", serviceCategory: "Chefs", photos: [photo("photo-1577219491135-ce391730fb2c")], price: 320, rating: 4.97, reviewCount: 142, city: "Rome", description: "A four-course tasting menu cooked in your rental, ingredients included." },
+  { id: "s3", title: "In-home deep tissue massage", provider: "Calm Hands Studio", serviceCategory: "Massage", photos: [photo("photo-1600334129128-685c5582fd35")], price: 130, rating: 4.9, reviewCount: 76, city: "Aspen", description: "A 60-minute therapeutic massage with table and oils provided." },
+  { id: "s4", title: "Personal training & mobility", provider: "Drive Fitness", serviceCategory: "Training", photos: [photo("photo-1571019613454-1cb2f99b2d8b")], price: 90, rating: 4.85, reviewCount: 64, city: "Malibu", description: "One-on-one strength and mobility coaching at your location." },
+  { id: "s5", title: "Event hair & makeup", provider: "Glow Atelier", serviceCategory: "Hair & makeup", photos: [photo("photo-1487412947147-5cebf100ffc2")], price: 150, rating: 4.92, reviewCount: 103, city: "Athens", description: "Full glam for a night out or shoot, travel kit included." },
+  { id: "s6", title: "Family lifestyle photo walk", provider: "Mara Lensworth", serviceCategory: "Photography", photos: [photo("photo-1452587925148-ce544e77e70d")], price: 210, rating: 4.89, reviewCount: 51, city: "Kyoto", description: "A relaxed walking session capturing candid family moments." },
+  { id: "s7", title: "Plant-based meal prep", provider: "Chef Nadia Ven", serviceCategory: "Chefs", photos: [photo("photo-1505935428862-770b6f24f629")], price: 160, rating: 4.8, reviewCount: 47, city: "Lisbon", description: "A week of prepped plant-based meals tailored to your tastes." },
+  { id: "s8", title: "Prenatal massage", provider: "Calm Hands Studio", serviceCategory: "Massage", photos: [photo("photo-1519823551278-64ac92734fb1")], price: 140, rating: 4.95, reviewCount: 39, city: "Wilmington", description: "A gentle 60-minute massage designed for expecting guests." },
+  { id: "s9", title: "Boxing fundamentals", provider: "Drive Fitness", serviceCategory: "Training", photos: [photo("photo-1517836357463-d25dfeac3438")], price: 85, rating: 4.78, reviewCount: 33, city: "Athens", description: "Learn stance, footwork, and combinations with all gear supplied." },
+  { id: "s10", title: "Bridal hair trial", provider: "Glow Atelier", serviceCategory: "Hair & makeup", photos: [photo("photo-1560066984-138dadb4c035")], price: 175, rating: 4.91, reviewCount: 58, city: "Rome", description: "A relaxed trial run to design your wedding-day look." },
+  { id: "s11", title: "Real-estate photography", provider: "Brightframe Media", serviceCategory: "Photography", photos: [photo("photo-1600585154340-be6161a56a0c")], price: 240, rating: 4.87, reviewCount: 44, city: "Malibu", description: "HDR interior and drone exterior shots for listings." },
+  { id: "s12", title: "Sports recovery massage", provider: "Calm Hands Studio", serviceCategory: "Massage", photos: [photo("photo-1540555700478-4be289fbecef")], price: 120, rating: 4.83, reviewCount: 27, city: "Aspen", description: "Post-activity recovery work focused on legs and back." },
+];

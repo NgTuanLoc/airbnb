@@ -3,8 +3,10 @@ import { listings } from "./listings";
 import { cities } from "./cities";
 import { hosts } from "./hosts";
 import { reviews } from "./reviews";
+import { experiences } from "./experiences";
+import { services } from "./services";
 import { listingSchema } from "@/lib/api-client/schemas";
-import { CATEGORIES } from "@/lib/types";
+import { CATEGORIES, EXPERIENCE_CATEGORIES, SERVICE_CATEGORIES } from "@/lib/types";
 
 const allowedCategories = CATEGORIES.filter((c) => c !== "All");
 
@@ -49,14 +51,40 @@ describe("seed cities", () => {
 });
 
 describe("seed reviews", () => {
-  test("every review references an existing listing", () => {
-    const listingIds = new Set(listings.map((l) => l.id));
+  test("every review references an existing listing or experience", () => {
+    const ids = new Set([...listings.map((l) => l.id), ...experiences.map((e) => e.id)]);
     for (const r of reviews) {
-      expect(listingIds.has(r.listingId)).toBe(true);
+      expect(ids.has(r.listingId)).toBe(true);
     }
   });
 
   test("listing l1 has at least two reviews", () => {
     expect(reviews.filter((r) => r.listingId === "l1").length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("experiences data", () => {
+  test("has at least 12 records with unique ids", () => {
+    expect(experiences.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(experiences.map((e) => e.id)).size).toBe(experiences.length);
+  });
+
+  test("covers every non-All experience category", () => {
+    for (const category of EXPERIENCE_CATEGORIES.filter((c) => c !== "All")) {
+      expect(experiences.some((e) => e.category === category)).toBe(true);
+    }
+  });
+});
+
+describe("services data", () => {
+  test("has at least 12 records with unique ids", () => {
+    expect(services.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(services.map((s) => s.id)).size).toBe(services.length);
+  });
+
+  test("covers every non-All service category", () => {
+    for (const category of SERVICE_CATEGORIES.filter((c) => c !== "All")) {
+      expect(services.some((s) => s.serviceCategory === category)).toBe(true);
+    }
   });
 });
