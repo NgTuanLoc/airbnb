@@ -29,4 +29,7 @@ function reviewsFor(listingId: string, count: number, startIndex: number): Revie
 export const reviews: Review[] = [
   ...reviewsFor("l1", 4, 0),
   ...Array.from({ length: 15 }, (_, i) => reviewsFor(`l${i + 2}`, 2, i)).flat(),
+  { id: "re1", listingId: "e1", authorName: "Priya", authorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80", date: "March 2026", rating: 5, body: "The nonna was wonderful and the pasta was unreal. A highlight of the trip." },
+  { id: "re2", listingId: "e1", authorName: "Marcus", authorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80", date: "February 2026", rating: 5, body: "Hands-on, warm, and delicious. Booking again next time." },
+  { id: "re3", listingId: "e2", authorName: "Sofia", authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80", date: "January 2026", rating: 5, body: "The caves at sunrise were magic and our guide was so calm and safe." },
 ];
