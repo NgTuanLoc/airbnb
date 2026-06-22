@@ -15,4 +15,11 @@ describe("Footer", () => {
     expect(screen.getByText(/© 2026 Airbnb, Inc\./)).toBeInTheDocument();
     expect(screen.getByText("English (US)")).toBeInTheDocument();
   });
+
+  test("renders social links with accessible labels", () => {
+    render(<Footer />);
+    expect(screen.getByLabelText("Facebook")).toBeInTheDocument();
+    expect(screen.getByLabelText("Instagram")).toBeInTheDocument();
+    expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
+  });
 });
