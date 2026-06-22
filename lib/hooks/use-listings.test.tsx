@@ -39,4 +39,28 @@ describe("useListings", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(spy).toHaveBeenCalledWith("Beachfront");
   });
+
+  test("keeps previous data while a new category query is fetching", async () => {
+    const first: Listing = { ...sample, id: "a" };
+    const second: Listing = { ...sample, id: "b" };
+    const spy = vi
+      .spyOn(api, "fetchListings")
+      .mockResolvedValueOnce([first])
+      .mockResolvedValueOnce([second]);
+
+    const { result, rerender } = renderHook(({ c }) => useListings(c), {
+      wrapper,
+      initialProps: { c: "All" },
+    });
+    await waitFor(() => expect(result.current.data).toEqual([first]));
+
+    rerender({ c: "Cabins" });
+    // Immediately after switching keys, previous data is retained as placeholder.
+    expect(result.current.data).toEqual([first]);
+    expect(result.current.isPlaceholderData).toBe(true);
+
+    await waitFor(() => expect(result.current.data).toEqual([second]));
+    expect(result.current.isPlaceholderData).toBe(false);
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
 });

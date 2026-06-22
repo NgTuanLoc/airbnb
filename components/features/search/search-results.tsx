@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
 import { useSearchListings } from "@/lib/hooks/use-search-listings";
 import { filtersFromSearch, countActiveFilters } from "@/lib/search/filters";
@@ -26,7 +27,7 @@ export function SearchResults({ location }: SearchResultsProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filters = filtersFromSearch(location, new URLSearchParams(searchParams.toString()));
-  const { data, isLoading, isError } = useSearchListings(filters);
+  const { data, isLoading, isError, isPlaceholderData } = useSearchListings(filters);
   const listings = data ?? [];
 
   function pushParams(mutate: (params: URLSearchParams) => void) {
@@ -69,7 +70,9 @@ export function SearchResults({ location }: SearchResultsProps) {
           {isError ? (
             <p className="text-body-md text-error">Something went wrong loading stays. Please try again.</p>
           ) : (
-            <SearchResultsList listings={listings} isLoading={isLoading} location={location} />
+            <div className={cn("transition-opacity duration-200", isPlaceholderData && "opacity-60")}>
+              <SearchResultsList listings={listings} isLoading={isLoading} location={location} />
+            </div>
           )}
         </div>
         <div
