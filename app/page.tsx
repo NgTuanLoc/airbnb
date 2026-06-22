@@ -1,5 +1,5 @@
 import { TopNav, Footer } from "@/components/design-system";
-import { HomeSearchBar } from "@/components/features/home-search-bar";
+import { HomeSearchBar } from "@/components/features/search-bar/home-search-bar";
 import { HomeListings } from "@/components/features/home-listings";
 import { CityLinkGrid } from "@/components/features/city-link-grid";
 import { cities } from "@/lib/data/cities";

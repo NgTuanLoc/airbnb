@@ -65,3 +65,18 @@
   .text-button-sm { font-size: 14px; font-weight: 500; line-height: 1.29; }
   .text-nav-link { font-size: 16px; font-weight: 600; line-height: 1.25; }
 }
+
+@keyframes searchPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-pop-in {
+  animation: searchPopIn 150ms ease-out;
+}
