@@ -14,6 +14,7 @@ Monorepo with a Next.js frontend and an ASP.NET Core backend.
 - .NET 10 SDK (pinned by `backend/global.json`)
 - Docker Desktop (Aspire containers and backend integration tests)
 - Aspire CLI: `dotnet tool install -g aspire.cli`
+- ReportGenerator (optional, for backend coverage summaries): `dotnet tool install -g dotnet-reportgenerator-globaltool`
 
 ## Frontend
 

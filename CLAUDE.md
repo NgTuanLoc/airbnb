@@ -96,6 +96,6 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 
 ### Backend Conventions
 - Package versions live only in `backend/Directory.Packages.props`; shared settings in `backend/Directory.Build.props` (warnings are errors, so xUnit tests pass `TestContext.Current.CancellationToken`).
-- Every response body is the frontend envelope `{ success, data?, error?, meta? }` (`Airbnb.SharedKernel.ApiResponse`). Framework errors are reshaped by `Airbnb.Api/Errors/EnvelopeProblemDetailsWriter`; 5xx messages never carry details.
+- Every `/api` response body and every framework-generated error body is the frontend envelope `{ success, data?, error?, meta? }` (`Airbnb.SharedKernel.ApiResponse`); `/health`, `/alive`, `/openapi/v1.json` and `/scalar` keep their standard formats. Framework errors are reshaped by `Airbnb.Api/Errors/EnvelopeProblemDetailsWriter`; 5xx messages never carry details.
 - Modules: request records are `public` but nested inside `internal` slice classes, and each module calls `services.AddValidation()` in its own `AddXModule`. .NET 10's validation generator ignores `internal` types and only registers types for `AddValidation()` calls in the same assembly.
 - Integration tests use `ApiFactory` plus the assembly-wide `PostgresFixture` (one Testcontainers Postgres per test run).
