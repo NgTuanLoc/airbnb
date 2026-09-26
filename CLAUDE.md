@@ -2,9 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Layout
+
+Monorepo:
+- `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
+- `backend/` — ASP.NET Core (.NET 10) API. Solution `backend/Airbnb.slnx`; API in `src/Airbnb.Api`, tests in `tests/Airbnb.Api.Tests`. SDK pinned by `backend/global.json`.
+- `docs/` — specs and plans (repo root).
+
 ## Commands
 
 ```bash
+cd frontend
 npm run dev          # Start Next.js dev server (http://localhost:3000)
 npm run build        # Production build
 npm test             # Run Vitest unit tests (single run)
@@ -16,8 +24,15 @@ npm run lint         # ESLint
 
 Run a single test file:
 ```bash
-npx vitest run components/design-system/button.test.tsx
-npx vitest run lib/utils.test.ts
+cd frontend && npx vitest run components/design-system/button.test.tsx
+cd frontend && npx vitest run lib/utils.test.ts
+```
+
+Backend:
+```bash
+cd backend
+dotnet run --project src/Airbnb.Api   # start API
+dotnet test                           # run xUnit tests
 ```
 
 ## Architecture
@@ -30,7 +45,7 @@ npx vitest run lib/utils.test.ts
 - **Vitest** + **React Testing Library** for unit/component tests; **Playwright** for E2E
 
 ### Design Token System
-`DESIGN.md` is the source of truth for the visual design. All tokens are encoded in `app/globals.css`:
+`frontend/DESIGN.md` is the source of truth for the visual design. All tokens are encoded in `frontend/app/globals.css`:
 - **Colors:** `bg-rausch`, `text-ink`, `bg-canvas`, `border-hairline`, etc.
 - **Typography:** CSS component classes `.text-display-xl`, `.text-body-md`, `.text-caption`, etc. (not Tailwind utility classes)
 - **Radii:** `rounded-sm` (8px), `rounded-md` (14px), `rounded-full`
