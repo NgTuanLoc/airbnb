@@ -1,23 +1,47 @@
 using System.Net;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Airbnb.Api.Tests.Infrastructure;
 
 namespace Airbnb.Api.Tests;
 
-public class HealthEndpointTests(WebApplicationFactory<Program> factory)
-    : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthEndpointTests(PostgresFixture postgres)
 {
-    private sealed record HealthResponse(string Status);
+    // Port 1 refuses connections immediately; Timeout=2 bounds the check if anything hangs.
+    private const string UnreachableDatabase = "Host=127.0.0.1;Port=1;Username=u;Password=p;Database=airbnb;Timeout=2";
 
     [Fact]
-    public async Task Get_health_returns_ok_status()
+    public async Task Health_is_healthy_when_postgres_is_reachable()
     {
-        var client = factory.CreateClient();
+        var (status, body) = await GetAsync(postgres.ConnectionString, "/health");
 
-        var response = await client.GetAsync("/health", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal("Healthy", body);
+    }
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<HealthResponse>(TestContext.Current.CancellationToken);
-        Assert.Equal("ok", body?.Status);
+    [Fact]
+    public async Task Health_is_unhealthy_when_postgres_is_unreachable()
+    {
+        var (status, body) = await GetAsync(UnreachableDatabase, "/health");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, status);
+        Assert.Equal("Unhealthy", body);
+    }
+
+    [Fact]
+    public async Task Alive_ignores_dependencies()
+    {
+        var (status, body) = await GetAsync(UnreachableDatabase, "/alive");
+
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal("Healthy", body);
+    }
+
+    private static async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path)
+    {
+        await using var factory = new ApiFactory(connectionString);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        return (response.StatusCode, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 }
