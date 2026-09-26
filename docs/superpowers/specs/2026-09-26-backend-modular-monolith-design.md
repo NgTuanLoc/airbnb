@@ -63,7 +63,7 @@ the backend.
 
 ### Solution layout
 
-```
+```text
 backend/
 ├── Airbnb.slnx
 ├── global.json                    # unchanged (SDK 10)
@@ -97,7 +97,7 @@ backend/
 
 Inside a module (Stays shown):
 
-```
+```text
 Airbnb.Modules.Stays/
 ├── StaysModule.cs                # the only public types: registration + endpoint mapping
 ├── Listings/
@@ -125,8 +125,18 @@ Airbnb.Modules.Stays/
 - `MapXEndpoints(IEndpointRouteBuilder)`.
 - Its Contracts project, where one exists.
 
-Everything else is `internal`. `InternalsVisibleTo` is granted to test projects
-only.
+Nothing else is visible outside the assembly: `Assembly.GetExportedTypes()`
+returns only the module class. Two .NET 10 validation rules, confirmed in a
+spike, shape this:
+
+- Request records are declared `public` but nested inside `internal` slice
+  classes. The validation source generator ignores types declared `internal`;
+  nesting keeps the records invisible outside the assembly.
+- `AddXModule` calls `services.AddValidation()` itself. The generator only
+  registers the request types of the assembly in which `AddValidation()` is
+  called, so a single call in the API would validate nothing in the modules.
+
+`InternalsVisibleTo` is granted to test projects only.
 
 ### Dependency rules
 
@@ -246,7 +256,8 @@ One file per feature. Illustrative — the plan pins exact APIs:
 // Modules/Stays/Airbnb.Modules.Stays/Listings/GetListing.cs
 internal static class GetListing
 {
-    internal sealed record Query([StringLength(50, MinimumLength = 1)] string Id);
+    // public for the validation generator; still invisible outside the assembly (nested)
+    public sealed record Query([property: StringLength(50, MinimumLength = 1)] string Id);
 
     internal sealed class Handler(StaysDbContext db, HybridCache cache)
     {
@@ -460,8 +471,9 @@ var migrations = builder.AddProject<Projects.Airbnb_MigrationService>("migration
 
 var api = builder.AddProject<Projects.Airbnb_Api>("api")
     .WithReference(db).WithReference(redis).WithReference(rabbitmq)
-    .WaitFor(redis).WaitFor(rabbitmq)
-    .WaitForCompletion(migrations);
+    .WaitFor(db).WaitFor(redis).WaitFor(rabbitmq)
+    .WaitForCompletion(migrations)
+    .WithHttpHealthCheck("/health");
 
 builder.AddJavaScriptApp("frontend", "../../../frontend")
     .WithHttpEndpoint(port: 3000, env: "PORT")
@@ -472,8 +484,14 @@ builder.AddJavaScriptApp("frontend", "../../../frontend")
 builder.Build().Run();
 ```
 
+- The API also waits for `db` and declares `WithHttpHealthCheck("/health")`, so
+  "healthy" in the dashboard means its own health checks pass.
+- `backend/aspire.config.json` points the Aspire CLI at the AppHost, so
+  `aspire run` works from `backend/`. `aspire start`, `aspire wait api` and
+  `aspire stop` give a scriptable background check.
 - Persistent containers plus a Postgres data volume make restarts fast and keep
-  submitted reviews.
+  submitted reviews. `aspire stop --force` removes the containers; data volumes
+  survive until deleted with `docker volume rm`.
 - `Frontend:DataSource` in the AppHost's `appsettings.json` (default `api`)
   flips the Aspire-run frontend back to mock data.
 - `AddJavaScriptApp` (stable) is used rather than `AddNextJsApp`, which is
@@ -516,14 +534,16 @@ builder.Build().Run();
 
 ## 7. Testing
 
-### Backend (xUnit v3 everywhere; the existing project moves from v2)
+### Backend (xUnit v3 4.x on Microsoft Testing Platform, enabled in `global.json`; the existing project moves from v2)
 
 - **`Airbnb.UnitTests`:** the Polly Redis decorator (a hung cache becomes a
   miss within 250 ms; the circuit opens and short-circuits), request validation
   rules, the envelope writer, seed JSON loading and counts.
 - **`Airbnb.ArchitectureTests`** (NetArchTest.eNhancedEdition): the dependency
-  rules in section 1 — modules reference only other modules' Contracts; slice
-  types are not public; SharedKernel and Contracts depend on no module.
+  rules in section 1 — modules reference only other modules' Contracts; each
+  module assembly exports only its module class (checked with
+  `Assembly.GetExportedTypes()`, because NetArchTest counts nested public types
+  as public); SharedKernel and Contracts depend on no module.
 - **`Airbnb.Api.Tests`** (integration): `WebApplicationFactory` against
   Postgres, Redis and RabbitMQ Testcontainers started once per run, migrated
   and seeded through the module migrators. Covers every endpoint's success, 404,
@@ -548,7 +568,9 @@ builder.Build().Run();
 
 - **frontend** job: adds `npm run seed:check`.
 - **backend** job: runs the unit, architecture and integration test projects
-  (Docker is available on GitHub-hosted Ubuntu runners).
+  (Docker is available on GitHub-hosted Ubuntu runners). It installs the latest
+  .NET 10 SDK (`10.0.x`) instead of the `global.json` floor, matching local
+  development.
 - New **apphost** job: .NET + Node, runs `Airbnb.AppHost.Tests`.
 
 ## 9. Phases
@@ -585,15 +607,16 @@ One implementation plan per phase. Each phase updates `README.md` and
 | Risk | Mitigation |
 |---|---|
 | EF Core retrying strategy conflicts with Wolverine's transactions | Retries off for module DbContexts (section 3); Wolverine policies retry the write path |
-| Built-in validation emits ProblemDetails, not the envelope | Envelope writer in the ProblemDetails pipeline, pinned by a test in phase 1; fallback: a small endpoint filter using `Validator.TryValidateObject` |
+| Built-in validation only sees `public` request types, and only in the assembly that calls `AddValidation()` (confirmed in a spike) | Public request records nested in internal slices; each module calls `AddValidation()` (section 1). The envelope writer was spike-verified for 400, 404, 500 and 429 responses |
+| xUnit v3 4.x runs only on Microsoft Testing Platform under the .NET 10 SDK | `global.json` sets `"test": { "runner": "Microsoft.Testing.Platform" }`; coverage via `Microsoft.Testing.Extensions.CodeCoverage` (coverlet's collector is VSTest-only) |
 | RabbitMQ 4.3 rejects transient non-exclusive queues | All Wolverine queues durable |
 | Aspire 13.4+ defaults to Postgres 18, whose on-disk layout differs | Fresh data volume; no volumes carried over from older Aspire versions |
 | Node type stripping needs `.ts` extensions in the script's imports; `tsc` rejects them by default and type-checks `scripts/` | Enable `allowImportingTsExtensions` (valid because `noEmit` is on) |
 | Development host validates DI on build | MigrationService registers only `AddXModuleDatabase`, never full modules |
 | HybridCache tag invalidation is per process for L1 | Single API instance today; multi-instance staleness bounded by the 1-minute L1 TTL |
 | AppHost smoke test is slow (containers, `npm install`, `next dev`) | Separate CI job so it doesn't slow the main backend job |
-| The Aspire CLI is a .NET global tool, not on Git Bash's `PATH` | Docs give `aspire run` plus the `dotnet run --project src/Airbnb.AppHost` fallback |
-| Aspire 13.5 templates enable `AspireUseCliBundle` | Phase 1 checks that `dotnet build`/`test` work in CI without the CLI installed; turn the setting off if they don't |
+| The Aspire CLI is a .NET global tool (`aspire.cmd`), not resolvable from Git Bash | Docs run `aspire` commands from PowerShell, with `dotnet run --project src/Airbnb.AppHost` as the fallback |
+| Aspire 13.5 templates enable `AspireUseCliBundle`, which resolves DCP and the dashboard from the installed CLI | Bundle left off, so DCP and the dashboard come from NuGet and CI needs no CLI; the resulting ASPIRE010 warning is suppressed in the AppHost project |
 
 ## 11. Verification (definition of done)
 
