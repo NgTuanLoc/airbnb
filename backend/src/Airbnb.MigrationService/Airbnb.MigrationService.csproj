@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Airbnb.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Airbnb.ServiceDefaults\Airbnb.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Airbnb.SharedKernel\Airbnb.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
