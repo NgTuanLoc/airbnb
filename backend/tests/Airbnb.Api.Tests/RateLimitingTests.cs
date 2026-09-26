@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Airbnb.Api.Tests;
 
-public sealed class RateLimitingTests(PostgresFixture postgres)
+public sealed class RateLimitingTests(InfrastructureFixture infrastructure)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -52,7 +52,7 @@ public sealed class RateLimitingTests(PostgresFixture postgres)
     }
 
     private WebApplicationFactory<Program> CreateFactory(int readsPerMinute, int writesPerMinute) =>
-        new ApiFactory(postgres.ConnectionString).WithWebHostBuilder(builder => builder
+        new ApiFactory(infrastructure).WithWebHostBuilder(builder => builder
             .UseSetting("RateLimiting:ReadsPerMinute", readsPerMinute.ToString())
             .UseSetting("RateLimiting:WritesPerMinute", writesPerMinute.ToString()));
 }

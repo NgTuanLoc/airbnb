@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Airbnb.Api.Tests;
 
-public sealed class ApiDocsTests(PostgresFixture postgres)
+public sealed class ApiDocsTests(InfrastructureFixture infrastructure)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -13,7 +13,7 @@ public sealed class ApiDocsTests(PostgresFixture postgres)
     [InlineData("/scalar", "text/html")]
     public async Task Docs_are_served_in_development(string path, string mediaType)
     {
-        await using var factory = new ApiFactory(postgres.ConnectionString);
+        await using var factory = new ApiFactory(infrastructure);
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(path, Ct);
@@ -27,7 +27,7 @@ public sealed class ApiDocsTests(PostgresFixture postgres)
     [InlineData("/scalar")]
     public async Task Docs_are_not_served_outside_development(string path)
     {
-        await using var factory = new ApiFactory(postgres.ConnectionString)
+        await using var factory = new ApiFactory(infrastructure)
             .WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
         using var client = factory.CreateClient();
 
