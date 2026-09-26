@@ -13,6 +13,9 @@
   <Folder Name="/src/Modules/Hosts/">
     <Project Path="src/Modules/Hosts/Airbnb.Modules.Hosts/Airbnb.Modules.Hosts.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Services/">
+    <Project Path="src/Modules/Services/Airbnb.Modules.Services/Airbnb.Modules.Services.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Stays/">
     <Project Path="src/Modules/Stays/Airbnb.Modules.Stays/Airbnb.Modules.Stays.csproj" />
   </Folder>

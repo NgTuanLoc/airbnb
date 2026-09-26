@@ -1,6 +1,7 @@
 using Airbnb.MigrationService;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -12,6 +13,7 @@ builder.AddNpgsqlDataSource("airbnb");
 builder.AddStaysModuleDatabase();
 builder.AddHostsModuleDatabase();
 builder.AddExperiencesModuleDatabase();
+builder.AddServicesModuleDatabase();
 
 builder.Services.AddHostedService<MigrationWorker>();
 
