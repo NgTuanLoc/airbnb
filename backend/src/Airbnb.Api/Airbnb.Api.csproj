@@ -1,11 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Airbnb.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Aspire.Npgsql" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Airbnb.ServiceDefaults\Airbnb.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Airbnb.SharedKernel\Airbnb.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>
