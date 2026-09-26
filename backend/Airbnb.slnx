@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Airbnb.Api/Airbnb.Api.csproj" />
+    <Project Path="src/Airbnb.AppHost/Airbnb.AppHost.csproj" />
     <Project Path="src/Airbnb.MigrationService/Airbnb.MigrationService.csproj" />
     <Project Path="src/Airbnb.ServiceDefaults/Airbnb.ServiceDefaults.csproj" />
     <Project Path="src/Airbnb.SharedKernel/Airbnb.SharedKernel.csproj" />

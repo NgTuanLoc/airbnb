@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="NetArchTest.eNhancedEdition" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>

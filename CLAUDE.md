@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo:
 - `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
-- `backend/` — ASP.NET Core (.NET 10) API. Solution `backend/Airbnb.slnx`; API in `src/Airbnb.Api`, tests in `tests/Airbnb.Api.Tests`. SDK pinned by `backend/global.json`.
+- `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.5. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`; tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
 - `docs/` — specs and plans (repo root).
 
 ## Commands
@@ -28,11 +28,13 @@ cd frontend && npx vitest run components/design-system/button.test.tsx
 cd frontend && npx vitest run lib/utils.test.ts
 ```
 
-Backend:
+Backend (run from `backend/`; Aspire commands from PowerShell; Docker must be running):
 ```bash
-cd backend
-dotnet run --project src/Airbnb.Api   # start API
-dotnet test                           # run xUnit tests
+aspire run                         # whole stack + dashboard
+dotnet test                        # all test projects (Microsoft Testing Platform)
+dotnet test --project tests/Airbnb.UnitTests --filter-class "Airbnb.UnitTests.Api.EnvelopeProblemDetailsWriterTests"
+dotnet test --coverage --coverage-output-format cobertura   # coverage files under TestResults/
+reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestResults/report -reporttypes:TextSummary "-classfilters:-*.Generated*;-System.Runtime.CompilerServices*"   # summary without source-generated code
 ```
 
 ## Architecture
@@ -91,3 +93,9 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 
 ### Path Alias
 `@/*` maps to the repo root (e.g., `@/lib/utils`, `@/components/design-system`).
+
+### Backend Conventions
+- Package versions live only in `backend/Directory.Packages.props`; shared settings in `backend/Directory.Build.props` (warnings are errors, so xUnit tests pass `TestContext.Current.CancellationToken`).
+- Every response body is the frontend envelope `{ success, data?, error?, meta? }` (`Airbnb.SharedKernel.ApiResponse`). Framework errors are reshaped by `Airbnb.Api/Errors/EnvelopeProblemDetailsWriter`; 5xx messages never carry details.
+- Modules: request records are `public` but nested inside `internal` slice classes, and each module calls `services.AddValidation()` in its own `AddXModule`. .NET 10's validation generator ignores `internal` types and only registers types for `AddValidation()` calls in the same assembly.
+- Integration tests use `ApiFactory` plus the assembly-wide `PostgresFixture` (one Testcontainers Postgres per test run).

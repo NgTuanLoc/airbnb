@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/Airbnb.AppHost/Airbnb.AppHost.csproj"
+  }
+}
