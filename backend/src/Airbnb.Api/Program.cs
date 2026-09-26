@@ -1,6 +1,10 @@
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
+builder.AddNpgsqlDataSource("airbnb");
+
 var app = builder.Build();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapDefaultEndpoints();
 
 app.Run();

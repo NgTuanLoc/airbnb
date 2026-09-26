@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Airbnb.Api/Airbnb.Api.csproj" />
+    <Project Path="src/Airbnb.ServiceDefaults/Airbnb.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Airbnb.Api.Tests/Airbnb.Api.Tests.csproj" />
