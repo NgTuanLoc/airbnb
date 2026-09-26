@@ -8,6 +8,9 @@ public static class Paging
     public const int DefaultLimit = 50;
     public const int MaxLimit = 100;
 
+    // Keeps (page - 1) * limit well inside int range.
+    public const int MaxPage = 100_000;
+
     // One page of an ordered query plus the { total, page, limit } meta the frontend envelope carries.
     public static async Task<ApiResponse<IReadOnlyList<T>>> ToPageAsync<T>(
         this IQueryable<T> orderedQuery, int page, int limit, CancellationToken cancellationToken)

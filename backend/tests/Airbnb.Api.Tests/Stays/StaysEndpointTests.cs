@@ -64,6 +64,7 @@ public sealed class StaysEndpointTests(InfrastructureFixture infrastructure)
     [InlineData("?limit=101", "Limit")]
     [InlineData("?minPrice=-5", "MinPrice")]
     [InlineData("?guests=0", "Guests")]
+    [InlineData("?page=100001", "Page")]
     public async Task Out_of_range_queries_get_the_400_envelope_naming_the_field(string query, string field)
     {
         var (status, body) = await infrastructure.GetJsonAsync($"/api/listings{query}");

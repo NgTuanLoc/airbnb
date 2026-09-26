@@ -26,7 +26,7 @@ internal static class ListReviews
     // SubjectId is nullable so a missing value reaches validation and gets a field-level message.
     public sealed record Query(
         [property: Required, StringLength(50, MinimumLength = 1)] string? SubjectId,
-        [property: Range(1, int.MaxValue)] int Page = Paging.DefaultPage,
+        [property: Range(1, Paging.MaxPage)] int Page = Paging.DefaultPage,
         [property: Range(1, Paging.MaxLimit)] int Limit = Paging.DefaultLimit);
 
     internal sealed class Handler(ReviewsDbContext db, HybridCache cache)

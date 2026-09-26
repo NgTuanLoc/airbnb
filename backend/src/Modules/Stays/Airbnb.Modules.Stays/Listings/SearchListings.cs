@@ -22,7 +22,7 @@ internal static class SearchListings
         [property: Range(0, 50)] int? Bedrooms,
         [property: Range(0, 50)] int? Beds,
         [property: Range(0d, 50d)] decimal? Baths,
-        [property: Range(1, int.MaxValue)] int Page = Paging.DefaultPage,
+        [property: Range(1, Paging.MaxPage)] int Page = Paging.DefaultPage,
         [property: Range(1, Paging.MaxLimit)] int Limit = Paging.DefaultLimit);
 
     internal sealed class Handler(StaysDbContext db, HybridCache cache)

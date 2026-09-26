@@ -15,7 +15,7 @@ internal static class ListServices
     // public for the validation generator; still invisible outside the assembly because the class is internal.
     public sealed record Query(
         [property: StringLength(50)] string? Category,
-        [property: Range(1, int.MaxValue)] int Page = Paging.DefaultPage,
+        [property: Range(1, Paging.MaxPage)] int Page = Paging.DefaultPage,
         [property: Range(1, Paging.MaxLimit)] int Limit = Paging.DefaultLimit);
 
     internal sealed class Handler(ServicesDbContext db, HybridCache cache)
