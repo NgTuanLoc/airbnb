@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Modules\Hosts\Airbnb.Modules.Hosts\Airbnb.Modules.Hosts.csproj" />
     <ProjectReference Include="..\Modules\Experiences\Airbnb.Modules.Experiences\Airbnb.Modules.Experiences.csproj" />
     <ProjectReference Include="..\Modules\Services\Airbnb.Modules.Services\Airbnb.Modules.Services.csproj" />
+    <ProjectReference Include="..\Modules\Reviews\Airbnb.Modules.Reviews\Airbnb.Modules.Reviews.csproj" />
   </ItemGroup>
 
 </Project>

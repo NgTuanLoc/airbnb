@@ -3,6 +3,7 @@ using Airbnb.Api.Errors;
 using Airbnb.Api.RateLimiting;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -32,6 +33,7 @@ builder.AddStaysModule();
 builder.AddHostsModule();
 builder.AddExperiencesModule();
 builder.AddServicesModule();
+builder.AddReviewsModule();
 
 var app = builder.Build();
 
@@ -52,5 +54,6 @@ api.MapStaysEndpoints();
 api.MapHostsEndpoints();
 api.MapExperiencesEndpoints();
 api.MapServicesEndpoints();
+api.MapReviewsEndpoints();
 
 app.Run();
