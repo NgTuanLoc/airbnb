@@ -17,6 +17,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Airbnb.SharedKernel\Airbnb.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Experiences\Airbnb.Modules.Experiences\Airbnb.Modules.Experiences.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Hosts\Airbnb.Modules.Hosts\Airbnb.Modules.Hosts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reviews\Airbnb.Modules.Reviews\Airbnb.Modules.Reviews.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Services\Airbnb.Modules.Services\Airbnb.Modules.Services.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Stays\Airbnb.Modules.Stays\Airbnb.Modules.Stays.csproj" />
   </ItemGroup>
 
 </Project>
