@@ -7,6 +7,9 @@
     <Project Path="src/Airbnb.SharedKernel/Airbnb.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Hosts/">
+    <Project Path="src/Modules/Hosts/Airbnb.Modules.Hosts/Airbnb.Modules.Hosts.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Stays/">
     <Project Path="src/Modules/Stays/Airbnb.Modules.Stays/Airbnb.Modules.Stays.csproj" />
   </Folder>

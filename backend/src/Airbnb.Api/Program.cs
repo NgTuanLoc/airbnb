@@ -1,6 +1,7 @@
 using Airbnb.Api.Caching;
 using Airbnb.Api.Errors;
 using Airbnb.Api.RateLimiting;
+using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Stays;
 using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
@@ -26,6 +27,7 @@ builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddOpenApi();
 
 builder.AddStaysModule();
+builder.AddHostsModule();
 
 var app = builder.Build();
 
@@ -43,5 +45,6 @@ if (app.Environment.IsDevelopment())
 
 var api = app.MapGroup("/api");
 api.MapStaysEndpoints();
+api.MapHostsEndpoints();
 
 app.Run();
