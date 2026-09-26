@@ -7,6 +7,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Airbnb.Api.Tests/Airbnb.Api.Tests.csproj" />
+    <Project Path="tests/Airbnb.ArchitectureTests/Airbnb.ArchitectureTests.csproj" />
     <Project Path="tests/Airbnb.UnitTests/Airbnb.UnitTests.csproj" />
   </Folder>
 </Solution>
