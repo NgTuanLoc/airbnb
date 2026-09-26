@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.5.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>8f3b6c1e-2d47-4a9e-b5c8-1e6f0a7d9c42</UserSecretsId>
+    <!-- AspireUseCliBundle stays off: DCP and the dashboard come from NuGet, so build/test work without the Aspire CLI (CI). -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Airbnb.Api\Airbnb.Api.csproj" />
+    <ProjectReference Include="..\Airbnb.MigrationService\Airbnb.MigrationService.csproj" />
+  </ItemGroup>
+
+</Project>
