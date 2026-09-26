@@ -1,4 +1,8 @@
 using Airbnb.Api.Tests.Infrastructure;
+using Airbnb.Modules.Stays;
+using Airbnb.SharedKernel;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 
@@ -22,11 +26,27 @@ public sealed class InfrastructureFixture : IAsyncLifetime
     {
         await _postgres.StartAsync();
         await _redis.StartAsync();
+        await MigrateAndSeedAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
         await _redis.DisposeAsync();
         await _postgres.DisposeAsync();
+    }
+
+    // Migrates and seeds every module once, exactly as the MigrationService does.
+    private async Task MigrateAndSeedAsync()
+    {
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration["ConnectionStrings:airbnb"] = PostgresConnectionString;
+        builder.AddNpgsqlDataSource("airbnb");
+        builder.AddStaysModuleDatabase();
+
+        using var host = builder.Build();
+        foreach (var migrator in host.Services.GetServices<IModuleMigrator>())
+        {
+            await migrator.MigrateAsync(CancellationToken.None);
+        }
     }
 }
