@@ -1,0 +1,372 @@
+[
+  {
+    "id": "l1-r1",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l1",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l1-r2",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l1",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l1-r3",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l1",
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "l1-r4",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l1",
+    "createdAt": "2025-12-01T00:00:00Z"
+  },
+  {
+    "id": "l2-r1",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l2",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l2-r2",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l2",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l3-r1",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l3",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l3-r2",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l3",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l4-r1",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l4",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l4-r2",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l4",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l5-r1",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l5",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l5-r2",
+    "authorName": "Yuki",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l5",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l6-r1",
+    "authorName": "Yuki",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l6",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l6-r2",
+    "authorName": "Hannah",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l6",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l7-r1",
+    "authorName": "Hannah",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l7",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l7-r2",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l7",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l8-r1",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l8",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l8-r2",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l8",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l9-r1",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l9",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l9-r2",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l9",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l10-r1",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l10",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l10-r2",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l10",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l11-r1",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l11",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l11-r2",
+    "authorName": "Yuki",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l11",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l12-r1",
+    "authorName": "Yuki",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l12",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l12-r2",
+    "authorName": "Hannah",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l12",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l13-r1",
+    "authorName": "Hannah",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l13",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l13-r2",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l13",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l14-r1",
+    "authorName": "Sarah",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Absolutely stunning place. Spotless, well-stocked, and exactly as pictured. The host was responsive and thoughtful.",
+    "subjectType": "stay",
+    "subjectId": "l14",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l14-r2",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l14",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l15-r1",
+    "authorName": "David",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "A wonderful stay from start to finish. Great location, comfortable beds, and beautiful views every morning.",
+    "subjectType": "stay",
+    "subjectId": "l15",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l15-r2",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l15",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "l16-r1",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "We didn't want to leave. Cozy, quiet, and full of charming touches. Would book again in a heartbeat.",
+    "subjectType": "stay",
+    "subjectId": "l16",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "l16-r2",
+    "authorName": "Marco",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "Perfect getaway. Check-in was seamless and the space felt even better in person. Highly recommend.",
+    "subjectType": "stay",
+    "subjectId": "l16",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "re1",
+    "authorName": "Priya",
+    "authorAvatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&q=80",
+    "rating": 5,
+    "body": "The nonna was wonderful and the pasta was unreal. A highlight of the trip.",
+    "subjectType": "experience",
+    "subjectId": "e1",
+    "createdAt": "2026-03-01T00:00:00Z"
+  },
+  {
+    "id": "re2",
+    "authorName": "Marcus",
+    "authorAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&q=80",
+    "rating": 5,
+    "body": "Hands-on, warm, and delicious. Booking again next time.",
+    "subjectType": "experience",
+    "subjectId": "e1",
+    "createdAt": "2026-02-01T00:00:00Z"
+  },
+  {
+    "id": "re3",
+    "authorName": "Sofia",
+    "authorAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80",
+    "rating": 5,
+    "body": "The caves at sunrise were magic and our guide was so calm and safe.",
+    "subjectType": "experience",
+    "subjectId": "e2",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+]
