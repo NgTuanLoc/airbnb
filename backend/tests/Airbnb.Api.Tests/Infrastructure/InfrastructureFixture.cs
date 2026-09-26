@@ -1,4 +1,5 @@
 using Airbnb.Api.Tests.Infrastructure;
+using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Stays;
 using Airbnb.SharedKernel;
@@ -44,6 +45,7 @@ public sealed class InfrastructureFixture : IAsyncLifetime
         builder.AddNpgsqlDataSource("airbnb");
         builder.AddStaysModuleDatabase();
         builder.AddHostsModuleDatabase();
+        builder.AddExperiencesModuleDatabase();
 
         using var host = builder.Build();
         foreach (var migrator in host.Services.GetServices<IModuleMigrator>())
