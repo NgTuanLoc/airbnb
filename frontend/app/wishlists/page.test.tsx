@@ -13,18 +13,14 @@ beforeEach(() => session.requireSession.mockReset());
 
 describe("WishlistsPage", () => {
   test("asks for a session that comes back to /wishlists", async () => {
-    session.requireSession.mockImplementation(async () => {
-      // Simulate unauthenticated state - component calls this to guard the page
-      return Promise.resolve({ id: "skip", name: "skip", email: "skip@test.local" });
-    });
-    // This test verifies that requireSession is called with the correct path
-    // to guard the wishlist page with proper auth redirect
-    await WishlistsPage();
+    session.requireSession.mockRejectedValueOnce(new Error("NEXT_REDIRECT"));
+    await expect(WishlistsPage()).rejects.toThrow("NEXT_REDIRECT");
     expect(session.requireSession).toHaveBeenCalledWith("/wishlists");
   });
 
   test("shows the empty state when there are no lists", async () => {
-    session.requireSession.mockResolvedValue(user());
+    const u = user();
+    session.requireSession.mockResolvedValue(u);
     render(await WishlistsPage());
     expect(screen.getByText("Create your first wishlist")).toBeInTheDocument();
   });
