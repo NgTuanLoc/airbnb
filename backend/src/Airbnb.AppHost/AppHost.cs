@@ -17,7 +17,8 @@ var migrations = builder.AddProject<Projects.Airbnb_MigrationService>("migration
     .WithReference(db)
     .WaitFor(db);
 
-builder.AddProject<Projects.Airbnb_Api>("api")
+// The http profile only: an HTTPS endpoint would need a dev certificate, which CI runners don't have.
+var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "http")
     .WithReference(db)
     .WithReference(redis)
     .WithReference(rabbitmq)
@@ -26,5 +27,12 @@ builder.AddProject<Projects.Airbnb_Api>("api")
     .WaitFor(rabbitmq)
     .WaitForCompletion(migrations)
     .WithHttpHealthCheck("/health");
+
+// Port 3000 so Playwright (baseURL localhost:3000, reuseExistingServer) can run e2e against this frontend.
+builder.AddJavaScriptApp("frontend", "../../../frontend")
+    .WithHttpEndpoint(port: 3000, env: "PORT")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("DATA_SOURCE", builder.Configuration["Frontend:DataSource"] ?? "api");
 
 builder.Build().Run();

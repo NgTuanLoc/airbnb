@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo:
 - `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
-- `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.5. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`; tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
+- `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.5. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`; tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration), `tests/Airbnb.AppHost.Tests` (Aspire smoke test). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
 - `docs/` — specs and plans (repo root).
 
 ## Commands
@@ -64,18 +64,18 @@ Always use these named tokens rather than arbitrary Tailwind values.
 ### Data Layer (bottom-up)
 
 ```
-lib/data/              Static mock data arrays (listings, hosts, reviews, cities)
-lib/repositories/      Repository interfaces + mock implementations
-  mock/                MockListingRepository, MockHostRepository, MockReviewRepository
+lib/data/              Static mock data arrays (listings, hosts, reviews, cities, experiences, services)
+lib/repositories/      Repository interfaces + getRepositories() (index.ts) — the DATA_SOURCE switch
+  mock/                mock*Repository implementations over lib/data
+  http/                apiFetch + createHttpRepositories(API_HTTP) — the .NET API, Zod-validated
 lib/api/envelope.ts    ApiResponse<T> type + ok()/fail() helpers
-app/api/listings/      GET /api/listings?category=X — wraps mock repository
-lib/api-client/        fetchListings() + Zod schemas validating the envelope
-lib/hooks/             useListings(category?) — TanStack Query wrapper
+app/api/*/route.ts     GET /api/{listings,experiences,services} — call getRepositories()
+lib/api-client/        fetch* functions + Zod schemas validating the envelope
+lib/hooks/             TanStack Query wrappers (useListings, …)
 ```
 
-- Server components (`app/rooms/[id]/page.tsx`) call mock repositories directly.
-- Client components (`HomeListings`) use `useListings()` which fetches `/api/listings`.
-- `app/providers.tsx` wraps the app with `QueryClientProvider`.
+- `DATA_SOURCE=mock|api` (server-only, default `mock`; `api` needs `API_HTTP`) selects the implementations. Server code gets data only through `getRepositories()`; ESLint forbids importing `repositories/mock/*` outside `lib/repositories/`.
+- Server components (detail pages, the homepage's cities) call `getRepositories()` directly; client components fetch the Next `/api/*` route handlers, which call it too.
 
 ### Core Types
 All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `City`, `CATEGORIES`, `Category`.
@@ -103,3 +103,4 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 - Migrations (from `backend/`): `dotnet tool restore`, then `dotnet ef migrations add <Name> --project src/Modules/<M>/Airbnb.Modules.<M> --startup-project src/Modules/<M>/Airbnb.Modules.<M> --output-dir Data/Migrations`. The MigrationService applies them and each DbContext's `UseAsyncSeeding` fills empty tables.
 - Seed data is generated, not hand-edited: change `frontend/lib/data/*.ts`, then `npm run seed:export` in `frontend/` (CI runs `npm run seed:check`).
 - Queries are cached through `HybridCache` with keys prefixed by the module name and tagged with the module's cache tag.
+- The AppHost runs the frontend (`AddJavaScriptApp`, port 3000, `DATA_SOURCE` from `Frontend:DataSource`, default `api`) and the API on its `http` launch profile only. `tests/Airbnb.AppHost.Tests` starts the whole AppHost, so it needs Docker and port 3000 free; CI runs it in its own `apphost` job.
