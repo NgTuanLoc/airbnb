@@ -3,6 +3,12 @@ import { test, expect, type Page } from "@playwright/test";
 const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
 
 async function logIn(page: Page) {
+  // Wait for the page to finish loading (scripts run, React hydrates) before typing. The <form>
+  // has no action/method and its inputs have no name, so a click that lands before hydration
+  // attaches the submit handler makes the browser native-submit it: a GET to the current path
+  // with no query string, which drops ?next= and reloads a blank /login. Under many concurrent
+  // Playwright workers the dev server is slow enough for fill+click to win that race.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Email").fill(uniqueEmail());
   await page.getByLabel("Password").fill("supersecret");
   await page.getByRole("button", { name: "Log in" }).click();
