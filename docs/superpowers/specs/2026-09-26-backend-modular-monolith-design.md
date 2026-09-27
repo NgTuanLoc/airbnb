@@ -359,8 +359,9 @@ rows), so events **increment** the counters rather than recount them.
 EF Core's retrying execution strategy (which Aspire's Npgsql integration
 enables by default) cannot be combined with the transactions Wolverine opens.
 Every module DbContext is registered the same way, with that strategy turned
-off. Transient failures on the write path are covered by Wolverine's retry
-policy; reads fail fast.
+off. Transient failures in the event consumers are covered by Wolverine's
+retry policy; `POST /api/reviews` does not run through a Wolverine handler, so
+it fails fast like reads.
 
 ### RabbitMQ topology
 
@@ -600,7 +601,7 @@ One implementation plan per phase. Each phase updates `README.md` and
 
 | Risk | Mitigation |
 |---|---|
-| EF Core retrying strategy conflicts with Wolverine's transactions | Retries off for module DbContexts (section 3); Wolverine policies retry the write path |
+| EF Core retrying strategy conflicts with Wolverine's transactions | Retries off for module DbContexts (section 3); Wolverine policies retry the event consumers; `POST /api/reviews` fails fast like reads |
 | Built-in validation only sees `public` request types, and only in the assembly that calls `AddValidation()` (confirmed in a spike) | Public request records nested in internal slices; each module calls `AddValidation()` (section 1). The envelope writer was spike-verified for 400, 404, 500 and 429 responses |
 | xUnit v3 4.x runs only on Microsoft Testing Platform under the .NET 10 SDK | `global.json` sets `"test": { "runner": "Microsoft.Testing.Platform" }`; coverage via `Microsoft.Testing.Extensions.CodeCoverage` (coverlet's collector is VSTest-only) |
 | RabbitMQ 4.3 rejects transient non-exclusive queues | All Wolverine queues durable |

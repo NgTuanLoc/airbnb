@@ -56,11 +56,14 @@ builder.UseWolverine(options =>
     options.UseEntityFrameworkCoreTransactions();
 
     options.UseRabbitMqUsingNamedConnection("rabbitmq").AutoProvision();
-    options.PublishMessage<ReviewSubmitted>().ToRabbitQueue(reviewSubmittedQueue);
+    options.PublishMessage<ReviewSubmitted>().ToRabbitQueue(reviewSubmittedQueue).UseDurableOutbox();
     options.ListenToRabbitQueue(reviewSubmittedQueue).UseDurableInbox();
 
     // Each module's handler gets the message on its own, with its own retries: one failing never blocks or re-runs another.
     options.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;
+
+    // Separated fans each message out to one local queue per handler; durable so a crash can't drop a rating update.
+    options.Policies.UseDurableLocalQueues();
 
     // The handlers in Messaging/ reach each module through its Contracts interface; the implementations are internal,
     // so Wolverine's generated code has to resolve them from the container.

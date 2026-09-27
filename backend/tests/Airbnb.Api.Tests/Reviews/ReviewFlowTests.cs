@@ -9,6 +9,7 @@ namespace Airbnb.Api.Tests.Reviews;
 
 // The whole write flow: POST → outbox → RabbitMQ → module handler → rating update (spec §3).
 // Uses l10, l11 and e10, which no read test asserts on.
+[Collection(nameof(ReviewFlowTests))]
 public sealed class ReviewFlowTests(InfrastructureFixture infrastructure)
 {
     private static readonly TimeSpan DeliveryTimeout = TimeSpan.FromSeconds(20);
@@ -89,3 +90,8 @@ public sealed class ReviewFlowTests(InfrastructureFixture infrastructure)
     private static decimal ExpectedRating((int ReviewCount, decimal Rating) before, int rating) =>
         Math.Round((before.Rating * before.ReviewCount + rating) / (before.ReviewCount + 1), 2, MidpointRounding.AwayFromZero);
 }
+
+// Every API host with messaging listens on the one shared RabbitMQ queue, so a host from a parallel test class could
+// take this class's message (and only its own cache would see the update). Run alone: the only consumer while it runs.
+[CollectionDefinition(nameof(ReviewFlowTests), DisableParallelization = true)]
+public sealed class ReviewFlowCollection;
