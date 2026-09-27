@@ -1,5 +1,6 @@
 using System.Reflection;
 using Airbnb.Modules.Experiences;
+using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Services;
@@ -38,6 +39,7 @@ public sealed class ModuleRulesTests
 
     private static readonly Dictionary<string, Type> Contracts = new()
     {
+        ["Airbnb.Modules.Experiences.Contracts"] = typeof(IExperienceLookup),
         ["Airbnb.Modules.Stays.Contracts"] = typeof(IListingLookup),
     };
 

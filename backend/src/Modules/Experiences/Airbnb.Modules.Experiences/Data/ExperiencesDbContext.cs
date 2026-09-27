@@ -6,15 +6,18 @@ namespace Airbnb.Modules.Experiences.Data;
 
 internal sealed class ExperiencesDbContext(DbContextOptions<ExperiencesDbContext> options) : DbContext(options)
 {
+    internal const string ExperiencesTable = "experiences";
+
     public DbSet<Experience> Experiences => Set<Experience>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(ExperiencesModule.Schema);
+        modelBuilder.MapAppliedReviews();
 
         modelBuilder.Entity<Experience>(experience =>
         {
-            experience.ToTable("experiences");
+            experience.ToTable(ExperiencesTable);
             experience.Property(e => e.Id).HasMaxLength(50);
             experience.ComplexProperty(e => e.Location);
             experience.Property(e => e.PricePerPerson).HasPrecision(10, 2);

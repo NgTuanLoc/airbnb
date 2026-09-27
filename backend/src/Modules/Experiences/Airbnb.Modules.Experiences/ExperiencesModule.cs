@@ -1,3 +1,4 @@
+using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Experiences.Data;
 using Airbnb.SharedKernel.Persistence;
 using Microsoft.AspNetCore.Routing;
@@ -18,6 +19,8 @@ public static class ExperiencesModule
         builder.Services.AddValidation();
         builder.Services.AddScoped<ListExperiences.Handler>();
         builder.Services.AddScoped<GetExperience.Handler>();
+        builder.Services.AddScoped<IExperienceLookup, ExperienceLookup>();
+        builder.Services.AddScoped<IExperienceReviewStats, ExperienceReviewStats>();
         return builder;
     }
 
