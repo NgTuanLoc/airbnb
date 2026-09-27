@@ -80,6 +80,14 @@ describe("createHttpRepositories", () => {
     expect(requestedPaths(fetchMock)).toEqual(["/api/listings/a%2Fb%3Fc%23d"]);
   });
 
+  test("dot-segment ids resolve to null without a fetch call", async () => {
+    const fetchMock = stubBackend({});
+
+    expect(await repos.listings.findById(".")).toBeNull();
+    expect(await repos.listings.findById("..")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test("cities.findAll returns the cities", async () => {
     stubBackend({ "/api/cities": cities });
 

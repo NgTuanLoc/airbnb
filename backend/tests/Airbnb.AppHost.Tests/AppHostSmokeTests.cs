@@ -16,7 +16,9 @@ public sealed class AppHostSmokeTests
     public async Task The_frontend_serves_backend_data_under_aspire()
     {
         var ct = TestContext.Current.CancellationToken;
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Airbnb_AppHost>(ct);
+        // Explicit so the test doesn't depend on Frontend:DataSource staying "api" in appsettings.json.
+        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Airbnb_AppHost>(
+            ["--Frontend:DataSource=api"], ct);
         await using var app = await appHost.BuildAsync(ct);
         await app.StartAsync(ct);
 

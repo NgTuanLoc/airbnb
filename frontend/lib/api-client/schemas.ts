@@ -114,7 +114,7 @@ export const reviewDtoSchema = z.object({
   authorAvatar: z.string(),
   rating: z.number(),
   body: z.string(),
-  createdAt: z.string().datetime({ offset: true }),
+  createdAt: z.iso.datetime({ offset: true }),
 });
 
 export type ReviewDto = z.infer<typeof reviewDtoSchema>;

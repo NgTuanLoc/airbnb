@@ -25,7 +25,7 @@ npm run dev        # http://localhost:3000
 npm test
 ```
 
-Data comes from in-repo mock data by default. `DATA_SOURCE=api` (server-only; needs `API_HTTP`, the backend URL) switches every page to the backend — Aspire sets both.
+Data comes from in-repo mock data by default. `DATA_SOURCE=api` (server-only; needs `API_HTTP`, the backend URL) switches every server-side data read — pages and the `/api/*` route handlers — to the backend. Aspire sets both.
 
 ## Backend
 

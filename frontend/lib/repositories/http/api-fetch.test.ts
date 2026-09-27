@@ -23,6 +23,7 @@ describe("apiFetch", () => {
   });
 
   test("requests bypass the Next data cache and carry a timeout signal", async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
     const fetchMock = stubResponse(200, { success: true, data: { id: "a" } });
 
     await apiFetch(BASE, "/api/things/a", itemSchema);
@@ -30,6 +31,8 @@ describe("apiFetch", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect(init.cache).toBe("no-store");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(timeoutSpy).toHaveBeenCalledWith(5000);
+    timeoutSpy.mockRestore();
   });
 
   test("a 404 resolves to null", async () => {

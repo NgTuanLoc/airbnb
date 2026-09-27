@@ -56,7 +56,11 @@ export function createHttpRepositories(baseUrl: string): Repositories {
   const byId =
     <T extends z.ZodType>(resource: string, schema: T) =>
     (id: string) =>
-      apiFetch(baseUrl, `/api/${resource}/${encodeURIComponent(id)}`, schema);
+      // "." and ".." survive encodeURIComponent, then URL() resolves them as dot segments
+      // (escaping out of the /api/<resource>/ path), so short-circuit them to a 404-equivalent null.
+      id === "." || id === ".."
+        ? Promise.resolve(null)
+        : apiFetch(baseUrl, `/api/${resource}/${encodeURIComponent(id)}`, schema);
 
   return {
     listings: {
