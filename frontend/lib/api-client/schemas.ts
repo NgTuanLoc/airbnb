@@ -118,3 +118,28 @@ export const reviewDtoSchema = z.object({
 });
 
 export type ReviewDto = z.infer<typeof reviewDtoSchema>;
+
+export const userSchema = z.object({ id: z.string(), name: z.string(), email: z.string() });
+
+const priceBreakdownSchema = z.object({
+  lineItems: z.array(z.object({ label: z.string(), amount: z.number() })),
+  total: z.number(),
+});
+
+export const wishlistSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  listingIds: z.array(z.string()),
+  createdAt: z.string(),
+});
+
+export const bookingSchema = z.object({
+  id: z.string(),
+  listingId: z.string(),
+  checkIn: z.string(),
+  checkOut: z.string(),
+  guests: z.object({ adults: z.number(), children: z.number() }),
+  priceBreakdown: priceBreakdownSchema,
+  status: z.literal("confirmed"),
+  createdAt: z.string(),
+});
