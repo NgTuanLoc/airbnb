@@ -37,7 +37,7 @@ public sealed class HealthEndpointTests(InfrastructureFixture infrastructure)
 
     private async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path)
     {
-        await using var factory = new ApiFactory(connectionString, infrastructure.RedisConnectionString);
+        await using var factory = new ApiFactory(infrastructure, postgresConnectionString: connectionString, withMessaging: false);
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);

@@ -4,7 +4,7 @@ internal sealed class Review
 {
     public required string Id { get; init; }
 
-    // "stay" or "experience" (phase 4 turns this into an enum in Reviews.Contracts).
+    // "stay" or "experience", as on the wire; ReviewSubmitted carries it as Reviews.Contracts.ReviewSubjectType.
     public required string SubjectType { get; init; }
 
     public required string SubjectId { get; init; }

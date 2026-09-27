@@ -96,7 +96,7 @@ public sealed class StaysEndpointTests(InfrastructureFixture infrastructure)
     [Fact]
     public async Task Listings_are_still_served_when_redis_is_unreachable()
     {
-        await using var factory = new ApiFactory(infrastructure.PostgresConnectionString, "127.0.0.1:1,abortConnect=false,connectTimeout=200");
+        await using var factory = new ApiFactory(infrastructure, redisConnectionString: "127.0.0.1:1,abortConnect=false,connectTimeout=200");
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync("/api/listings/l1", Ct);

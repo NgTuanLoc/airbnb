@@ -1,16 +1,31 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Wolverine;
 
 namespace Airbnb.Api.Tests.Infrastructure;
 
-public sealed class ApiFactory(string postgresConnectionString, string redisConnectionString) : WebApplicationFactory<Program>
+// The API against the shared test containers; a test overrides a connection string to simulate a dead dependency.
+public sealed class ApiFactory(
+    InfrastructureFixture infrastructure,
+    string? postgresConnectionString = null,
+    string? redisConnectionString = null,
+    bool withMessaging = true) : WebApplicationFactory<Program>
 {
-    public ApiFactory(InfrastructureFixture infrastructure)
-        : this(infrastructure.PostgresConnectionString, infrastructure.RedisConnectionString)
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-    }
+        builder
+            .UseSetting("ConnectionStrings:airbnb", postgresConnectionString ?? infrastructure.PostgresConnectionString)
+            .UseSetting("ConnectionStrings:redis", redisConnectionString ?? infrastructure.RedisConnectionString);
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder) => builder
-        .UseSetting("ConnectionStrings:airbnb", postgresConnectionString)
-        .UseSetting("ConnectionStrings:redis", redisConnectionString);
+        // Wolverine can't start without a reachable Postgres; tests that point the API at a dead database switch it off.
+        if (!withMessaging)
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                services.DisableAllWolverineMessagePersistence();
+                services.DisableAllExternalWolverineTransports();
+            });
+        }
+    }
 }

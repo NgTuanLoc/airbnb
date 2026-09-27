@@ -8,10 +8,14 @@ using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
 using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
+using Wolverine;
+using Wolverine.EntityFrameworkCore;
+using Wolverine.Postgresql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.AddNpgsqlDataSource("airbnb");
 
 // HybridCache: 1-minute in-memory layer over a 10-minute Redis layer guarded by Polly (spec §2, §4).
@@ -34,6 +38,14 @@ builder.AddHostsModule();
 builder.AddExperiencesModule();
 builder.AddServicesModule();
 builder.AddReviewsModule();
+
+// The one write flow (spec §3): a review and its ReviewSubmitted event commit in one Postgres transaction (outbox),
+// and Wolverine relays the event afterwards. Its tables live in their own "wolverine" schema, created at startup.
+builder.UseWolverine(options =>
+{
+    options.PersistMessagesWithPostgresql(builder.Configuration.GetConnectionString("airbnb")!, "wolverine");
+    options.UseEntityFrameworkCoreTransactions();
+});
 
 var app = builder.Build();
 

@@ -16,6 +16,7 @@
   </Folder>
   <Folder Name="/src/Modules/Reviews/">
     <Project Path="src/Modules/Reviews/Airbnb.Modules.Reviews/Airbnb.Modules.Reviews.csproj" />
+    <Project Path="src/Modules/Reviews/Airbnb.Modules.Reviews.Contracts/Airbnb.Modules.Reviews.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Services/">
     <Project Path="src/Modules/Services/Airbnb.Modules.Services/Airbnb.Modules.Services.csproj" />

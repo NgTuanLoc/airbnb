@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Modules\Experiences\Airbnb.Modules.Experiences.Contracts\Airbnb.Modules.Experiences.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Hosts\Airbnb.Modules.Hosts\Airbnb.Modules.Hosts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Reviews\Airbnb.Modules.Reviews\Airbnb.Modules.Reviews.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reviews\Airbnb.Modules.Reviews.Contracts\Airbnb.Modules.Reviews.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Modules\Services\Airbnb.Modules.Services\Airbnb.Modules.Services.csproj" />
     <ProjectReference Include="..\..\src\Modules\Stays\Airbnb.Modules.Stays\Airbnb.Modules.Stays.csproj" />
     <ProjectReference Include="..\..\src\Modules\Stays\Airbnb.Modules.Stays.Contracts\Airbnb.Modules.Stays.Contracts.csproj" />

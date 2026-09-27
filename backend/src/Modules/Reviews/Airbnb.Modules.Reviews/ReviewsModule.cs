@@ -17,6 +17,7 @@ public static class ReviewsModule
         // The validation generator only registers request types for AddValidation() calls in this assembly.
         builder.Services.AddValidation();
         builder.Services.AddScoped<ListReviews.Handler>();
+        builder.Services.AddScoped<SubmitReview.Handler>();
         return builder;
     }
 
@@ -26,6 +27,7 @@ public static class ReviewsModule
     public static IEndpointRouteBuilder MapReviewsEndpoints(this IEndpointRouteBuilder api)
     {
         ListReviews.Map(api);
+        SubmitReview.Map(api);
         return api;
     }
 }

@@ -31,6 +31,12 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.10" />
   </ItemGroup>
 
+  <ItemGroup Label="Messaging">
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.40.0" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="6.40.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.40.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Persistence">
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
