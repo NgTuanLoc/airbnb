@@ -8,6 +8,8 @@ namespace Airbnb.Modules.Stays.Data;
 
 internal sealed class StaysDbContext(DbContextOptions<StaysDbContext> options) : DbContext(options)
 {
+    internal const string ListingsTable = "listings";
+
     public DbSet<Listing> Listings => Set<Listing>();
 
     public DbSet<City> Cities => Set<City>();
@@ -15,10 +17,11 @@ internal sealed class StaysDbContext(DbContextOptions<StaysDbContext> options) :
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(StaysModule.Schema);
+        modelBuilder.MapAppliedReviews();
 
         modelBuilder.Entity<Listing>(listing =>
         {
-            listing.ToTable("listings");
+            listing.ToTable(ListingsTable);
             listing.Property(l => l.Id).HasMaxLength(50);
             listing.ComplexProperty(l => l.Location);
             listing.Property(l => l.PricePerNight).HasPrecision(10, 2);

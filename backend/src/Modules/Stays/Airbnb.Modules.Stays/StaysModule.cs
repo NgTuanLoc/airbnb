@@ -1,4 +1,5 @@
 using Airbnb.Modules.Stays.Cities;
+using Airbnb.Modules.Stays.Contracts;
 using Airbnb.Modules.Stays.Data;
 using Airbnb.Modules.Stays.Listings;
 using Airbnb.SharedKernel.Persistence;
@@ -21,6 +22,8 @@ public static class StaysModule
         builder.Services.AddScoped<SearchListings.Handler>();
         builder.Services.AddScoped<GetListing.Handler>();
         builder.Services.AddScoped<GetCities.Handler>();
+        builder.Services.AddScoped<IListingLookup, ListingLookup>();
+        builder.Services.AddScoped<IListingReviewStats, ListingReviewStats>();
         return builder;
     }
 

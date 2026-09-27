@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Airbnb.Modules.Stays.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Airbnb.Modules.Stays.Data.Migrations
 {
     [DbContext(typeof(StaysDbContext))]
-    partial class StaysDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927075123_AppliedReviews")]
+    partial class AppliedReviews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
