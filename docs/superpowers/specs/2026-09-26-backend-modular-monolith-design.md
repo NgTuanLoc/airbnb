@@ -79,10 +79,10 @@ backend/
 │   └── Modules/
 │       ├── Stays/
 │       │   ├── Airbnb.Modules.Stays/                  # listings + cities
-│       │   └── Airbnb.Modules.Stays.Contracts/        # IListingLookup
+│       │   └── Airbnb.Modules.Stays.Contracts/        # IListingLookup, IListingReviewStats
 │       ├── Experiences/
 │       │   ├── Airbnb.Modules.Experiences/
-│       │   └── Airbnb.Modules.Experiences.Contracts/  # IExperienceLookup
+│       │   └── Airbnb.Modules.Experiences.Contracts/  # IExperienceLookup, IExperienceReviewStats
 │       ├── Services/Airbnb.Modules.Services/
 │       ├── Hosts/Airbnb.Modules.Hosts/
 │       └── Reviews/
@@ -106,7 +106,7 @@ Airbnb.Modules.Stays/
 │   ├── ListingDto.cs             # shared by both slices, with its projection expression
 │   └── ListingLookup.cs          # implements Stays.Contracts.IListingLookup
 ├── Cities/GetCities.cs
-├── ReviewSubmittedHandler.cs     # consumes Reviews.Contracts.ReviewSubmitted
+├── Listings/ListingReviewStats.cs  # implements Stays.Contracts.IListingReviewStats (applies ReviewSubmitted)
 ├── Domain/                       # Listing, City
 └── Data/
     ├── StaysDbContext.cs + entity configurations
@@ -156,9 +156,10 @@ depend on no other module.
 
 - **Synchronous, in-process:** Reviews checks that a review's subject exists
   through `IListingLookup` / `IExperienceLookup`.
-- **Asynchronous, over RabbitMQ:** Reviews publishes `ReviewSubmitted`; Stays
-  and Experiences consume it to update their own copy of rating and review
-  count.
+- **Asynchronous, over RabbitMQ:** Reviews publishes `ReviewSubmitted`; handlers in the API host
+  (`Airbnb.Api/Messaging/`) pass it to Stays and Experiences through `IListingReviewStats` /
+  `IExperienceReviewStats`, which update each module's own copy of rating and review count. (Wolverine only
+  runs public handler types, so consumers can't live inside a module whose only public type is its module class.)
 - **Page assembly stays in the Next.js server:** a listing page fetches the
   listing, its host and its reviews separately, exactly as the server components
   do today. There is no backend "detail" aggregate endpoint.
@@ -329,30 +330,23 @@ Body: `{ subjectType: "stay" | "experience", subjectId, authorName, rating, body
 
 ### Flow
 
-1. Built-in validation runs; the endpoint calls
-   `bus.InvokeAsync<ReviewDto>(SubmitReview)`.
-2. The Reviews handler asks `IListingLookup` or `IExperienceLookup` whether the
-   subject exists → 404 envelope if not.
-3. It adds the review (UUIDv7 id, `createdAt` from `TimeProvider`, default
-   avatar) and cascades
-   `ReviewSubmitted { reviewId, subjectType, subjectId, rating, occurredAt }`.
-   Wolverine's EF Core transactional middleware commits the review row and the
-   outgoing envelope in **one Postgres transaction** (outbox), then relays the
-   message to RabbitMQ. The API responds **201** with the review.
+1. Built-in validation runs; the slice handler (a plain DI-registered class, like the read slices) takes over.
+   Malformed bodies get the 400 envelope too.
+2. It asks `IListingLookup` or `IExperienceLookup` whether the subject exists → 404 envelope if not.
+3. It adds the review (UUIDv7 id, `createdAt` from `TimeProvider`, default avatar) through
+   `IDbContextOutbox<ReviewsDbContext>` and publishes
+   `ReviewSubmitted { reviewId, subjectType, subjectId, rating, occurredAt }`;
+   `SaveChangesAndFlushMessagesAsync` commits the review row and the outgoing envelope in **one Postgres
+   transaction** (outbox), then Wolverine relays the message to RabbitMQ. The endpoint then invalidates the
+   `reviews` tag (after the commit, so a read can't re-cache pre-commit data) and responds **201**.
 4. The API listens on the RabbitMQ queue with a durable inbox. With
-   `MultipleHandlerBehavior.Separated`, Wolverine hands the message to each
-   module's handler separately — own transaction, own retries; one module
-   failing never blocks or re-runs another:
-   - **Stays / Experiences:** ignore subjects that aren't theirs; otherwise run
-     one atomic statement —
-     `UPDATE … SET review_count = review_count + 1, rating = round((rating * review_count + @rating) / (review_count + 1), 2) WHERE id = @subjectId`
-     — then invalidate their cache tag. No read-modify-write, so concurrent
-     reviews can't lose updates.
-   - **Reviews:** invalidates its own `reviews` tag. Doing this after commit,
-     from the event, rather than inside the command closes the window in which a
-     read could re-cache pre-commit data.
-5. **Duplicates:** the durable inbox records the message as handled in the same
-   transaction as the handler's work, so a redelivery is a no-op.
+   `MultipleHandlerBehavior.Separated`, Wolverine hands the message to each handler separately — own retries; one failing never blocks or re-runs
+   another:
+   - **Stays / Experiences:** ignore subjects that aren't theirs; otherwise, in one transaction, record the review
+     id in the module's `applied_reviews` table and run one atomic statement —
+     `UPDATE … SET "ReviewCount" = "ReviewCount" + 1, "Rating" = round(("Rating" * "ReviewCount" + @rating) / ("ReviewCount" + 1), 2) WHERE "Id" = @subjectId`
+     — then invalidate their cache tag. No read-modify-write, so concurrent reviews can't lose updates.
+5. **Duplicates:** a redelivered message finds its review id in `applied_reviews` and changes nothing.
 6. **Failures:** transient database errors retry 3 times with cooldowns
    (100 ms, 500 ms, 2 s), then the message moves to Wolverine's dead-letter
    storage.
