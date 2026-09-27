@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { render, screen, userEvent } from "@/lib/test-utils";
 import { PropertyCard } from "./property-card";
 import type { Listing } from "@/lib/types";
@@ -36,11 +36,22 @@ describe("PropertyCard", () => {
     expect(screen.getByText("Guest favorite")).toBeInTheDocument();
   });
 
-  test("heart toggles to the saved (rausch) state on click", async () => {
+  test("shows no heart without a save handler", () => {
     render(<PropertyCard listing={listing} />);
-    const heart = screen.getByRole("button", { name: /save/i });
-    await userEvent.click(heart);
-    expect(screen.getByRole("button", { name: /remove from wishlist/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /wishlist/i })).not.toBeInTheDocument();
+  });
+
+  test("the heart calls onToggleSave", async () => {
+    const onToggleSave = vi.fn();
+    render(<PropertyCard listing={listing} saved={false} onToggleSave={onToggleSave} />);
+    await userEvent.click(screen.getByRole("button", { name: "Save to wishlist" }));
+    expect(onToggleSave).toHaveBeenCalledOnce();
+  });
+
+  test("a saved listing shows the filled rausch heart", () => {
+    render(<PropertyCard listing={listing} saved onToggleSave={() => {}} />);
+    const heart = screen.getByRole("button", { name: "Remove from wishlist" });
+    expect(heart.querySelector("svg")).toHaveAttribute("fill", "var(--color-rausch)");
   });
 
   test("the photo zooms on hover without resizing the card", () => {
