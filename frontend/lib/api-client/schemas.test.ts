@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { listingSchema, experiencesEnvelopeSchema, servicesEnvelopeSchema } from "./schemas";
+import { listingSchema, experiencesEnvelopeSchema, servicesEnvelopeSchema, envelopeSchema, hostSchema, citySchema, reviewDtoSchema } from "./schemas";
 
 describe("listingSchema", () => {
   test("parses a full listing including detail fields", () => {
@@ -51,5 +51,50 @@ describe("servicesEnvelopeSchema", () => {
       ],
     });
     expect(parsed.data?.[0]?.id).toBe("s1");
+  });
+});
+
+describe("envelopeSchema", () => {
+  test("parses a single-item envelope", () => {
+    const parsed = envelopeSchema(hostSchema).parse({
+      success: true,
+      data: { id: "h1", name: "Maya", avatar: "https://example.com/a.jpg", isSuperhost: true, responseRate: 98, joinedYear: 2019 },
+    });
+    expect(parsed.data?.name).toBe("Maya");
+  });
+
+  test("parses an error envelope without data", () => {
+    const parsed = envelopeSchema(hostSchema).parse({ success: false, error: "Host 'x' was not found" });
+    expect(parsed.error).toBe("Host 'x' was not found");
+  });
+});
+
+describe("citySchema", () => {
+  test("parses a city", () => {
+    const city = { id: "aspen", name: "Aspen", subLabel: "Colorado", image: "https://example.com/c.jpg", listingCount: 4 };
+    expect(citySchema.parse(city)).toEqual(city);
+  });
+});
+
+describe("reviewDtoSchema", () => {
+  const dto = {
+    id: "l1-r1",
+    subjectType: "stay",
+    subjectId: "l1",
+    authorName: "Sarah",
+    authorAvatar: "https://example.com/a.jpg",
+    rating: 5,
+    body: "Lovely",
+    createdAt: "2026-03-01T00:00:00+00:00",
+  };
+
+  test("accepts offset and Z timestamps", () => {
+    expect(reviewDtoSchema.parse(dto).subjectId).toBe("l1");
+    expect(reviewDtoSchema.parse({ ...dto, createdAt: "2026-03-01T00:00:00Z" }).createdAt).toBe("2026-03-01T00:00:00Z");
+  });
+
+  test("rejects a preformatted date and an unknown subject type", () => {
+    expect(() => reviewDtoSchema.parse({ ...dto, createdAt: "March 2026" })).toThrow();
+    expect(() => reviewDtoSchema.parse({ ...dto, subjectType: "service" })).toThrow();
   });
 });

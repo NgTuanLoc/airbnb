@@ -75,3 +75,46 @@ export const servicesEnvelopeSchema = z.object({
   error: z.string().optional(),
   meta: z.object({ total: z.number(), page: z.number(), limit: z.number() }).optional(),
 });
+
+const pageMetaSchema = z.object({ total: z.number(), page: z.number(), limit: z.number() });
+
+/** The backend's `{ success, data?, error?, meta? }` envelope around any payload schema. */
+export function envelopeSchema<T extends z.ZodType>(data: T) {
+  return z.object({
+    success: z.boolean(),
+    data: data.optional(),
+    error: z.string().optional(),
+    meta: pageMetaSchema.optional(),
+  });
+}
+
+export const hostSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  avatar: z.string(),
+  isSuperhost: z.boolean(),
+  responseRate: z.number(),
+  joinedYear: z.number().int(),
+});
+
+export const citySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  subLabel: z.string(),
+  image: z.string(),
+  listingCount: z.number().int().nonnegative(),
+});
+
+/** The backend's review shape; the HTTP repository maps it to the frontend `Review`. */
+export const reviewDtoSchema = z.object({
+  id: z.string(),
+  subjectType: z.enum(["stay", "experience"]),
+  subjectId: z.string(),
+  authorName: z.string(),
+  authorAvatar: z.string(),
+  rating: z.number(),
+  body: z.string(),
+  createdAt: z.string().datetime({ offset: true }),
+});
+
+export type ReviewDto = z.infer<typeof reviewDtoSchema>;
