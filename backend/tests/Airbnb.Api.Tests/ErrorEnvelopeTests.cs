@@ -24,4 +24,20 @@ public sealed class ErrorEnvelopeTests(InfrastructureFixture infrastructure)
             """{"success":false,"error":"Not Found"}""",
             await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
+
+    [Theory]
+    [InlineData("/api/listings?page=abc")]
+    [InlineData("/api/listings?guests=many")]
+    public async Task Unparsable_query_values_get_the_400_envelope(string path)
+    {
+        await using var factory = new ApiFactory(infrastructure);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            """{"success":false,"error":"Bad Request"}""",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
 }

@@ -37,7 +37,13 @@ builder.AddReviewsModule();
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+// A malformed request (an unparsable JSON body, "?page=abc") is the client's fault: keep its 400 instead of the default 500.
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception => exception is BadHttpRequestException badRequest
+        ? badRequest.StatusCode
+        : StatusCodes.Status500InternalServerError,
+});
 app.UseStatusCodePages();
 app.UseRateLimiter();
 
