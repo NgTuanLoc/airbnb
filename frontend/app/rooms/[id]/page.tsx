@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import { mockListingRepository } from "@/lib/repositories/mock/mock-listing-repository";
-import { mockHostRepository } from "@/lib/repositories/mock/mock-host-repository";
-import { mockReviewRepository } from "@/lib/repositories/mock/mock-review-repository";
+import { getRepositories } from "@/lib/repositories";
 import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-system";
 import { ListingGallery } from "@/components/features/listing-gallery";
 import { ListingOverview } from "@/components/features/listing-overview";
@@ -11,12 +9,13 @@ import { ReservationCard } from "@/components/features/reservation-card";
 
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const listing = await mockListingRepository.findById(id);
+  const repos = getRepositories();
+  const listing = await repos.listings.findById(id);
   if (!listing) notFound();
 
   const [host, reviews] = await Promise.all([
-    mockHostRepository.findById(listing.hostId),
-    mockReviewRepository.findByListingId(listing.id),
+    repos.hosts.findById(listing.hostId),
+    repos.reviews.findByListingId(listing.id),
   ]);
 
   return (

@@ -2,9 +2,11 @@ import { TopNav, Footer } from "@/components/design-system";
 import { StickyHomeSearch } from "@/components/features/search-bar/sticky-home-search";
 import { HomeListings } from "@/components/features/home-listings";
 import { CityLinkGrid } from "@/components/features/city-link-grid";
-import { cities } from "@/lib/data/cities";
+import { getRepositories } from "@/lib/repositories";
 
-export default function Home() {
+export default async function Home() {
+  const cities = await getRepositories().cities.findAll();
+
   return (
     <div className="flex min-h-screen flex-col">
       <TopNav active="homes" />

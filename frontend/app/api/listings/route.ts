@@ -1,4 +1,4 @@
-import { mockListingRepository } from "@/lib/repositories/mock/mock-listing-repository";
+import { getRepositories } from "@/lib/repositories";
 import { ok } from "@/lib/api/envelope";
 
 function num(value: string | null): number | undefined {
@@ -9,7 +9,7 @@ function num(value: string | null): number | undefined {
 
 export async function GET(request: Request): Promise<Response> {
   const { searchParams } = new URL(request.url);
-  const data = await mockListingRepository.findAll({
+  const data = await getRepositories().listings.findAll({
     location: searchParams.get("location") ?? undefined,
     category: searchParams.get("category") ?? undefined,
     minPrice: num(searchParams.get("minPrice")),

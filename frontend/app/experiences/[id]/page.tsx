@@ -1,19 +1,18 @@
 import { notFound } from "next/navigation";
-import { mockExperienceRepository } from "@/lib/repositories/mock/mock-experience-repository";
-import { mockHostRepository } from "@/lib/repositories/mock/mock-host-repository";
-import { mockReviewRepository } from "@/lib/repositories/mock/mock-review-repository";
+import { getRepositories } from "@/lib/repositories";
 import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-system";
 import { ListingGallery } from "@/components/features/listing-gallery";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
 
 export default async function ExperienceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const experience = await mockExperienceRepository.findById(id);
+  const repos = getRepositories();
+  const experience = await repos.experiences.findById(id);
   if (!experience) notFound();
 
   const [host, reviews] = await Promise.all([
-    mockHostRepository.findById(experience.hostId),
-    mockReviewRepository.findByListingId(experience.id),
+    repos.hosts.findById(experience.hostId),
+    repos.reviews.findByListingId(experience.id),
   ]);
 
   return (
