@@ -183,7 +183,7 @@ with 12px interior padding.
 3. Listing detail + reservation flow (date picker, guest stepper).
 4. Search results + Mapbox map + filters.
 5. Experiences + Services verticals.
-6. Mock auth + wishlists + trips + booking confirmation.
+6. Mock auth + wishlists + trips + booking confirmation. — see 2026-09-27-frontend-phase6-auth-wishlists-trips-design.md
 7. Host pages.
 8. Responsive polish + Playwright E2E + accessibility pass.
 

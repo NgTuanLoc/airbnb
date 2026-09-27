@@ -72,10 +72,14 @@ lib/api/envelope.ts    ApiResponse<T> type + ok()/fail() helpers
 app/api/*/route.ts     GET /api/{listings,experiences,services} — call getRepositories()
 lib/api-client/        fetch* functions + Zod schemas validating the envelope
 lib/hooks/             TanStack Query wrappers (useListings, …)
+lib/auth/              session.ts (mock session cookie), get-session.ts (server: getSession/requireSession), next-path.ts
+lib/repositories/      … also WishlistRepository + BookingRepository (in-memory mocks in both data modes)
+app/api/auth|wishlists|bookings/   session-guarded route handlers (401 envelope without a session)
 ```
 
 - `DATA_SOURCE=mock|api` (server-only, default `mock`; `api` needs `API_HTTP`) selects the implementations. Server code gets data only through `getRepositories()`; ESLint forbids importing `repositories/mock/*` outside `lib/repositories/`.
 - Server components (detail pages, the homepage's cities) call `getRepositories()` directly; client components fetch the Next `/api/*` route handlers, which call it too.
+- Auth is a mock: any valid email/password logs in; an httpOnly `session` cookie holds the user. Wishlists and bookings are frontend in-memory mocks in both `DATA_SOURCE` modes (the backend doesn't serve them). Client code reads the session and wishlist hearts from `SessionProvider` / `WishlistHeartsProvider` (in `app/providers.tsx`) via `useSessionState()` / `useWishlistHearts()`, which return null outside the providers.
 
 ### Core Types
 All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `City`, `CATEGORIES`, `Category`.
@@ -84,6 +88,7 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 - `/` — Homepage: `TopNav` + `SearchBar` + `HomeListings` (category filter + property grid) + `CityLinkGrid` + `Footer`
 - `/rooms/[id]` — Listing detail: server component, fetches listing/host/reviews from repositories
 - `/design-system` — Component gallery (development reference)
+- `/wishlists`, `/wishlists/[id]`, `/trips`, `/trips/[id]`, `/book/[listingId]` — gated server pages (`requireSession` redirects to `/login?next=…`)
 
 ### Testing Conventions
 - Import `render`, `screen`, `userEvent` from `@/lib/test-utils` (not directly from RTL)
