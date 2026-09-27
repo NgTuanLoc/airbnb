@@ -104,9 +104,9 @@ Airbnb.Modules.Stays/
 │   ├── SearchListings.cs         # slice: Query + Handler + Map
 │   ├── GetListing.cs
 │   ├── ListingDto.cs             # shared by both slices, with its projection expression
-│   └── ListingLookup.cs          # implements Stays.Contracts.IListingLookup
+│   ├── ListingLookup.cs          # implements Stays.Contracts.IListingLookup
+│   └── ListingReviewStats.cs     # implements Stays.Contracts.IListingReviewStats (applies ReviewSubmitted)
 ├── Cities/GetCities.cs
-├── Listings/ListingReviewStats.cs  # implements Stays.Contracts.IListingReviewStats (applies ReviewSubmitted)
 ├── Domain/                       # Listing, City
 └── Data/
     ├── StaysDbContext.cs + entity configurations
