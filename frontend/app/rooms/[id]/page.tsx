@@ -50,7 +50,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <ReservationCard pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} />
+            <ReservationCard pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} listingId={listing.id} />
           </div>
         </div>
       </main>
