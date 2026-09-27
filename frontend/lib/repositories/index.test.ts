@@ -49,4 +49,15 @@ describe("getRepositories", () => {
 
     expect(() => getRepositories()).toThrow('DATA_SOURCE must be "mock" or "api", got "API"');
   });
+
+  test("wishlists and bookings are the frontend mocks in both modes", () => {
+    vi.stubEnv("DATA_SOURCE", "mock");
+    const mock = getRepositories();
+    vi.stubEnv("DATA_SOURCE", "api");
+    vi.stubEnv("API_HTTP", "http://backend.test");
+    const api = getRepositories();
+
+    expect(api.wishlists).toBe(mock.wishlists);
+    expect(api.bookings).toBe(mock.bookings);
+  });
 });

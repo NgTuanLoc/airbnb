@@ -1,3 +1,5 @@
+import type { PriceBreakdown } from "@/lib/reservation/pricing";
+
 export interface Listing {
   id: string;
   title: string;
@@ -112,4 +114,24 @@ export interface User {
   id: string;
   name: string;
   email: string;
+}
+
+export interface Wishlist {
+  id: string;
+  name: string;
+  listingIds: string[];
+  createdAt: string;
+}
+
+export interface Booking {
+  id: string;
+  listingId: string;
+  /** YYYY-MM-DD */
+  checkIn: string;
+  /** YYYY-MM-DD */
+  checkOut: string;
+  guests: { adults: number; children: number };
+  priceBreakdown: PriceBreakdown;
+  status: "confirmed";
+  createdAt: string;
 }
