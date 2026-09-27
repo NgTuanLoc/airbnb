@@ -107,3 +107,9 @@ export const SERVICE_CATEGORIES = [
 ] as const;
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
