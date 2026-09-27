@@ -34,6 +34,7 @@
   <ItemGroup Label="Messaging">
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.40.0" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.40.0" />
+    <PackageVersion Include="WolverineFx.RabbitMQ" Version="6.40.0" />
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.40.0" />
   </ItemGroup>
 
@@ -49,6 +50,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
     <PackageVersion Include="NetArchTest.eNhancedEdition" Version="1.4.5" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers.RabbitMq" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.15.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>

@@ -2,15 +2,21 @@ using Airbnb.Api.Caching;
 using Airbnb.Api.Errors;
 using Airbnb.Api.RateLimiting;
 using Airbnb.Modules.Experiences;
+using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Reviews;
+using Airbnb.Modules.Reviews.Contracts;
 using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
+using Airbnb.Modules.Stays.Contracts;
 using Microsoft.Extensions.Caching.Hybrid;
+using Npgsql;
 using Scalar.AspNetCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
+using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
+using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,11 +46,31 @@ builder.AddServicesModule();
 builder.AddReviewsModule();
 
 // The one write flow (spec §3): a review and its ReviewSubmitted event commit in one Postgres transaction (outbox),
-// and Wolverine relays the event afterwards. Its tables live in their own "wolverine" schema, created at startup.
+// then Wolverine relays the event to a durable RabbitMQ queue that this API also listens on (durable inbox).
+// Its tables live in their own "wolverine" schema, and its exchange and queues are created at startup.
 builder.UseWolverine(options =>
 {
+    const string reviewSubmittedQueue = "reviews.review-submitted";
+
     options.PersistMessagesWithPostgresql(builder.Configuration.GetConnectionString("airbnb")!, "wolverine");
     options.UseEntityFrameworkCoreTransactions();
+
+    options.UseRabbitMqUsingNamedConnection("rabbitmq").AutoProvision();
+    options.PublishMessage<ReviewSubmitted>().ToRabbitQueue(reviewSubmittedQueue);
+    options.ListenToRabbitQueue(reviewSubmittedQueue).UseDurableInbox();
+
+    // Each module's handler gets the message on its own, with its own retries: one failing never blocks or re-runs another.
+    options.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;
+
+    // The handlers in Messaging/ reach each module through its Contracts interface; the implementations are internal,
+    // so Wolverine's generated code has to resolve them from the container.
+    options.CodeGeneration.AlwaysUseServiceLocationFor<IListingReviewStats>();
+    options.CodeGeneration.AlwaysUseServiceLocationFor<IExperienceReviewStats>();
+
+    // Transient database errors: three retries with cooldowns, then the error queue (spec §3).
+    options.OnException<NpgsqlException>(exception => exception.IsTransient)
+        .RetryWithCooldown(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2))
+        .Then.MoveToErrorQueue();
 });
 
 var app = builder.Build();

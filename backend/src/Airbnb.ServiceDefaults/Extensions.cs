@@ -62,6 +62,8 @@ public static class Extensions
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
+                    // Wolverine's spans, so one trace shows POST /api/reviews → outbox → RabbitMQ → each module's handler.
+                    .AddSource("Wolverine")
                     .AddAspNetCoreInstrumentation(tracing =>
                         // Exclude health check requests from tracing
                         tracing.Filter = context =>
