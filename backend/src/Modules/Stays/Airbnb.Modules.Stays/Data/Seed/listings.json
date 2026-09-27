@@ -1,0 +1,610 @@
+[
+  {
+    "id": "l1",
+    "title": "Cozy cabin in the pines",
+    "location": {
+      "city": "Aspen",
+      "country": "USA",
+      "lat": 39.19,
+      "lng": -106.82
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 220,
+    "rating": 4.92,
+    "reviewCount": 88,
+    "isGuestFavorite": true,
+    "hostId": "h1",
+    "category": "Cabins",
+    "description": "A warm timber cabin tucked among tall pines, with a wood-burning stove, reading nook, and a deck overlooking the valley. Minutes from the trailhead.",
+    "propertyType": "Entire cabin",
+    "maxGuests": 4,
+    "bedrooms": 2,
+    "beds": 3,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 0
+  },
+  {
+    "id": "l2",
+    "title": "Beachfront villa with infinity pool",
+    "location": {
+      "city": "Malibu",
+      "country": "USA",
+      "lat": 34.03,
+      "lng": -118.69
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 540,
+    "rating": 4.88,
+    "reviewCount": 142,
+    "isGuestFavorite": true,
+    "hostId": "h2",
+    "category": "Beachfront",
+    "description": "A luxurious beachfront villa with a stunning infinity pool that blends into the Pacific horizon. Wake up to crashing waves and unobstructed ocean views.",
+    "propertyType": "Entire villa",
+    "maxGuests": 8,
+    "bedrooms": 4,
+    "beds": 5,
+    "baths": 3,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 1
+  },
+  {
+    "id": "l3",
+    "title": "Stone cottage in the countryside",
+    "location": {
+      "city": "Wilmington",
+      "country": "USA",
+      "lat": 34.22,
+      "lng": -77.94
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 180,
+    "rating": 4.79,
+    "reviewCount": 64,
+    "isGuestFavorite": false,
+    "hostId": "h3",
+    "category": "Countryside",
+    "description": "A charming stone cottage nestled in rolling countryside, featuring original hardwood floors and a wrap-around porch with garden views. Perfect for a quiet rural retreat.",
+    "propertyType": "Entire cottage",
+    "maxGuests": 4,
+    "bedrooms": 2,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 2
+  },
+  {
+    "id": "l4",
+    "title": "Cliffside home with amazing views",
+    "location": {
+      "city": "Athens",
+      "country": "Greece",
+      "lat": 37.98,
+      "lng": 23.72
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 310,
+    "rating": 4.95,
+    "reviewCount": 201,
+    "isGuestFavorite": true,
+    "hostId": "h4",
+    "category": "Amazing views",
+    "description": "A dramatic cliffside home perched above the Aegean with floor-to-ceiling windows framing panoramic sunset views. Modern design meets ancient Greek landscape.",
+    "propertyType": "Entire home",
+    "maxGuests": 6,
+    "bedrooms": 3,
+    "beds": 4,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 3
+  },
+  {
+    "id": "l5",
+    "title": "Tiny home in the woods",
+    "location": {
+      "city": "Kyoto",
+      "country": "Japan",
+      "lat": 35.01,
+      "lng": 135.77
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 95,
+    "rating": 4.81,
+    "reviewCount": 39,
+    "isGuestFavorite": false,
+    "hostId": "h5",
+    "category": "Tiny homes",
+    "description": "A thoughtfully designed tiny home nestled in a bamboo grove, offering a serene escape with a Japanese-inspired interior and outdoor meditation deck.",
+    "propertyType": "Tiny home",
+    "maxGuests": 2,
+    "bedrooms": 1,
+    "beds": 1,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 4
+  },
+  {
+    "id": "l6",
+    "title": "Lakefront retreat with dock",
+    "location": {
+      "city": "Aspen",
+      "country": "USA",
+      "lat": 39.2,
+      "lng": -106.8
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1475087542963-13ab5e611954?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 260,
+    "rating": 4.9,
+    "reviewCount": 110,
+    "isGuestFavorite": true,
+    "hostId": "h6",
+    "category": "Lakefront",
+    "description": "A peaceful lakefront retreat with a private dock, canoes, and sweeping mountain reflections on the water. Ideal for fishing, kayaking, or simply unwinding.",
+    "propertyType": "Entire home",
+    "maxGuests": 6,
+    "bedrooms": 3,
+    "beds": 4,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 5
+  },
+  {
+    "id": "l7",
+    "title": "Trending loft in the city",
+    "location": {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "lat": 38.72,
+      "lng": -9.14
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 145,
+    "rating": 4.74,
+    "reviewCount": 53,
+    "isGuestFavorite": false,
+    "hostId": "h7",
+    "category": "Trending",
+    "description": "A stylish industrial loft in the heart of Lisbon with exposed brick, soaring ceilings, and a rooftop terrace overlooking the tiled rooftops of Alfama.",
+    "propertyType": "Entire loft",
+    "maxGuests": 4,
+    "bedrooms": 1,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 6
+  },
+  {
+    "id": "l8",
+    "title": "A-frame cabin escape",
+    "location": {
+      "city": "Aspen",
+      "country": "USA",
+      "lat": 39.18,
+      "lng": -106.83
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 175,
+    "rating": 4.85,
+    "reviewCount": 72,
+    "isGuestFavorite": false,
+    "hostId": "h8",
+    "category": "Cabins",
+    "description": "A classic A-frame cabin with dramatic vaulted ceilings, a loft sleeping area, and a wood stove for snowy evenings. Steps from ski trails and mountain biking paths.",
+    "propertyType": "Entire cabin",
+    "maxGuests": 4,
+    "bedrooms": 1,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 7
+  },
+  {
+    "id": "l9",
+    "title": "Ocean-view beach bungalow",
+    "location": {
+      "city": "Malibu",
+      "country": "USA",
+      "lat": 34.01,
+      "lng": -118.8
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 420,
+    "rating": 4.83,
+    "reviewCount": 96,
+    "isGuestFavorite": true,
+    "hostId": "h9",
+    "category": "Beachfront",
+    "description": "A breezy beach bungalow with direct sand access, a private sun deck, and uninterrupted Pacific views from every room. Surfboards and beach chairs included.",
+    "propertyType": "Entire home",
+    "maxGuests": 6,
+    "bedrooms": 2,
+    "beds": 3,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 8
+  },
+  {
+    "id": "l10",
+    "title": "Rolling-hills farmhouse",
+    "location": {
+      "city": "Athens",
+      "country": "Greece",
+      "lat": 37.95,
+      "lng": 23.7
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 160,
+    "rating": 4.77,
+    "reviewCount": 45,
+    "isGuestFavorite": false,
+    "hostId": "h10",
+    "category": "Countryside",
+    "description": "A rustic farmhouse surrounded by olive groves and rolling hills, with a stone terrace, herb garden, and sweeping views across the Athenian countryside.",
+    "propertyType": "Entire home",
+    "maxGuests": 6,
+    "bedrooms": 3,
+    "beds": 3,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 9
+  },
+  {
+    "id": "l11",
+    "title": "Panoramic mountain lookout",
+    "location": {
+      "city": "Kyoto",
+      "country": "Japan",
+      "lat": 35.05,
+      "lng": 135.8
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1521401830884-6c03c1c87ebb?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 285,
+    "rating": 4.97,
+    "reviewCount": 188,
+    "isGuestFavorite": true,
+    "hostId": "h11",
+    "category": "Amazing views",
+    "description": "A mountain-top retreat with 360-degree views of Kyoto's peaks and valleys, featuring a glass-enclosed lounge and an outdoor onsen for stargazing.",
+    "propertyType": "Entire home",
+    "maxGuests": 4,
+    "bedrooms": 2,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 10
+  },
+  {
+    "id": "l12",
+    "title": "Compact tiny cabin",
+    "location": {
+      "city": "Wilmington",
+      "country": "USA",
+      "lat": 34.24,
+      "lng": -77.9
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 88,
+    "rating": 4.7,
+    "reviewCount": 28,
+    "isGuestFavorite": false,
+    "hostId": "h12",
+    "category": "Tiny homes",
+    "description": "A cleverly designed tiny cabin with built-in storage, a fold-down dining table, and a cozy loft bed—everything you need in a footprint that leaves you more time outdoors.",
+    "propertyType": "Tiny home",
+    "maxGuests": 2,
+    "bedrooms": 1,
+    "beds": 1,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 11
+  },
+  {
+    "id": "l13",
+    "title": "Lakeside glass house",
+    "location": {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "lat": 38.7,
+      "lng": -9.2
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 330,
+    "rating": 4.91,
+    "reviewCount": 134,
+    "isGuestFavorite": true,
+    "hostId": "h13",
+    "category": "Lakefront",
+    "description": "A stunning modern glass house cantilevered over a tranquil lake, with floor-to-ceiling windows that dissolve the boundary between indoors and the glassy water below.",
+    "propertyType": "Entire home",
+    "maxGuests": 6,
+    "bedrooms": 3,
+    "beds": 3,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 12
+  },
+  {
+    "id": "l14",
+    "title": "Designer city apartment",
+    "location": {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "lat": 38.71,
+      "lng": -9.13
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 199,
+    "rating": 4.82,
+    "reviewCount": 77,
+    "isGuestFavorite": false,
+    "hostId": "h14",
+    "category": "Trending",
+    "description": "A curated designer apartment in central Lisbon featuring bespoke furniture, art-covered walls, and a terrace with views over the city's iconic pastel buildings.",
+    "propertyType": "Entire apartment",
+    "maxGuests": 4,
+    "bedrooms": 2,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 13
+  },
+  {
+    "id": "l15",
+    "title": "Forest cabin with hot tub",
+    "location": {
+      "city": "Aspen",
+      "country": "USA",
+      "lat": 39.21,
+      "lng": -106.79
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1518732714860-b62714ce0c59?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 240,
+    "rating": 4.89,
+    "reviewCount": 119,
+    "isGuestFavorite": true,
+    "hostId": "h15",
+    "category": "Cabins",
+    "description": "A cozy forest cabin with a private hot tub on the deck, surrounded by tall aspens and pine. Soak under the stars after a day on the slopes.",
+    "propertyType": "Entire cabin",
+    "maxGuests": 4,
+    "bedrooms": 2,
+    "beds": 2,
+    "baths": 1,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 14
+  },
+  {
+    "id": "l16",
+    "title": "Sunset beach cottage",
+    "location": {
+      "city": "Malibu",
+      "country": "USA",
+      "lat": 34.02,
+      "lng": -118.75
+    },
+    "photos": [
+      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80"
+    ],
+    "pricePerNight": 365,
+    "rating": 4.86,
+    "reviewCount": 103,
+    "isGuestFavorite": false,
+    "hostId": "h16",
+    "category": "Beachfront",
+    "description": "A charming beach cottage steps from the sand, with a west-facing deck perfectly positioned to catch golden-hour sunsets over the Pacific every evening.",
+    "propertyType": "Entire cottage",
+    "maxGuests": 6,
+    "bedrooms": 2,
+    "beds": 3,
+    "baths": 2,
+    "amenities": [
+      "Wifi",
+      "Kitchen",
+      "Free parking",
+      "Self check-in",
+      "Air conditioning",
+      "Washer"
+    ],
+    "sortOrder": 15
+  }
+]

@@ -6,6 +6,22 @@
     <Project Path="src/Airbnb.ServiceDefaults/Airbnb.ServiceDefaults.csproj" />
     <Project Path="src/Airbnb.SharedKernel/Airbnb.SharedKernel.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Experiences/">
+    <Project Path="src/Modules/Experiences/Airbnb.Modules.Experiences/Airbnb.Modules.Experiences.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Hosts/">
+    <Project Path="src/Modules/Hosts/Airbnb.Modules.Hosts/Airbnb.Modules.Hosts.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Reviews/">
+    <Project Path="src/Modules/Reviews/Airbnb.Modules.Reviews/Airbnb.Modules.Reviews.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Services/">
+    <Project Path="src/Modules/Services/Airbnb.Modules.Services/Airbnb.Modules.Services.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Stays/">
+    <Project Path="src/Modules/Stays/Airbnb.Modules.Stays/Airbnb.Modules.Stays.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Airbnb.Api.Tests/Airbnb.Api.Tests.csproj" />
     <Project Path="tests/Airbnb.ArchitectureTests/Airbnb.ArchitectureTests.csproj" />

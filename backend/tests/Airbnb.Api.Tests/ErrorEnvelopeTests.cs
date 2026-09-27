@@ -3,7 +3,7 @@ using Airbnb.Api.Tests.Infrastructure;
 
 namespace Airbnb.Api.Tests;
 
-public sealed class ErrorEnvelopeTests(PostgresFixture postgres)
+public sealed class ErrorEnvelopeTests(InfrastructureFixture infrastructure)
 {
     [Theory]
     [InlineData("application/json")]
@@ -11,7 +11,7 @@ public sealed class ErrorEnvelopeTests(PostgresFixture postgres)
     [InlineData("*/*")]
     public async Task Unknown_api_route_returns_the_404_envelope_whatever_the_client_accepts(string accept)
     {
-        await using var factory = new ApiFactory(postgres.ConnectionString);
+        await using var factory = new ApiFactory(infrastructure);
         using var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/api/does-not-exist");
         request.Headers.Accept.ParseAdd(accept);

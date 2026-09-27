@@ -1,5 +1,12 @@
+using Airbnb.Api.Caching;
 using Airbnb.Api.Errors;
 using Airbnb.Api.RateLimiting;
+using Airbnb.Modules.Experiences;
+using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Reviews;
+using Airbnb.Modules.Services;
+using Airbnb.Modules.Stays;
+using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,11 +14,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.AddNpgsqlDataSource("airbnb");
 
+// HybridCache: 1-minute in-memory layer over a 10-minute Redis layer guarded by Polly (spec §2, §4).
+builder.AddRedisDistributedCache("redis");
+builder.Services.AddResilientDistributedCache();
+builder.Services.AddHybridCache(options => options.DefaultEntryOptions = new HybridCacheEntryOptions
+{
+    Expiration = TimeSpan.FromMinutes(10),
+    LocalCacheExpiration = TimeSpan.FromMinutes(1),
+});
+
 // Registered before AddProblemDetails so it is chosen ahead of the default ProblemDetails JSON writer.
 builder.Services.AddSingleton<IProblemDetailsWriter, EnvelopeProblemDetailsWriter>();
 builder.Services.AddProblemDetails();
 builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddOpenApi();
+
+builder.AddStaysModule();
+builder.AddHostsModule();
+builder.AddExperiencesModule();
+builder.AddServicesModule();
+builder.AddReviewsModule();
 
 var app = builder.Build();
 
@@ -26,5 +48,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+var api = app.MapGroup("/api");
+api.MapStaysEndpoints();
+api.MapHostsEndpoints();
+api.MapExperiencesEndpoints();
+api.MapServicesEndpoints();
+api.MapReviewsEndpoints();
 
 app.Run();

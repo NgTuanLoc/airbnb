@@ -3,7 +3,7 @@ using Airbnb.Api.Tests.Infrastructure;
 
 namespace Airbnb.Api.Tests;
 
-public sealed class HealthEndpointTests(PostgresFixture postgres)
+public sealed class HealthEndpointTests(InfrastructureFixture infrastructure)
 {
     // Port 1 refuses connections immediately; Timeout=2 bounds the check if anything hangs.
     private const string UnreachableDatabase = "Host=127.0.0.1;Port=1;Username=u;Password=p;Database=airbnb;Timeout=2";
@@ -11,7 +11,7 @@ public sealed class HealthEndpointTests(PostgresFixture postgres)
     [Fact]
     public async Task Health_is_healthy_when_postgres_is_reachable()
     {
-        var (status, body) = await GetAsync(postgres.ConnectionString, "/health");
+        var (status, body) = await GetAsync(infrastructure.PostgresConnectionString, "/health");
 
         Assert.Equal(HttpStatusCode.OK, status);
         Assert.Equal("Healthy", body);
@@ -35,9 +35,9 @@ public sealed class HealthEndpointTests(PostgresFixture postgres)
         Assert.Equal("Healthy", body);
     }
 
-    private static async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path)
+    private async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path)
     {
-        await using var factory = new ApiFactory(connectionString);
+        await using var factory = new ApiFactory(connectionString, infrastructure.RedisConnectionString);
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);

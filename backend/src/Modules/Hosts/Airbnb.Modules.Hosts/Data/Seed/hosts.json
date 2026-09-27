@@ -1,0 +1,130 @@
+[
+  {
+    "id": "h1",
+    "name": "Maya",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 100,
+    "joinedYear": 2016
+  },
+  {
+    "id": "h2",
+    "name": "Liam",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 98,
+    "joinedYear": 2017
+  },
+  {
+    "id": "h3",
+    "name": "Sofia",
+    "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 92,
+    "joinedYear": 2019
+  },
+  {
+    "id": "h4",
+    "name": "Noah",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 99,
+    "joinedYear": 2015
+  },
+  {
+    "id": "h5",
+    "name": "Emma",
+    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 88,
+    "joinedYear": 2020
+  },
+  {
+    "id": "h6",
+    "name": "Oliver",
+    "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 97,
+    "joinedYear": 2016
+  },
+  {
+    "id": "h7",
+    "name": "Ava",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 90,
+    "joinedYear": 2021
+  },
+  {
+    "id": "h8",
+    "name": "Ethan",
+    "avatar": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 100,
+    "joinedYear": 2014
+  },
+  {
+    "id": "h9",
+    "name": "Isabella",
+    "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 96,
+    "joinedYear": 2018
+  },
+  {
+    "id": "h10",
+    "name": "Lucas",
+    "avatar": "https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 85,
+    "joinedYear": 2022
+  },
+  {
+    "id": "h11",
+    "name": "Mia",
+    "avatar": "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 99,
+    "joinedYear": 2015
+  },
+  {
+    "id": "h12",
+    "name": "Mason",
+    "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 91,
+    "joinedYear": 2020
+  },
+  {
+    "id": "h13",
+    "name": "Charlotte",
+    "avatar": "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 98,
+    "joinedYear": 2017
+  },
+  {
+    "id": "h14",
+    "name": "James",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+    "isSuperhost": false,
+    "responseRate": 89,
+    "joinedYear": 2021
+  },
+  {
+    "id": "h15",
+    "name": "Amelia",
+    "avatar": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 100,
+    "joinedYear": 2016
+  },
+  {
+    "id": "h16",
+    "name": "Benjamin",
+    "avatar": "https://images.unsplash.com/photo-1463453091185-61582044d556?w=200&q=80",
+    "isSuperhost": true,
+    "responseRate": 95,
+    "joinedYear": 2018
+  }
+]
