@@ -29,8 +29,10 @@ export function WishlistHeartsProvider({
   const [pending, setPending] = useState<Listing | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Per user, so a different login on the same browser never sees the previous user's cached lists.
+  const queryKey = [...WISHLISTS_QUERY_KEY, user?.id];
   const { data: wishlists = NO_WISHLISTS } = useQuery({
-    queryKey: WISHLISTS_QUERY_KEY,
+    queryKey,
     queryFn: fetchWishlists,
     enabled: user !== null,
   });
@@ -39,15 +41,15 @@ export function WishlistHeartsProvider({
   const unsave = useMutation({
     mutationFn: (listingId: string) => removeFromWishlists(listingId),
     onMutate: async (listingId: string) => {
-      await queryClient.cancelQueries({ queryKey: WISHLISTS_QUERY_KEY });
-      const previous = queryClient.getQueryData<Wishlist[]>(WISHLISTS_QUERY_KEY);
-      queryClient.setQueryData<Wishlist[]>(WISHLISTS_QUERY_KEY, (lists = []) =>
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Wishlist[]>(queryKey);
+      queryClient.setQueryData<Wishlist[]>(queryKey, (lists = []) =>
         lists.map((w) => ({ ...w, listingIds: w.listingIds.filter((id) => id !== listingId) })),
       );
       return { previous };
     },
     onError: (_error, _listingId, context) => {
-      queryClient.setQueryData(WISHLISTS_QUERY_KEY, context?.previous);
+      queryClient.setQueryData(queryKey, context?.previous);
       setError("Couldn't remove it from your wishlist. Try again.");
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: WISHLISTS_QUERY_KEY }),

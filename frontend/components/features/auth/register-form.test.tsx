@@ -45,4 +45,9 @@ describe("RegisterForm", () => {
     await fill("supersecret");
     expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong");
   });
+
+  test("keeps the next path through a submit before hydration", () => {
+    const { container } = render(<RegisterForm next="/wishlists" />);
+    expect(container.querySelector('input[type="hidden"][name="next"]')).toHaveValue("/wishlists");
+  });
 });

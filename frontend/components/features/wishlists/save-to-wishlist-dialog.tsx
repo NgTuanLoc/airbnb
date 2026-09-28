@@ -25,9 +25,14 @@ export function SaveToWishlistDialog({ listing, wishlists, onClose }: SaveToWish
   const [error, setError] = useState<string | null>(null);
 
   // A native modal: focus trap, Esc and a backdrop without a UI library.
+  // It unmounts on close, so focus goes back by hand to whatever opened it.
   useEffect(() => {
+    const opener = document.activeElement;
     const dialog = dialogRef.current;
     if (dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
   }, []);
 
   function done() {

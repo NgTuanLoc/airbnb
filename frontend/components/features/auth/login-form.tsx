@@ -48,6 +48,8 @@ export function LoginForm({ next = "/" }: { next?: string }) {
 
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* A submit before hydration is a native GET to this page; this keeps ?next= through it. */}
+      <input type="hidden" name="next" value={next} />
       <TextInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
       <TextInput label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} />
       {formError && (

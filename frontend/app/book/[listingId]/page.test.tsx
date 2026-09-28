@@ -41,9 +41,14 @@ describe("BookPage", () => {
     await expect(BookPage(props("l1", { checkIn: "nope", checkOut: "nope", adults: "1" }))).rejects.toThrow("NEXT_REDIRECT");
   });
 
+  test("more guests than the listing allows go back to the listing", async () => {
+    const query = { checkIn: daysFromToday(20), checkOut: daysFromToday(22), adults: String(l1.maxGuests), children: "1" };
+    await expect(BookPage(props("l1", query))).rejects.toMatchObject({ digest: expect.stringContaining("/rooms/l1") });
+  });
+
   test("an unknown listing is not found", async () => {
     await expect(
       BookPage(props("l999", { checkIn: daysFromToday(20), checkOut: daysFromToday(22), adults: "1" })),
-    ).rejects.toThrow();
+    ).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
   });
 });

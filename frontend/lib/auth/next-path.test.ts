@@ -8,9 +8,25 @@ describe("safeNextPath", () => {
   });
 
   test("safeNextPath rejects anything that isn't a same-site path", () => {
-    for (const next of [undefined, null, "", "trips", "//evil.com", "/\\evil.com", "https://evil.com", "javascript:alert(1)"]) {
+    for (const next of [
+      undefined,
+      null,
+      "",
+      "trips",
+      "//evil.com",
+      "/\\evil.com",
+      "https://evil.com",
+      "javascript:alert(1)",
+      "/\t/evil.com",
+      "/\n/evil.com",
+      "/\r/evil.com",
+    ]) {
       expect(safeNextPath(next)).toBe("/");
     }
+  });
+
+  test("an encoded tab stays a same-site path", () => {
+    expect(safeNextPath("/%09/evil.com")).toBe("/%09/evil.com");
   });
 });
 

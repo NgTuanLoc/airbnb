@@ -33,7 +33,7 @@ describe("WishlistPage", () => {
     const list = await getRepositories().wishlists.create(owner.id, "Private");
     session.requireSession.mockResolvedValue(user());
 
-    await expect(WishlistPage(params(list.id))).rejects.toThrow();
+    await expect(WishlistPage(params(list.id))).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
   });
 
   test("an empty list says so", async () => {

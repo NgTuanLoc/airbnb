@@ -28,19 +28,19 @@ function Heart() {
 
 function renderHearts(user: SessionState["user"], redirectToLogin = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const session: SessionState = { user, isLoading: false, refresh: vi.fn(), logout: vi.fn() };
-  const wrap = (ui: ReactNode) => (
+  const wrap = (sessionUser: SessionState["user"], ui: ReactNode) => (
     <QueryClientProvider client={client}>
-      <SessionContext.Provider value={session}>
+      <SessionContext.Provider value={{ user: sessionUser, isLoading: false, refresh: vi.fn(), logout: vi.fn() }}>
         <WishlistHeartsProvider redirectToLogin={redirectToLogin}>{ui}</WishlistHeartsProvider>
       </SessionContext.Provider>
     </QueryClientProvider>
   );
-  render(wrap(<Heart />));
-  return { redirectToLogin };
+  const { rerender } = render(wrap(user, <Heart />));
+  return { redirectToLogin, rerenderAs: (next: SessionState["user"]) => rerender(wrap(next, <Heart />)) };
 }
 
 const ana = { id: "u-ana@example.com", name: "ana", email: "ana@example.com" };
+const ben = { id: "u-ben@example.com", name: "ben", email: "ben@example.com" };
 
 beforeEach(() => Object.values(api).forEach((fn) => fn.mockReset()));
 
@@ -80,6 +80,17 @@ describe("WishlistHeartsProvider", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't remove it from your wishlist. Try again.");
     await waitFor(() => expect(screen.getByRole("button", { name: "saved" })).toBeInTheDocument());
+  });
+
+  test("another user logging in sees their own saved listings, not the previous user's cache", async () => {
+    api.fetchWishlists.mockResolvedValueOnce([list(["l1"])]).mockResolvedValueOnce([]);
+    const { rerenderAs } = renderHearts(ana);
+    expect(await screen.findByText("saved")).toBeInTheDocument();
+
+    rerenderAs(ben);
+
+    expect(await screen.findByText("not saved")).toBeInTheDocument();
+    expect(api.fetchWishlists).toHaveBeenCalledTimes(2);
   });
 
   test("an unsaved listing opens the save dialog", async () => {

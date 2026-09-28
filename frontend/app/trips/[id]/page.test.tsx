@@ -42,6 +42,6 @@ describe("TripPage", () => {
   test("another user's trip is not found", async () => {
     const booking = await bookFor(user().id, "2032-02-10", "2032-02-12");
     session.requireSession.mockResolvedValue(user());
-    await expect(TripPage(props(booking.id))).rejects.toThrow();
+    await expect(TripPage(props(booking.id))).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
   });
 });

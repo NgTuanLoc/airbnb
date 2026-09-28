@@ -15,12 +15,12 @@ const summer: Wishlist = { id: "w1", name: "Summer", listingIds: ["l1", "l2"], c
 
 function renderDialog(wishlists: Wishlist[], onClose = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
+  const { unmount } = render(
     <QueryClientProvider client={client}>
       <SaveToWishlistDialog listing={listing} wishlists={wishlists} onClose={onClose} />
     </QueryClientProvider>,
   );
-  return { onClose };
+  return { onClose, unmount };
 }
 
 beforeEach(() => Object.values(api).forEach((fn) => fn.mockReset()));
@@ -74,5 +74,17 @@ describe("SaveToWishlistDialog", () => {
     const { onClose } = renderDialog([summer]);
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  test("focus goes back to what opened it once it closes", () => {
+    const opener = document.body.appendChild(document.createElement("button"));
+    opener.focus();
+    const { unmount } = renderDialog([summer]);
+    screen.getByRole("button", { name: "Close" }).focus(); // a real showModal moves focus inside; the jsdom polyfill doesn't
+
+    unmount();
+
+    expect(opener).toHaveFocus();
+    opener.remove();
   });
 });

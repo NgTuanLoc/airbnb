@@ -39,6 +39,7 @@ export default async function BookPage({
   if (!listing) notFound();
 
   const request = parsed.data;
+  if (request.adults + request.children > listing.maxGuests) redirect(`/rooms/${listingId}`);
   const breakdown = calculatePriceBreakdown(listing.pricePerNight, nightsBetweenDates(request.checkIn, request.checkOut));
   const guestCount = request.adults + request.children;
 

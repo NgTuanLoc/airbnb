@@ -21,8 +21,8 @@ describe("AccountMenu", () => {
     renderWith(null);
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
 
-    expect(screen.getByRole("menuitem", { name: "Log in" })).toHaveAttribute("href", "/login");
-    expect(screen.getByRole("menuitem", { name: "Sign up" })).toHaveAttribute("href", "/register");
+    expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/register");
   });
 
   test("logged in: shows the initial and links to wishlists and trips", async () => {
@@ -33,8 +33,29 @@ describe("AccountMenu", () => {
     await userEvent.click(button);
 
     expect(button).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("menuitem", { name: "Wishlists" })).toHaveAttribute("href", "/wishlists");
-    expect(screen.getByRole("menuitem", { name: "Trips" })).toHaveAttribute("href", "/trips");
+    expect(screen.getByRole("link", { name: "Wishlists" })).toHaveAttribute("href", "/wishlists");
+    expect(screen.getByRole("link", { name: "Trips" })).toHaveAttribute("href", "/trips");
+  });
+
+  test("Escape closes it and returns focus to the button", async () => {
+    renderWith(loggedIn());
+    const button = screen.getByRole("button", { name: "Account menu" });
+    await userEvent.click(button);
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("link", { name: "Trips" })).not.toBeInTheDocument();
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(button).toHaveFocus();
+  });
+
+  test("a click outside closes it", async () => {
+    renderWith(loggedIn());
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    await userEvent.click(document.body);
+
+    expect(screen.queryByRole("link", { name: "Trips" })).not.toBeInTheDocument();
   });
 
   test("log out calls the session's logout", async () => {
@@ -42,7 +63,7 @@ describe("AccountMenu", () => {
     renderWith(loggedIn(logout));
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
 
-    await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
+    await userEvent.click(screen.getByRole("button", { name: "Log out" }));
 
     expect(logout).toHaveBeenCalled();
   });

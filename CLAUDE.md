@@ -59,21 +59,21 @@ Always use these named tokens rather than arbitrary Tailwind values.
 
 **`components/design-system/`** — tokenized atoms. Barrel export via `components/design-system/index.ts`. Components here: `Button`, `TextInput`, `SearchBar`, `TopNav`, `Footer`, `PropertyCard`, `ExperienceCard`, `RatingDisplay`, `DatePickerDay`, `HostCard`, `NewBadge`, `GuestFavoriteBadge`.
 
-**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`.
+**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`, `AccountMenu`, `SaveToWishlistDialog`, `ConfirmBookingButton`, `PriceBreakdownList`.
 
 ### Data Layer (bottom-up)
 
 ```
 lib/data/              Static mock data arrays (listings, hosts, reviews, cities, experiences, services)
-lib/repositories/      Repository interfaces + getRepositories() (index.ts) — the DATA_SOURCE switch
-  mock/                mock*Repository implementations over lib/data
+lib/repositories/      Repository interfaces + getRepositories() (index.ts) — the DATA_SOURCE switch for catalog data;
+                       WishlistRepository + BookingRepository are in-memory mocks in both data modes
+  mock/                mock*Repository implementations over lib/data (plus the in-memory wishlist/booking stores)
   http/                apiFetch + createHttpRepositories(API_HTTP) — the .NET API, Zod-validated
 lib/api/envelope.ts    ApiResponse<T> type + ok()/fail() helpers
 app/api/*/route.ts     GET /api/{listings,experiences,services} — call getRepositories()
 lib/api-client/        fetch* functions + Zod schemas validating the envelope
 lib/hooks/             TanStack Query wrappers (useListings, …)
 lib/auth/              session.ts (mock session cookie), get-session.ts (server: getSession/requireSession), next-path.ts
-lib/repositories/      … also WishlistRepository + BookingRepository (in-memory mocks in both data modes)
 app/api/auth|wishlists|bookings/   session-guarded route handlers (401 envelope without a session)
 ```
 
@@ -82,7 +82,7 @@ app/api/auth|wishlists|bookings/   session-guarded route handlers (401 envelope 
 - Auth is a mock: any valid email/password logs in; an httpOnly `session` cookie holds the user. Wishlists and bookings are frontend in-memory mocks in both `DATA_SOURCE` modes (the backend doesn't serve them). Client code reads the session and wishlist hearts from `SessionProvider` / `WishlistHeartsProvider` (in `app/providers.tsx`) via `useSessionState()` / `useWishlistHearts()`, which return null outside the providers.
 
 ### Core Types
-All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `City`, `CATEGORIES`, `Category`.
+All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `City`, `CATEGORIES`, `Category`, `User`, `Wishlist`, `Booking`.
 
 ### Pages
 - `/` — Homepage: `TopNav` + `SearchBar` + `HomeListings` (category filter + property grid) + `CityLinkGrid` + `Footer`
