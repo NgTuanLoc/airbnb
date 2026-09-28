@@ -67,4 +67,10 @@ describe("AccountMenu", () => {
 
     expect(logout).toHaveBeenCalled();
   });
+
+  test("logged in: links to the host dashboard", async () => {
+    renderWith(loggedIn());
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    expect(screen.getByRole("link", { name: "Host dashboard" })).toHaveAttribute("href", "/host/listings");
+  });
 });
