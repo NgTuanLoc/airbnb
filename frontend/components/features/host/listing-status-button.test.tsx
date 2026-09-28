@@ -21,6 +21,16 @@ test("unlists a listed listing and refreshes", async () => {
   expect(refresh).toHaveBeenCalled();
 });
 
+test("invalidates the listings and search-listings queries before refreshing", async () => {
+  setHostListingStatus.mockResolvedValue({});
+  const { queryClient } = render(<ListingStatusButton listingId="hl-1" status="listed" />);
+  const spy = vi.spyOn(queryClient, "invalidateQueries");
+  await userEvent.click(screen.getByRole("button", { name: "Unlist" }));
+  expect(spy).toHaveBeenCalledWith({ queryKey: ["listings"] });
+  expect(spy).toHaveBeenCalledWith({ queryKey: ["search-listings"] });
+  expect(spy.mock.invocationCallOrder[0]).toBeLessThan(refresh.mock.invocationCallOrder[0]);
+});
+
 test("relists an unlisted listing and shows failures", async () => {
   setHostListingStatus.mockRejectedValueOnce(new Error("Listing not found"));
   render(<ListingStatusButton listingId="hl-1" status="unlisted" />);

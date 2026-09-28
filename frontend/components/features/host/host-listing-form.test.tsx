@@ -86,6 +86,20 @@ describe("HostListingForm", () => {
     expect(push).toHaveBeenCalledWith("/host/listings");
   });
 
+  test("invalidates the listings and search-listings queries before navigating away", async () => {
+    api.updateHostListing.mockResolvedValue({ id: "hl-1" });
+    const { queryClient } = render(<HostListingForm mode="edit" listingId="hl-1" initial={hostListingInputSchema.parse(validInput)} />);
+    const spy = vi.spyOn(queryClient, "invalidateQueries");
+    await next();
+    await next();
+    await next();
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["listings"] });
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["search-listings"] });
+    expect(spy.mock.invocationCallOrder[0]).toBeLessThan(push.mock.invocationCallOrder[0]);
+  });
+
   test("shows an API failure and stays on the review step", async () => {
     api.updateHostListing.mockRejectedValueOnce(new Error("Listing not found"));
     render(<HostListingForm mode="edit" listingId="hl-1" initial={hostListingInputSchema.parse(validInput)} />);

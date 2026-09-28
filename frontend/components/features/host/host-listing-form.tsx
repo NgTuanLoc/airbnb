@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button, TextInput } from "@/components/design-system";
 import { createHostListing, updateHostListing } from "@/lib/api-client/host";
 import { AMENITY_OPTIONS, HOST_CATEGORIES, HOST_CITIES, MAX_PHOTOS, PHOTO_OPTIONS, PROPERTY_TYPES } from "@/lib/host/options";
@@ -30,6 +31,7 @@ export type HostListingFormProps = { mode: "create" } | { mode: "edit"; listingI
 
 export function HostListingForm(props: HostListingFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [values, setValues] = useState<HostListingInput>(props.mode === "edit" ? props.initial : EMPTY);
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
@@ -59,6 +61,11 @@ export function HostListingForm(props: HostListingFormProps) {
     if (Object.keys(stepErrors).length === 0) setStep((s) => s + 1);
   }
 
+  function invalidateListingQueries() {
+    queryClient.invalidateQueries({ queryKey: ["listings"] });
+    queryClient.invalidateQueries({ queryKey: ["search-listings"] });
+  }
+
   async function submit() {
     const parsed = hostListingInputSchema.safeParse(values);
     if (!parsed.success) {
@@ -70,9 +77,11 @@ export function HostListingForm(props: HostListingFormProps) {
     try {
       if (props.mode === "create") {
         const listing = await createHostListing(parsed.data);
+        invalidateListingQueries();
         router.push(`/host/listings?created=${encodeURIComponent(listing.id)}`);
       } else {
         await updateHostListing(props.listingId, parsed.data);
+        invalidateListingQueries();
         router.push("/host/listings");
       }
     } catch (error) {
