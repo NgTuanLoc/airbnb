@@ -18,6 +18,8 @@ export interface Listing {
   beds: number;
   baths: number;
   amenities: string[];
+  /** Host-created listings can be unlisted; seed and backend listings leave it out, meaning listed. */
+  status?: "listed" | "unlisted";
 }
 
 export interface Host {

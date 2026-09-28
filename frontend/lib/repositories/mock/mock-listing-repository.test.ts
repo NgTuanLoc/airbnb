@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { mockListingRepository } from "./mock-listing-repository";
+import { listings } from "@/lib/data/listings";
+import { matchesFilters } from "@/lib/search/match-listing";
+import type { ListingFilters } from "../listing-repository";
 
 describe("mockListingRepository", () => {
   test("findAll with no filter returns all listings", async () => {
@@ -50,5 +53,19 @@ describe("mockListingRepository.findAll filters", () => {
   test("combines filters (city + category)", async () => {
     const result = await mockListingRepository.findAll({ location: "Aspen", category: "Cabins" });
     expect(result.every((l) => l.location.city === "Aspen" && l.category === "Cabins")).toBe(true);
+  });
+});
+
+describe("mockListingRepository filter parity", () => {
+  test.each<ListingFilters>([
+    {},
+    { location: "Aspen" },
+    { location: "aspen", category: "Cabins" },
+    { minPrice: 200, maxPrice: 400 },
+    { guests: 4, bedrooms: 2 },
+    { beds: 3, baths: 2 },
+  ])("returns exactly the seed listings matchesFilters accepts for %o", async (filters) => {
+    const expected = listings.filter((l) => matchesFilters(l, filters)).map((l) => l.id);
+    expect((await mockListingRepository.findAll(filters)).map((l) => l.id)).toEqual(expected);
   });
 });

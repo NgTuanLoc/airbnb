@@ -23,6 +23,7 @@ export const listingSchema = z.object({
   beds: z.number().int().nonnegative(),
   baths: z.number().nonnegative(),
   amenities: z.array(z.string()),
+  status: z.enum(["listed", "unlisted"]).optional(),
 });
 
 export const listingsEnvelopeSchema = z.object({

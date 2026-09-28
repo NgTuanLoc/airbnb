@@ -98,3 +98,22 @@ describe("reviewDtoSchema", () => {
     expect(() => reviewDtoSchema.parse({ ...dto, subjectType: "service" })).toThrow();
   });
 });
+
+describe("listingSchema status", () => {
+  const base = listingSchema.parse({
+    id: "l1", title: "Cozy cabin", location: { city: "Aspen", country: "USA", lat: 39.19, lng: -106.82 },
+    photos: ["https://example.com/a.jpg"], pricePerNight: 220, rating: 4.92, reviewCount: 88, isGuestFavorite: true,
+    hostId: "h1", category: "Cabins", description: "A warm cabin in the pines.", propertyType: "Entire cabin",
+    maxGuests: 4, bedrooms: 2, beds: 3, baths: 1, amenities: ["Wifi"],
+  });
+
+  test("accepts listings with no status, listed or unlisted", () => {
+    expect(listingSchema.parse({ ...base, status: "unlisted" }).status).toBe("unlisted");
+    expect(listingSchema.parse({ ...base, status: "listed" }).status).toBe("listed");
+    expect(base.status).toBeUndefined();
+  });
+
+  test("rejects other statuses", () => {
+    expect(() => listingSchema.parse({ ...base, status: "draft" })).toThrow();
+  });
+});
