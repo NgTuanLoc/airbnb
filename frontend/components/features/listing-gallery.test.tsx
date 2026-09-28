@@ -16,4 +16,11 @@ describe("ListingGallery", () => {
     render(<ListingGallery photos={["/only.jpg"]} title="Solo" />);
     expect(screen.getAllByRole("img").length).toBe(1);
   });
+
+  test("the cover spans the full width when there is only one photo", () => {
+    render(<ListingGallery photos={["/only.jpg"]} title="Solo" />);
+    const cover = screen.getByRole("img").parentElement;
+    expect(cover?.className).toContain("col-span-4");
+    expect(cover?.className).not.toContain("col-span-2");
+  });
 });
