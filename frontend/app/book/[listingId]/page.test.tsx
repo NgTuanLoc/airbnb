@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@/lib/test-utils";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 import { listings } from "@/lib/data/listings";
+import { getRepositories } from "@/lib/repositories";
+import { hostListingInputSchema } from "@/lib/host/schemas";
+import { validInput } from "@/lib/host/test-fixtures";
 
 const session = vi.hoisted(() => ({ requireSession: vi.fn() }));
 vi.mock("@/lib/auth/get-session", () => session);
@@ -50,5 +53,22 @@ describe("BookPage", () => {
     await expect(
       BookPage(props("l999", { checkIn: daysFromToday(20), checkOut: daysFromToday(22), adults: "1" })),
     ).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
+  });
+
+  test("booking your own listing redirects back to it", async () => {
+    const listing = await getRepositories().hostListings.create("u-ana@example.com", hostListingInputSchema.parse(validInput));
+    await expect(
+      BookPage(props(listing.id, { checkIn: daysFromToday(40), checkOut: daysFromToday(42), adults: "1" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
+  });
+
+  test("an unlisted listing redirects back to it", async () => {
+    const hostId = `u-${crypto.randomUUID()}@example.com`;
+    const repos = getRepositories();
+    const listing = await repos.hostListings.create(hostId, hostListingInputSchema.parse(validInput));
+    await repos.hostListings.setStatus(hostId, listing.id, "unlisted");
+    await expect(
+      BookPage(props(listing.id, { checkIn: daysFromToday(40), checkOut: daysFromToday(42), adults: "1" })),
+    ).rejects.toThrow("NEXT_REDIRECT");
   });
 });

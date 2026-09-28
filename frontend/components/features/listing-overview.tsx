@@ -30,7 +30,7 @@ export function ListingOverview({ listing }: ListingOverviewProps) {
       </ul>
       <p className="text-body-sm text-ink">
         <span aria-hidden>★ </span>
-        {listing.rating.toFixed(2)} · {listing.reviewCount} reviews ·{" "}
+        {listing.reviewCount === 0 ? "New" : `${listing.rating.toFixed(2)} · ${listing.reviewCount} reviews`} ·{" "}
         <span className="text-muted">{listing.location.city}, {listing.location.country}</span>
       </p>
     </header>

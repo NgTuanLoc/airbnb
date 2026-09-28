@@ -31,12 +31,13 @@ export default async function BookPage({
     const value = first(raw[key]);
     if (value !== undefined) query[key] = value;
   }
-  await requireSession(`/book/${listingId}?${new URLSearchParams(query)}`);
+  const user = await requireSession(`/book/${listingId}?${new URLSearchParams(query)}`);
 
   const parsed = bookingRequestSchema.safeParse({ listingId, ...query });
   if (!parsed.success) redirect(`/rooms/${listingId}`);
   const listing = await getRepositories().listings.findById(listingId);
   if (!listing) notFound();
+  if (listing.hostId === user.id || listing.status === "unlisted") redirect(`/rooms/${listingId}`);
 
   const request = parsed.data;
   if (request.adults + request.children > listing.maxGuests) redirect(`/rooms/${listingId}`);

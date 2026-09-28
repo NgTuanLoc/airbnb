@@ -35,7 +35,7 @@ export function PropertyCard({
           <h3 className="text-title-sm text-ink">{listing.title}</h3>
           <span className="flex items-center gap-1 text-body-sm text-ink">
             <span aria-hidden>★</span>
-            {listing.rating.toFixed(2)}
+            {listing.reviewCount === 0 ? "New" : listing.rating.toFixed(2)}
           </span>
         </div>
         <p className="text-body-sm text-muted">{listing.location.city}, {listing.location.country}</p>

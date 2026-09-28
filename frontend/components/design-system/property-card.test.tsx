@@ -60,6 +60,12 @@ describe("PropertyCard", () => {
     expect(img.className).toContain("group-hover:scale-105");
     expect(img.className).toContain("transition-transform");
   });
+
+  test("a listing without reviews shows New instead of a rating", () => {
+    render(<PropertyCard listing={{ ...listing, rating: 0, reviewCount: 0 }} />);
+    expect(screen.getByText("New")).toBeInTheDocument();
+    expect(screen.queryByText("0.00")).not.toBeInTheDocument();
+  });
 });
 
 test("links to the listing detail page", () => {
