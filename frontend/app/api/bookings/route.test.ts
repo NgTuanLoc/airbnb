@@ -4,6 +4,9 @@ import { POST } from "./route";
 import { jsonRequest, sessionCookieHeader } from "@/lib/auth/test-helpers";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 import { listings } from "@/lib/data/listings";
+import { getRepositories } from "@/lib/repositories";
+import { validInput } from "@/lib/host/test-fixtures";
+import { hostListingInputSchema } from "@/lib/host/schemas";
 
 const url = "http://localhost/api/bookings";
 const DAY = 86_400_000;
@@ -60,5 +63,35 @@ describe("POST /api/bookings", () => {
 
     expect(res.status).toBe(409);
     expect((await res.json()).error).toBe("Those dates are no longer available");
+  });
+
+  test("refuses to book your own listing", async () => {
+    const email = `host-${crypto.randomUUID()}@example.com`;
+    const listing = await getRepositories().hostListings.create(`u-${email}`, hostListingInputSchema.parse(validInput));
+
+    const res = await book(
+      { listingId: listing.id, checkIn: daysFromToday(300), checkOut: daysFromToday(302), adults: 1 },
+      sessionCookieHeader(email),
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("You can't book your own listing");
+  });
+
+  test("refuses to book an unlisted listing", async () => {
+    const host = `u-host-${crypto.randomUUID()}@example.com`;
+    const listing = await getRepositories().hostListings.create(host, hostListingInputSchema.parse(validInput));
+    await getRepositories().hostListings.setStatus(host, listing.id, "unlisted");
+
+    const res = await book({ listingId: listing.id, checkIn: daysFromToday(310), checkOut: daysFromToday(312), adults: 1 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("This place isn't taking bookings right now");
+  });
+
+  test("guests can book a listed host listing", async () => {
+    const listing = await getRepositories().hostListings.create(`u-host-${crypto.randomUUID()}@example.com`, hostListingInputSchema.parse(validInput));
+    const res = await book({ listingId: listing.id, checkIn: daysFromToday(320), checkOut: daysFromToday(322), adults: 1 });
+    expect(res.status).toBe(201);
   });
 });

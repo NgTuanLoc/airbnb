@@ -15,6 +15,8 @@ export async function POST(request: Request): Promise<Response> {
   const repos = getRepositories();
   const listing = await repos.listings.findById(listingId);
   if (!listing) return jsonError(`Listing '${listingId}' was not found`, 404);
+  if (listing.hostId === user.id) return jsonError("You can't book your own listing", 400);
+  if (listing.status === "unlisted") return jsonError("This place isn't taking bookings right now", 400);
   if (adults + children > listing.maxGuests) {
     return jsonError(`This place allows at most ${listing.maxGuests} guests`, 400);
   }
