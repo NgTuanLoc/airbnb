@@ -20,6 +20,11 @@ describe("safeNextPath", () => {
       "/\t/evil.com",
       "/\n/evil.com",
       "/\r/evil.com",
+      "/..//evil.com",
+      "/.//evil.com",
+      "/./..//evil.com",
+      "/%2e%2e//evil.com",
+      "/..\\/evil.com",
     ]) {
       expect(safeNextPath(next)).toBe("/");
     }

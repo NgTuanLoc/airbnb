@@ -8,7 +8,9 @@ export function safeNextPath(next: string | null | undefined): string {
   if (!next || !next.startsWith("/")) return "/";
   try {
     const url = new URL(next, BASE);
-    return url.origin === BASE ? url.pathname + url.search + url.hash : "/";
+    // Dot segments can normalize to "//host", which a browser reads as protocol-relative.
+    if (url.origin !== BASE || url.pathname.startsWith("//")) return "/";
+    return url.pathname + url.search + url.hash;
   } catch {
     return "/";
   }
