@@ -1,4 +1,7 @@
+"use client";
+
 import { PropertyCard, Skeleton } from "@/components/design-system";
+import { useWishlistHearts } from "@/components/features/wishlists/wishlist-hearts";
 import type { Listing } from "@/lib/types";
 
 export interface PropertyGridProps {
@@ -19,6 +22,8 @@ function PropertySkeleton() {
 }
 
 export function PropertyGrid({ listings, isLoading }: PropertyGridProps) {
+  const hearts = useWishlistHearts();
+
   if (isLoading) {
     return (
       <div className={gridClass}>
@@ -36,7 +41,12 @@ export function PropertyGrid({ listings, isLoading }: PropertyGridProps) {
   return (
     <div className={gridClass}>
       {listings.map((listing) => (
-        <PropertyCard key={listing.id} listing={listing} />
+        <PropertyCard
+          key={listing.id}
+          listing={listing}
+          saved={hearts?.savedIds.has(listing.id) ?? false}
+          onToggleSave={hearts ? () => hearts.toggle(listing) : undefined}
+        />
       ))}
     </div>
   );

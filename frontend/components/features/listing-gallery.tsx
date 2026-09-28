@@ -17,7 +17,9 @@ export function ListingGallery({ photos, title }: ListingGalleryProps) {
           key={src + i}
           className={
             i === 0
-              ? "relative col-span-2 row-span-2"
+              ? mosaic.length === 1
+                ? "relative col-span-4 row-span-2"
+                : "relative col-span-2 row-span-2"
               : "relative hidden md:block"
           }
         >

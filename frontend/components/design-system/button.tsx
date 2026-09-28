@@ -19,12 +19,16 @@ const variants: Record<ButtonVariant, string> = {
   pill: "px-5 py-2.5 rounded-full bg-rausch text-on-primary text-button-sm hover:bg-rausch-active",
 };
 
+export function buttonClassName(variant: ButtonVariant = "primary"): string {
+  return cn(base, variants[variant]);
+}
+
 export function Button({
   variant = "primary",
   className,
   ...props
 }: ButtonProps) {
   return (
-    <button className={cn(base, variants[variant], className)} {...props} />
+    <button className={cn(buttonClassName(variant), className)} {...props} />
   );
 }

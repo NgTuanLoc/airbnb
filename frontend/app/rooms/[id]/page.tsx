@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getSession } from "@/lib/auth/get-session";
 import { getRepositories } from "@/lib/repositories";
 import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-system";
 import { ListingGallery } from "@/components/features/listing-gallery";
@@ -13,10 +15,13 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const listing = await repos.listings.findById(id);
   if (!listing) notFound();
 
-  const [host, reviews] = await Promise.all([
+  const [host, reviews, viewer] = await Promise.all([
     repos.hosts.findById(listing.hostId),
     repos.reviews.findByListingId(listing.id),
+    getSession(),
   ]);
+  const isOwner = viewer?.id === listing.hostId;
+  const isUnlisted = listing.status === "unlisted";
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -41,16 +46,34 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
             )}
 
             <section className="pt-8">
-              <RatingDisplay value={listing.rating} />
-              <p className="mb-6 mt-2 text-center text-body-sm text-muted">
-                Guest favorite · {listing.reviewCount} reviews
-              </p>
+              {listing.reviewCount === 0 ? (
+                <p className="text-center text-title-md text-ink">New · No reviews yet</p>
+              ) : (
+                <>
+                  <RatingDisplay value={listing.rating} />
+                  <p className="mb-6 mt-2 text-center text-body-sm text-muted">
+                    Guest favorite · {listing.reviewCount} reviews
+                  </p>
+                </>
+              )}
               <ReviewsGrid reviews={reviews} />
             </section>
           </div>
 
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <ReservationCard pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} />
+            {isOwner ? (
+              <aside className="flex flex-col gap-3 rounded-md border border-hairline p-6 shadow-airbnb">
+                <p className="text-title-md text-ink">This is your listing</p>
+                <Link href={`/host/listings/${listing.id}/edit`} className="text-title-sm text-ink underline">Edit listing</Link>
+                <Link href="/host/listings" className="text-title-sm text-ink underline">Manage listings</Link>
+              </aside>
+            ) : isUnlisted ? (
+              <aside className="rounded-md border border-hairline p-6 shadow-airbnb">
+                <p className="text-title-md text-ink">This place isn&apos;t taking bookings right now</p>
+              </aside>
+            ) : (
+              <ReservationCard pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} listingId={listing.id} />
+            )}
           </div>
         </div>
       </main>

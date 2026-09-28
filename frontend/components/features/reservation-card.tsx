@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/design-system";
+import Link from "next/link";
+import { Button, buttonClassName } from "@/components/design-system";
 import { BookingCalendar } from "./booking-calendar";
 import { GuestStepper, type GuestCounts } from "./guest-stepper";
 import { nightsBetween, calculatePriceBreakdown } from "@/lib/reservation/pricing";
+import { toIsoDate } from "@/lib/reservation/dates";
 
 export interface ReservationCardProps {
   pricePerNight: number;
   maxGuests: number;
+  listingId: string;
 }
 
 function startOfThisMonth(): Date {
@@ -16,7 +19,7 @@ function startOfThisMonth(): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-export function ReservationCard({ pricePerNight, maxGuests }: ReservationCardProps) {
+export function ReservationCard({ pricePerNight, maxGuests, listingId }: ReservationCardProps) {
   const [month, setMonth] = useState<Date>(startOfThisMonth);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
@@ -52,9 +55,23 @@ export function ReservationCard({ pricePerNight, maxGuests }: ReservationCardPro
         <GuestStepper value={guests} onChange={setGuests} maxGuests={maxGuests} />
       </div>
 
-      <Button className="mt-4 w-full" disabled={breakdown === null}>
-        Reserve
-      </Button>
+      {breakdown && checkIn && checkOut ? (
+        <Link
+          href={`/book/${listingId}?${new URLSearchParams({
+            checkIn: toIsoDate(checkIn),
+            checkOut: toIsoDate(checkOut),
+            adults: String(guests.adults),
+            children: String(guests.children),
+          })}`}
+          className={`${buttonClassName()} mt-4 w-full`}
+        >
+          Reserve
+        </Link>
+      ) : (
+        <Button className="mt-4 w-full" disabled>
+          Reserve
+        </Button>
+      )}
       <p className="mt-2 text-center text-body-sm text-muted">You won&apos;t be charged yet</p>
 
       {breakdown && (

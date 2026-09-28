@@ -1,4 +1,4 @@
-export { Button } from "./button";
+export { Button, buttonClassName } from "./button";
 export { Skeleton } from "./skeleton";
 export { TextInput } from "./text-input";
 export { NewBadge, GuestFavoriteBadge } from "./badges";

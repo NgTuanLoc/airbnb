@@ -1,3 +1,5 @@
+import type { PriceBreakdown } from "@/lib/reservation/pricing";
+
 export interface Listing {
   id: string;
   title: string;
@@ -16,6 +18,8 @@ export interface Listing {
   beds: number;
   baths: number;
   amenities: string[];
+  /** Host-created listings can be unlisted; seed and backend listings leave it out, meaning listed. */
+  status?: "listed" | "unlisted";
 }
 
 export interface Host {
@@ -107,3 +111,29 @@ export const SERVICE_CATEGORIES = [
 ] as const;
 
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface Wishlist {
+  id: string;
+  name: string;
+  listingIds: string[];
+  createdAt: string;
+}
+
+export interface Booking {
+  id: string;
+  listingId: string;
+  /** YYYY-MM-DD */
+  checkIn: string;
+  /** YYYY-MM-DD */
+  checkOut: string;
+  guests: { adults: number; children: number };
+  priceBreakdown: PriceBreakdown;
+  status: "confirmed";
+  createdAt: string;
+}

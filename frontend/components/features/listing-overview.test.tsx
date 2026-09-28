@@ -31,3 +31,9 @@ describe("ListingOverview", () => {
     expect(container.querySelectorAll("svg.lucide")).toHaveLength(4);
   });
 });
+
+test("a listing without reviews says New instead of a rating and review count", () => {
+  render(<ListingOverview listing={{ ...listing, rating: 0, reviewCount: 0 }} />);
+  expect(screen.getByText(/New/)).toBeInTheDocument();
+  expect(screen.queryByText(/0 reviews/)).not.toBeInTheDocument();
+});

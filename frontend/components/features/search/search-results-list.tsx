@@ -1,4 +1,7 @@
+"use client";
+
 import { PropertyCard, Skeleton } from "@/components/design-system";
+import { useWishlistHearts } from "@/components/features/wishlists/wishlist-hearts";
 import type { Listing } from "@/lib/types";
 
 export interface SearchResultsListProps {
@@ -23,6 +26,7 @@ function ResultSkeleton() {
 }
 
 export function SearchResultsList({ listings, isLoading, location }: SearchResultsListProps) {
+  const hearts = useWishlistHearts();
   const place = placeLabel(location);
 
   if (isLoading) {
@@ -46,7 +50,12 @@ export function SearchResultsList({ listings, isLoading, location }: SearchResul
       </h1>
       <div className={gridClass}>
         {listings.map((listing) => (
-          <PropertyCard key={listing.id} listing={listing} />
+          <PropertyCard
+            key={listing.id}
+            listing={listing}
+            saved={hearts?.savedIds.has(listing.id) ?? false}
+            onToggleSave={hearts ? () => hearts.toggle(listing) : undefined}
+          />
         ))}
       </div>
     </div>

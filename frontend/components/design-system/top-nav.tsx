@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Menu, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewBadge } from "./badges";
+// The one design-system → features import: every page's nav needs the live session menu.
+import { AccountMenu } from "@/components/features/auth/account-menu";
 
 type Product = "homes" | "experiences" | "services";
 
@@ -36,14 +37,7 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
         <Link href="/host" className="text-title-sm text-ink">
           Become a host
         </Link>
-        <Link
-          href="/login"
-          aria-label="Account menu"
-          className="flex h-10 items-center gap-2 rounded-full border border-hairline px-3"
-        >
-          <Menu aria-hidden className="size-4 text-ink" />
-          <UserCircle aria-hidden className="size-7 text-muted" />
-        </Link>
+        <AccountMenu />
       </div>
     </header>
   );

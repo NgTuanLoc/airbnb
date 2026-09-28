@@ -16,20 +16,9 @@ describe("TopNav", () => {
     expect(tab.className).toContain("border-ink");
   });
 
-  test("renders the account menu link", () => {
+  test("renders the account menu button with its menu and account icons", () => {
     render(<TopNav active="homes" />);
-    expect(screen.getByRole("link", { name: /account menu/i })).toBeInTheDocument();
-  });
-
-  test("renders menu and account icons inside the account link", () => {
-    render(<TopNav active="homes" />);
-    const link = screen.getByRole("link", { name: /account menu/i });
-    expect(link.querySelectorAll("svg.lucide")).toHaveLength(2);
-  });
-
-  test("the account control links to the login page", () => {
-    render(<TopNav active="homes" />);
-    const account = screen.getByRole("link", { name: "Account menu" });
-    expect(account).toHaveAttribute("href", "/login");
+    const button = screen.getByRole("button", { name: /account menu/i });
+    expect(button.querySelectorAll("svg.lucide")).toHaveLength(2);
   });
 });
