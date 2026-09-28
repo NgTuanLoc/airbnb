@@ -38,4 +38,17 @@ describe("mockBookingRepository", () => {
     expect(await repo.create(newUser(), stay(listing, "2030-03-05", "2030-03-10"))).not.toBe("unavailable");
     expect(await repo.create(newUser(), stay(newListing(), "2030-03-10", "2030-03-15"))).not.toBe("unavailable");
   });
+
+  test("listForListings returns every guest's bookings on those listings, soonest first, with the guest id", async () => {
+    const listing = newListing();
+    const early = newUser();
+    const late = newUser();
+    await repo.create(late, stay(listing, "2031-05-10", "2031-05-12"));
+    await repo.create(early, stay(listing, "2031-04-01", "2031-04-03"));
+    await repo.create(newUser(), stay(newListing(), "2031-04-01", "2031-04-03"));
+
+    const result = await repo.listForListings([listing]);
+
+    expect(result.map((b) => [b.guestId, b.checkIn])).toEqual([[early, "2031-04-01"], [late, "2031-05-10"]]);
+  });
 });

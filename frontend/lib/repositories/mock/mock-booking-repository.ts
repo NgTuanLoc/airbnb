@@ -28,4 +28,11 @@ export const mockBookingRepository: BookingRepository = {
     store.set(userId, [...bookingsOf(userId), created]);
     return created;
   },
+
+  async listForListings(listingIds) {
+    const wanted = new Set(listingIds);
+    return [...store.entries()]
+      .flatMap(([guestId, bookings]) => bookings.filter((b) => wanted.has(b.listingId)).map((b) => ({ ...b, guestId })))
+      .sort((a, b) => a.checkIn.localeCompare(b.checkIn));
+  },
 };
