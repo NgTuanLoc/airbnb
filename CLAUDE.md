@@ -59,14 +59,15 @@ Always use these named tokens rather than arbitrary Tailwind values.
 
 **`components/design-system/`** — tokenized atoms. Barrel export via `components/design-system/index.ts`. Components here: `Button`, `TextInput`, `SearchBar`, `TopNav`, `Footer`, `PropertyCard`, `ExperienceCard`, `RatingDisplay`, `DatePickerDay`, `HostCard`, `NewBadge`, `GuestFavoriteBadge`.
 
-**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`, `AccountMenu`, `SaveToWishlistDialog`, `ConfirmBookingButton`, `PriceBreakdownList`.
+**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`, `AccountMenu`, `SaveToWishlistDialog`, `ConfirmBookingButton`, `PriceBreakdownList`, `HostListingForm`, `EarningsEstimate`, `HostNav`, `ListingStatusButton`.
 
 ### Data Layer (bottom-up)
 
 ```
 lib/data/              Static mock data arrays (listings, hosts, reviews, cities, experiences, services)
 lib/repositories/      Repository interfaces + getRepositories() (index.ts) — the DATA_SOURCE switch for catalog data;
-                       WishlistRepository + BookingRepository are in-memory mocks in both data modes
+                       listings/hosts are combined with host-created listings and host profiles (combined.ts);
+                       wishlists, bookings, host listings and host profiles are in-memory mocks in both data modes
   mock/                mock*Repository implementations over lib/data (plus the in-memory wishlist/booking stores)
   http/                apiFetch + createHttpRepositories(API_HTTP) — the .NET API, Zod-validated
 lib/api/envelope.ts    ApiResponse<T> type + ok()/fail() helpers
@@ -75,11 +76,14 @@ lib/api-client/        fetch* functions + Zod schemas validating the envelope
 lib/hooks/             TanStack Query wrappers (useListings, …)
 lib/auth/              session.ts (mock session cookie), get-session.ts (server: getSession/requireSession), next-path.ts
 app/api/auth|wishlists|bookings/   session-guarded route handlers (401 envelope without a session)
+lib/host/              host listing options (cities, photo gallery, amenities), hostListingInputSchema, listing-input helpers
+lib/search/match-listing.ts   matchesFilters — the one set of search filter rules (seed and host listings)
 ```
 
 - `DATA_SOURCE=mock|api` (server-only, default `mock`; `api` needs `API_HTTP`) selects the implementations. Server code gets data only through `getRepositories()`; ESLint forbids importing `repositories/mock/*` outside `lib/repositories/`.
 - Server components (detail pages, the homepage's cities) call `getRepositories()` directly; client components fetch the Next `/api/*` route handlers, which call it too.
 - Auth is a mock: any valid email/password logs in; an httpOnly `session` cookie holds the user. Wishlists and bookings are frontend in-memory mocks in both `DATA_SOURCE` modes (the backend doesn't serve them). Client code reads the session and wishlist hearts from `SessionProvider` / `WishlistHeartsProvider` (in `app/providers.tsx`) via `useSessionState()` / `useWishlistHearts()`, which return null outside the providers.
+- Hosting is a mock too: any logged-in user can create listings (`/host/listings/new`); host listings (`hl-` ids, `hostId` = the user id) join `findAll` (only when listed) and `findById` through `combineListings`. Photos must come from `PHOTO_OPTIONS` (next/image only allows configured hosts). Hosts can't book their own or unlisted listings.
 
 ### Core Types
 All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `City`, `CATEGORIES`, `Category`, `User`, `Wishlist`, `Booking`.
@@ -89,6 +93,7 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 - `/rooms/[id]` — Listing detail: server component, fetches listing/host/reviews from repositories
 - `/design-system` — Component gallery (development reference)
 - `/wishlists`, `/wishlists/[id]`, `/trips`, `/trips/[id]`, `/book/[listingId]` — gated server pages (`requireSession` redirects to `/login?next=…`)
+- `/host` — "Become a host" landing (public); `/host/listings`, `/host/listings/new`, `/host/listings/[id]/edit`, `/host/reservations` — gated host dashboard
 
 ### Testing Conventions
 - Import `render`, `screen`, `userEvent` from `@/lib/test-utils` (not directly from RTL)
