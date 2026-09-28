@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen } from "@/lib/test-utils";
+import { render, screen, userEvent } from "@/lib/test-utils";
 import { getRepositories } from "@/lib/repositories";
 import { hostListingInputSchema } from "@/lib/host/schemas";
 import { validInput } from "@/lib/host/test-fixtures";
@@ -25,5 +25,24 @@ describe("HostPage", () => {
     session.getSession.mockResolvedValue({ id, name: "ana", email: "ana@example.com" });
     render(await HostPage());
     expect(screen.getByRole("link", { name: "Go to your listings" })).toHaveAttribute("href", "/host/listings");
+  });
+
+  test("a host listing's price does not shift its city's earnings estimate", async () => {
+    session.getSession.mockResolvedValue(null);
+    const before = render(await HostPage());
+    await userEvent.selectOptions(screen.getByLabelText("City"), "aspen");
+    const beforeText = screen.getByText(/average of/).textContent;
+    before.unmount();
+
+    await getRepositories().hostListings.create(`u-${crypto.randomUUID()}@example.com`, {
+      ...hostListingInputSchema.parse(validInput),
+      cityId: "aspen",
+      pricePerNight: 10_000,
+    });
+
+    session.getSession.mockResolvedValue(null);
+    render(await HostPage());
+    await userEvent.selectOptions(screen.getByLabelText("City"), "aspen");
+    expect(screen.getByText(beforeText!)).toBeInTheDocument();
   });
 });

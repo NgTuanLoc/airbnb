@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Footer, TopNav, buttonClassName } from "@/components/design-system";
 import { EarningsEstimate } from "@/components/features/host/earnings-estimate";
 import { getSession } from "@/lib/auth/get-session";
-import { HOST_CITIES } from "@/lib/host/options";
+import { HOST_CITIES, HOST_LISTING_ID_PREFIX } from "@/lib/host/options";
 import { getRepositories } from "@/lib/repositories";
 
 export const metadata: Metadata = { title: "Airbnb it · Become a host" };
@@ -21,8 +21,9 @@ export default async function HostPage() {
     repos.listings.findAll(),
     user ? repos.hostListings.listForHost(user.id) : Promise.resolve([]),
   ]);
+  const seedCatalog = catalog.filter((l) => !l.id.startsWith(HOST_LISTING_ID_PREFIX));
   const cities = HOST_CITIES.map((city) => {
-    const prices = catalog.filter((l) => l.location.city === city.name).map((l) => l.pricePerNight);
+    const prices = seedCatalog.filter((l) => l.location.city === city.name).map((l) => l.pricePerNight);
     const averagePrice = prices.length ? Math.round(prices.reduce((sum, p) => sum + p, 0) / prices.length) : 0;
     return { id: city.id, name: city.name, averagePrice };
   });
