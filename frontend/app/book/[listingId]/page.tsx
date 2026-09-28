@@ -81,7 +81,10 @@ export default async function BookPage({
               </div>
               <div className="flex flex-col gap-1">
                 <p className="text-title-sm text-ink">{listing.title}</p>
-                <p className="text-body-sm text-muted">★ {listing.rating.toFixed(2)} · {listing.location.city}</p>
+                <p className="text-body-sm text-muted">
+                  <span aria-hidden>★ </span>
+                  {listing.reviewCount === 0 ? "New" : listing.rating.toFixed(2)} · {listing.location.city}
+                </p>
               </div>
             </div>
             <PriceBreakdownList breakdown={breakdown} />

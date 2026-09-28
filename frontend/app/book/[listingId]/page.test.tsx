@@ -71,4 +71,16 @@ describe("BookPage", () => {
       BookPage(props(listing.id, { checkIn: daysFromToday(40), checkOut: daysFromToday(42), adults: "1" })),
     ).rejects.toThrow("NEXT_REDIRECT");
   });
+
+  test("shows New for a listing with no reviews instead of a 0.00 rating", async () => {
+    const listing = await getRepositories().hostListings.create(
+      `u-${crypto.randomUUID()}@example.com`,
+      hostListingInputSchema.parse(validInput),
+    );
+    const query = { checkIn: daysFromToday(20), checkOut: daysFromToday(22), adults: "1", children: "0" };
+    render(await BookPage(props(listing.id, query)));
+
+    expect(screen.getByText(/New ·/)).toBeInTheDocument();
+    expect(screen.queryByText("★ 0.00")).not.toBeInTheDocument();
+  });
 });
