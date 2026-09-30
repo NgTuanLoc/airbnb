@@ -57,8 +57,9 @@ test("a host lists a place, a guest books it, and the host sees the reservation"
   await expect(guest.getByText("You're going to Aspen!")).toBeVisible({ timeout: 30000 });
 
   await host.goto("/host/reservations");
-  await expect(host.getByText(title)).toBeVisible({ timeout: 30000 });
-  await expect(host.getByText(guestEmail)).toBeVisible();
+  const reservationRow = host.getByRole("listitem").filter({ hasText: title });
+  await expect(reservationRow).toBeVisible({ timeout: 30000 });
+  await expect(reservationRow).toContainText(guestEmail);
 });
 
 test("unlisting hides a listing from search and relisting brings it back", async ({ browser }) => {
