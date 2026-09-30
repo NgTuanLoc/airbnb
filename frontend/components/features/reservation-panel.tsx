@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useReservationState } from "@/lib/hooks/use-reservation-state";
-import { parseReservationQuery, type ReservationQuery } from "@/lib/reservation/query";
+import { fromReservationInitDto, type ReservationInitDto } from "@/lib/reservation/query";
 import { ReservationBar } from "./reservation-bar";
 import { ReservationCard } from "./reservation-card";
 
@@ -10,12 +10,12 @@ export interface ReservationPanelProps {
   listingId: string;
   pricePerNight: number;
   maxGuests: number;
-  query: ReservationQuery;
+  initial: ReservationInitDto;
 }
 
 /** The reservation card (rail from md up, in flow on mobile) plus the mobile sticky bar, over one shared state. */
-export function ReservationPanel({ listingId, pricePerNight, maxGuests, query }: ReservationPanelProps) {
-  const [init] = useState(() => parseReservationQuery(query));
+export function ReservationPanel({ listingId, pricePerNight, maxGuests, initial }: ReservationPanelProps) {
+  const [init] = useState(() => fromReservationInitDto(initial));
   const state = useReservationState(listingId, pricePerNight, maxGuests, init);
   return (
     <>

@@ -8,7 +8,7 @@ import { ListingOverview } from "@/components/features/listing-overview";
 import { AmenityList } from "@/components/features/amenity-list";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
 import { ReservationPanel } from "@/components/features/reservation-panel";
-import type { ReservationQuery } from "@/lib/reservation/query";
+import { parseReservationQuery, toReservationInitDto, type ReservationQuery } from "@/lib/reservation/query";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const QUERY_KEYS = ["checkIn", "checkOut", "adults", "children"] as const;
@@ -39,6 +39,7 @@ export default async function RoomPage({
   ]);
   const isOwner = viewer?.id === listing.hostId;
   const isUnlisted = listing.status === "unlisted";
+  const initial = toReservationInitDto(parseReservationQuery(query));
 
   return (
     <div className={`min-h-screen bg-canvas ${!isOwner && !isUnlisted ? "pb-24 md:pb-0" : ""}`}>
@@ -89,7 +90,7 @@ export default async function RoomPage({
                 <p className="text-title-md text-ink">This place isn&apos;t taking bookings right now</p>
               </aside>
             ) : (
-              <ReservationPanel listingId={listing.id} pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} query={query} />
+              <ReservationPanel listingId={listing.id} pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} initial={initial} />
             )}
           </div>
         </div>

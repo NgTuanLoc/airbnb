@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
 import { getRepositories } from "@/lib/repositories";
 import { hostListingInputSchema } from "@/lib/host/schemas";
 import { validInput } from "@/lib/host/test-fixtures";
@@ -88,5 +88,32 @@ describe("RoomPage", () => {
     render(await RoomPage({ params: Promise.resolve({ id: listing.id }), searchParams: Promise.resolve({}) }));
 
     expect(screen.queryByRole("region", { name: "Reservation summary" })).not.toBeInTheDocument();
+  });
+
+  describe("with dates parsed once on the server", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2031, 0, 15));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    test("valid future dates in searchParams carry through to the Reserve link", async () => {
+      const searchParams = Promise.resolve({ checkIn: "2031-02-01", checkOut: "2031-02-04", adults: "2", children: "0" });
+      render(await RoomPage({ params: Promise.resolve({ id: "l1" }), searchParams }));
+
+      const bar = screen.getByRole("region", { name: "Reservation summary" });
+      expect(within(bar).getByRole("link", { name: "Reserve" })).toHaveAttribute(
+        "href", "/book/l1?checkIn=2031-02-01&checkOut=2031-02-04&adults=2&children=0",
+      );
+    });
+
+    test("past dates in searchParams fall back to Check availability", async () => {
+      const searchParams = Promise.resolve({ checkIn: "2031-01-10", checkOut: "2031-01-12" });
+      render(await RoomPage({ params: Promise.resolve({ id: "l1" }), searchParams }));
+
+      const bar = screen.getByRole("region", { name: "Reservation summary" });
+      expect(within(bar).getByRole("button", { name: "Check availability" })).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Reserve" })).not.toBeInTheDocument();
+    });
   });
 });

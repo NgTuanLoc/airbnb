@@ -53,6 +53,16 @@ describe("MobileNav", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  test("tapping the sheet's own bottom padding does not close it", async () => {
+    renderWithSession(<MobileNav active="homes" />, null);
+    await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    const sheet = screen.getByRole("dialog", { name: "Menu" });
+    const paddingWrapper = sheet.firstElementChild as HTMLElement;
+    expect(paddingWrapper.className).toContain("pb-4");
+    await userEvent.click(paddingWrapper);
+    expect(screen.getByRole("dialog", { name: "Menu" })).toBeInTheDocument();
+  });
+
   test("choosing a link closes the sheet", async () => {
     renderWithSession(<MobileNav active="homes" />, null);
     await userEvent.click(screen.getByRole("button", { name: "Open menu" }));

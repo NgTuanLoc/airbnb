@@ -1,3 +1,5 @@
+import { toIsoDate } from "./dates";
+
 export type ReservationQuery = Partial<Record<"checkIn" | "checkOut" | "adults" | "children", string>>;
 
 export interface ReservationInit {
@@ -33,5 +35,32 @@ export function parseReservationQuery(query: ReservationQuery, today: Date = new
     checkOut: valid ? checkOut : null,
     adults: toCount(query.adults, 1, 1),
     children: toCount(query.children, 0, 0),
+  };
+}
+
+/** A ReservationInit as plain strings, safe to pass from a server page to a client component. */
+export interface ReservationInitDto {
+  checkIn: string | null; // YYYY-MM-DD
+  checkOut: string | null;
+  adults: number;
+  children: number;
+}
+
+export function toReservationInitDto(init: ReservationInit): ReservationInitDto {
+  return {
+    checkIn: init.checkIn ? toIsoDate(init.checkIn) : null,
+    checkOut: init.checkOut ? toIsoDate(init.checkOut) : null,
+    adults: init.adults,
+    children: init.children,
+  };
+}
+
+/** Back to local Dates; no "today" check, the server already decided validity. */
+export function fromReservationInitDto(dto: ReservationInitDto): ReservationInit {
+  return {
+    checkIn: dto.checkIn ? toLocalDate(dto.checkIn) : null,
+    checkOut: dto.checkOut ? toLocalDate(dto.checkOut) : null,
+    adults: dto.adults,
+    children: dto.children,
   };
 }
