@@ -52,14 +52,15 @@ reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestResults/re
 - **Typography:** CSS component classes `.text-display-xl`, `.text-body-md`, `.text-caption`, etc. (not Tailwind utility classes)
 - **Radii:** `rounded-sm` (8px), `rounded-md` (14px), `rounded-full`
 - **Shadow:** single tier `shadow-airbnb`
+- **Breakpoints:** `md` 744px, `lg` 1128px, `xl` 1440px (DESIGN.md); width caps `max-w-listing` (1440) and `max-w-editorial` (1280)
 
 Always use these named tokens rather than arbitrary Tailwind values.
 
 ### Component Layers
 
-**`components/design-system/`** — tokenized atoms. Barrel export via `components/design-system/index.ts`. Components here: `Button`, `TextInput`, `SearchBar`, `TopNav`, `Footer`, `PropertyCard`, `ExperienceCard`, `RatingDisplay`, `DatePickerDay`, `HostCard`, `NewBadge`, `GuestFavoriteBadge`.
+**`components/design-system/`** — tokenized atoms. Barrel export via `components/design-system/index.ts`. Components here: `Button`, `TextInput`, `SearchBar`, `TopNav`, `Footer`, `PropertyCard`, `ExperienceCard`, `RatingDisplay`, `DatePickerDay`, `HostCard`, `NewBadge`, `GuestFavoriteBadge`, `SkipLink`.
 
-**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`, `AccountMenu`, `SaveToWishlistDialog`, `ConfirmBookingButton`, `PriceBreakdownList`, `HostListingForm`, `EarningsEstimate`, `HostNav`, `ListingStatusButton`.
+**`components/features/`** — composed feature components that assemble atoms and connect to data hooks. Components here: `HomeListings`, `CategoryStrip`, `PropertyGrid`, `CityLinkGrid`, `ListingGallery`, `ListingOverview`, `AmenityList`, `ReviewsGrid`, `ReservationCard`, `BookingCalendar`, `GuestStepper`, `AccountMenu`, `SaveToWishlistDialog`, `ConfirmBookingButton`, `PriceBreakdownList`, `HostListingForm`, `EarningsEstimate`, `HostNav`, `ListingStatusButton`, `MobileNav`, `MobileSearch`, `ReservationPanel`, `ReservationBar`, `AccountLinks`.
 
 ### Data Layer (bottom-up)
 
@@ -99,10 +100,14 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 - Import `render`, `screen`, `userEvent` from `@/lib/test-utils` (not directly from RTL)
 - Tests assert class names to verify token usage (e.g., `expect(el.className).toContain("bg-rausch")`)
 - E2E tests live in `e2e/`; Playwright config in `playwright.config.ts` auto-starts the dev server
+- Playwright runs a `desktop` (1280×800) and a `mobile` (Pixel 7) project; `e2e/a11y.spec.ts` is an axe gate (WCAG 2.1 AA, serious and critical fail); shared e2e helpers live in `e2e/helpers.ts`
 - TDD workflow: write failing test → minimal implementation → passing test → commit
 
 ### Path Alias
 `@/*` maps to the repo root (e.g., `@/lib/utils`, `@/components/design-system`).
+
+### Responsive rule
+Mobile-only UI is a separate component shown with `md:hidden`, never a viewport check in render.
 
 ### Backend Conventions
 - Package versions live only in `backend/Directory.Packages.props`; shared settings in `backend/Directory.Build.props` (warnings are errors, so xUnit tests pass `TestContext.Current.CancellationToken`).
