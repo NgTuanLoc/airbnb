@@ -16,6 +16,8 @@ test("navigates from the homepage to a listing detail and selects dates", async 
   const reserve = page.getByRole("button", { name: /^reserve$/i });
   await expect(reserve).toBeDisabled();
 
+  // Next month first: late in a month, the current month has fewer than two future days.
+  await page.getByRole("button", { name: "Next month" }).click();
   // Select two enabled day cells, then Reserve enables and a total appears.
   const dayButtons = page.getByRole('button').filter({ hasText: /^\d+$/ });
   const count = await dayButtons.count();
