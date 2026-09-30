@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Menu, UserCircle } from "lucide-react";
 import { useSessionState } from "./session-provider";
+import { AccountLinks } from "./account-links";
 
 const itemClass = "px-4 py-3 text-left text-body-sm text-ink hover:bg-surface-soft";
 
@@ -41,7 +41,7 @@ export function AccountMenu() {
         aria-label="Account menu"
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
-        className="flex h-10 items-center gap-2 rounded-full border border-hairline px-3"
+        className="flex h-11 items-center gap-2 rounded-full border border-hairline px-3"
       >
         <Menu aria-hidden className="size-4 text-ink" />
         {user ? (
@@ -54,22 +54,7 @@ export function AccountMenu() {
       </button>
       {open && (
         <div className="absolute right-0 top-12 z-20 flex w-56 flex-col rounded-sm bg-canvas py-2 shadow-airbnb">
-          {user ? (
-            <>
-              <p className="px-4 py-2 text-body-sm text-muted">{user.email}</p>
-              <Link href="/wishlists" className={itemClass}>Wishlists</Link>
-              <Link href="/trips" className={itemClass}>Trips</Link>
-              <Link href="/host/listings" className={itemClass}>Host dashboard</Link>
-              <button type="button" onClick={() => void session?.logout()} className={itemClass}>
-                Log out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className={itemClass}>Log in</Link>
-              <Link href="/register" className={itemClass}>Sign up</Link>
-            </>
-          )}
+          <AccountLinks itemClass={itemClass} />
         </div>
       )}
     </div>

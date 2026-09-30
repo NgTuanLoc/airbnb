@@ -105,6 +105,15 @@
   animation: searchMorphIn 200ms ease-out;
 }
 
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-slide-up {
+  animation: sheetSlideUp 250ms ease-out;
+}
+
 button:not(:disabled),
 [role="button"] {
   cursor: pointer;

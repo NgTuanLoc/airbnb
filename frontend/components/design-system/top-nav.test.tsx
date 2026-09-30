@@ -21,4 +21,13 @@ describe("TopNav", () => {
     const button = screen.getByRole("button", { name: /account menu/i });
     expect(button.querySelectorAll("svg.lucide")).toHaveLength(2);
   });
+
+  test("the product tabs and account area are hidden below md, and the nav is labelled", () => {
+    render(<TopNav active="homes" />);
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    expect(nav.className).toContain("hidden");
+    expect(nav.className).toContain("md:flex");
+    expect(screen.getByRole("link", { name: "Become a host" }).parentElement?.className).toContain("md:flex");
+    expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+  });
 });

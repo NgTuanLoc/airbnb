@@ -73,4 +73,19 @@ describe("AccountMenu", () => {
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
     expect(screen.getByRole("link", { name: "Host dashboard" })).toHaveAttribute("href", "/host/listings");
   });
+
+  test("a failed logout shows an inline error instead of failing silently", async () => {
+    const logout = vi.fn().mockRejectedValueOnce(new Error("offline"));
+    renderWith(loggedIn(logout));
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Log out" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't log you out. Try again.");
+  });
+
+  test("the menu trigger is at least 44px tall", () => {
+    renderWith(null);
+    expect(screen.getByRole("button", { name: "Account menu" }).className).toContain("h-11");
+  });
 });

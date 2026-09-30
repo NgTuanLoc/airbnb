@@ -3,14 +3,10 @@ import { cn } from "@/lib/utils";
 import { NewBadge } from "./badges";
 // The one design-system → features import: every page's nav needs the live session menu.
 import { AccountMenu } from "@/components/features/auth/account-menu";
+import { MobileNav } from "@/components/features/nav/mobile-nav";
+import { NAV_TABS, type Product } from "@/lib/nav";
 
-type Product = "homes" | "experiences" | "services";
-
-const tabs: { id: Product; label: string; href: string; isNew?: boolean }[] = [
-  { id: "homes", label: "Homes", href: "/" },
-  { id: "experiences", label: "Experiences", href: "/experiences", isNew: true },
-  { id: "services", label: "Services", href: "/services", isNew: true },
-];
+export type { Product } from "@/lib/nav";
 
 export function TopNav({ active = "homes" }: { active?: Product }) {
   return (
@@ -18,11 +14,12 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
       <Link href="/" className="text-display-sm font-bold text-rausch" aria-label="Airbnb home">
         airbnb
       </Link>
-      <nav className="flex items-center gap-8">
-        {tabs.map((tab) => (
+      <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
+        {NAV_TABS.map((tab) => (
           <Link
             key={tab.id}
             href={tab.href}
+            aria-current={tab.id === active ? "page" : undefined}
             className={cn(
               "flex items-center gap-1 border-b-2 border-transparent pb-1 text-nav-link",
               tab.id === active ? "border-ink text-ink" : "text-muted",
@@ -33,12 +30,13 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
           </Link>
         ))}
       </nav>
-      <div className="flex items-center gap-2">
+      <div className="hidden items-center gap-2 md:flex">
         <Link href="/host" className="text-title-sm text-ink">
           Become a host
         </Link>
         <AccountMenu />
       </div>
+      <MobileNav active={active} />
     </header>
   );
 }
