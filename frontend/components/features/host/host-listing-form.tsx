@@ -204,7 +204,7 @@ export function HostListingForm(props: HostListingFormProps) {
       {formError && <p role="alert" className="text-body-sm text-error">{formError}</p>}
 
       <div className="flex justify-between border-t border-hairline pt-4">
-        <Button type="button" variant="tertiary" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>Back</Button>
+        <Button type="button" variant="tertiary" onClick={() => setStep((s) => s - 1)} disabled={step === 0 || submitting}>Back</Button>
         {isLast ? (
           <Button type="button" onClick={submit} disabled={submitting}>{props.mode === "create" ? "Publish" : "Save"}</Button>
         ) : (

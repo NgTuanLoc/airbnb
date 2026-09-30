@@ -18,13 +18,17 @@ export function PropertyCard({
     <article className="group relative flex flex-col gap-2">
       <Link href={`/rooms/${listing.id}`} className="flex flex-col gap-2">
         <div className="relative aspect-square w-full overflow-hidden rounded-md">
-          <Image
-            src={listing.photos[0]}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 744px) 100vw, 25vw"
-            className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-          />
+          {listing.photos[0] ? (
+            <Image
+              src={listing.photos[0]}
+              alt={listing.title}
+              fill
+              sizes="(max-width: 744px) 100vw, 25vw"
+              className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+            />
+          ) : (
+            <div data-testid="photo-placeholder" aria-hidden className="size-full bg-surface-strong" />
+          )}
           {listing.isGuestFavorite && (
             <div className="absolute left-3 top-3">
               <GuestFavoriteBadge />

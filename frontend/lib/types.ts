@@ -4,6 +4,8 @@ export interface Listing {
   id: string;
   title: string;
   location: { city: string; country: string; lat: number; lng: number };
+  /** Host listings only: the HOST_CITIES id the host picked. */
+  cityId?: string;
   photos: string[];
   pricePerNight: number;
   rating: number;

@@ -93,6 +93,23 @@ describe("WishlistHeartsProvider", () => {
     expect(api.fetchWishlists).toHaveBeenCalledTimes(2);
   });
 
+  test("the unsave error can be dismissed with its button or Escape", async () => {
+    api.fetchWishlists.mockResolvedValue([list(["l1"])]);
+    api.removeFromWishlists.mockRejectedValueOnce(new Error("boom"));
+    renderHearts(ana);
+
+    await userEvent.click(await screen.findByText("saved"));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    api.removeFromWishlists.mockRejectedValueOnce(new Error("boom"));
+    await userEvent.click(await screen.findByText("saved"));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   test("an unsaved listing opens the save dialog", async () => {
     api.fetchWishlists.mockResolvedValue([list([])]);
     renderHearts(ana);

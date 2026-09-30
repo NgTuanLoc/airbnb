@@ -66,6 +66,12 @@ describe("PropertyCard", () => {
     expect(screen.getByText("New")).toBeInTheDocument();
     expect(screen.queryByText("0.00")).not.toBeInTheDocument();
   });
+
+  test("renders a placeholder instead of crashing when a listing has no photos", () => {
+    render(<PropertyCard listing={{ ...listing, photos: [] }} />);
+    expect(screen.getByTestId("photo-placeholder").className).toContain("bg-surface-strong");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
 });
 
 test("links to the listing detail page", () => {

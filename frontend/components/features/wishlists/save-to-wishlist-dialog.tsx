@@ -84,7 +84,7 @@ export function SaveToWishlistDialog({ listing, wishlists, onClose }: SaveToWish
             <TextInput label="Name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} error={nameError} />
             <div className="flex justify-end gap-2">
               {wishlists.length > 0 && (
-                <Button type="button" variant="tertiary" onClick={() => setCreating(false)}>Cancel</Button>
+                <Button type="button" variant="tertiary" onClick={() => { setCreating(false); setName(""); setNameError(undefined); }}>Cancel</Button>
               )}
               <Button type="submit" disabled={busy}>Create</Button>
             </div>

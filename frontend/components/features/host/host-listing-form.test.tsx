@@ -111,4 +111,14 @@ describe("HostListingForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Listing not found");
     expect(push).not.toHaveBeenCalled();
   });
+
+  test("Back is disabled while the listing is being saved", async () => {
+    let resolveUpdate: (value: unknown) => void = () => {};
+    api.updateHostListing.mockReturnValueOnce(new Promise((resolve) => { resolveUpdate = resolve; }));
+    render(<HostListingForm mode="edit" listingId="hl-1" initial={hostListingInputSchema.parse(validInput)} />);
+    await next(); await next(); await next();
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    resolveUpdate({ id: "hl-1" });
+  });
 });

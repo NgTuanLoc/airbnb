@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { useSessionState } from "@/components/features/auth/session-provider";
 import { WISHLISTS_QUERY_KEY, fetchWishlists, removeFromWishlists } from "@/lib/api-client/wishlists";
 import { loginPath } from "@/lib/auth/next-path";
@@ -55,6 +56,16 @@ export function WishlistHeartsProvider({
     onSettled: () => queryClient.invalidateQueries({ queryKey: WISHLISTS_QUERY_KEY }),
   });
 
+  // Escape dismisses the unsave error toast, same as its button.
+  useEffect(() => {
+    if (!error) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setError(null);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [error]);
+
   function toggle(listing: Listing) {
     setError(null);
     if (!user) {
@@ -70,9 +81,12 @@ export function WishlistHeartsProvider({
       {children}
       {pending && <SaveToWishlistDialog listing={pending} wishlists={wishlists} onClose={() => setPending(null)} />}
       {error && (
-        <p role="alert" className="fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-sm bg-ink px-4 py-3 text-body-sm text-on-primary shadow-airbnb">
+        <div role="alert" className="fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-sm bg-ink px-4 py-3 text-body-sm text-on-primary shadow-airbnb md:bottom-6">
           {error}
-        </p>
+          <button type="button" aria-label="Dismiss" onClick={() => setError(null)} className="flex size-8 items-center justify-center rounded-full">
+            <X aria-hidden className="size-4" />
+          </button>
+        </div>
       )}
     </WishlistHeartsContext.Provider>
   );

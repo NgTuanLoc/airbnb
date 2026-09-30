@@ -9,6 +9,7 @@ export const listingSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  cityId: z.string().optional(),
   photos: z.array(z.string()).min(1),
   pricePerNight: z.number().positive(),
   rating: z.number(),

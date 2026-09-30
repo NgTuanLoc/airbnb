@@ -76,6 +76,17 @@ describe("SaveToWishlistDialog", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  test("Cancel forgets the typed name, so reopening the form starts empty", async () => {
+    renderDialog([summer]);
+
+    await userEvent.click(screen.getByRole("button", { name: "Create new wishlist" }));
+    await userEvent.type(screen.getByLabelText("Name"), "Beach");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await userEvent.click(screen.getByRole("button", { name: "Create new wishlist" }));
+
+    expect(screen.getByLabelText("Name")).toHaveValue("");
+  });
+
   test("focus goes back to what opened it once it closes", () => {
     const opener = document.body.appendChild(document.createElement("button"));
     opener.focus();
