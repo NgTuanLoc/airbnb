@@ -88,4 +88,11 @@ describe("AccountMenu", () => {
     renderWith(null);
     expect(screen.getByRole("button", { name: "Account menu" }).className).toContain("h-11");
   });
+
+  test("the avatar initial sits on the text-safe rausch fill", () => {
+    renderWith(loggedIn());
+    const initial = screen.getByRole("button", { name: "Account menu" }).querySelector("span");
+    expect(initial).toHaveTextContent("A");
+    expect(initial?.className).toContain("bg-rausch-text-bg");
+  });
 });

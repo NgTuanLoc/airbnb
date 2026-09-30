@@ -14,3 +14,11 @@ test.each([
 ])("the theme defines %s as %s (DESIGN.md Responsive Behavior)", (token, value) => {
   expect(css).toContain(`${token}: ${value};`);
 });
+
+test.each([
+  ["--color-rausch-text-bg", "#e00b41"],
+  ["--color-rausch-text-bg-hover", "#c20a3a"],
+  ["--color-focus-ring", "#222222"],
+])("the theme defines %s as %s (DESIGN.md Colors, WCAG AA contrast)", (token, value) => {
+  expect(css).toContain(`${token}: ${value};`);
+});

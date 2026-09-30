@@ -15,7 +15,7 @@ export function PriceMarker({ price, selected, onClick }: PriceMarkerProps) {
         "rounded-full px-2.5 py-1 text-micro shadow-airbnb transition-colors",
         selected
           ? "bg-ink text-on-primary"
-          : "bg-rausch text-on-primary hover:bg-rausch-active",
+          : "bg-rausch-text-bg text-on-primary hover:bg-rausch-text-bg-hover",
       )}
     >
       ${price}

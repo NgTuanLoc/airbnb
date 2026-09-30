@@ -12,11 +12,11 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "h-12 px-6 rounded-sm bg-rausch text-on-primary hover:bg-rausch-active disabled:bg-rausch-disabled",
+    "h-12 px-6 rounded-sm bg-rausch-text-bg text-on-primary hover:bg-rausch-text-bg-hover disabled:bg-rausch-disabled",
   secondary:
     "h-12 px-6 rounded-sm bg-canvas text-ink border border-ink hover:bg-surface-soft",
   tertiary: "text-ink underline-offset-2 hover:underline bg-transparent",
-  pill: "px-5 py-2.5 rounded-full bg-rausch text-on-primary text-button-sm hover:bg-rausch-active",
+  pill: "px-5 py-2.5 rounded-full bg-rausch-text-bg text-on-primary text-button-sm hover:bg-rausch-text-bg-hover",
 };
 
 export function buttonClassName(variant: ButtonVariant = "primary"): string {

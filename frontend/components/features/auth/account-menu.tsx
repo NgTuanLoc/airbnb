@@ -45,7 +45,7 @@ export function AccountMenu() {
       >
         <Menu aria-hidden className="size-4 text-ink" />
         {user ? (
-          <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-rausch text-caption text-on-primary">
+          <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-rausch-text-bg text-caption text-on-primary">
             {user.name.charAt(0).toUpperCase()}
           </span>
         ) : (

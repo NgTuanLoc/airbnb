@@ -7,6 +7,9 @@ colors:
   primary: "#ff385c"
   primary-active: "#e00b41"
   primary-disabled: "#ffd1da"
+  primary-text-bg: "#e00b41"
+  primary-text-bg-hover: "#c20a3a"
+  focus-ring: "#222222"
   primary-error-text: "#c13515"
   primary-error-text-hover: "#b32505"
   luxe: "#460479"
@@ -161,7 +164,7 @@ spacing:
 
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
+    backgroundColor: "{colors.primary-text-bg}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button-md}"
     rounded: "{rounded.sm}"
@@ -187,7 +190,7 @@ components:
     textColor: "{colors.ink}"
     typography: "{typography.button-md}"
   button-pill-rausch:
-    backgroundColor: "{colors.primary}"
+    backgroundColor: "{colors.primary-text-bg}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button-sm}"
     rounded: "{rounded.full}"
@@ -349,6 +352,8 @@ The shape language is **soft**. Buttons are 8px radius (`{rounded.sm}`), propert
 ### Brand & Accent
 - **Rausch** (`{colors.primary}` — #ff385c): The single brand color. Used for primary CTA backgrounds (Reserve, Continue), the search orb, the heart save state on property cards, and inline brand links. The most recognizable color in consumer travel.
 - **Rausch Active** (`{colors.primary-active}` — #e00b41): The press / pointer-down variant — slightly more saturated. Used on `{component.button-primary-active}`.
+- **Rausch Text Fill** (`{colors.primary-text-bg}` — #e00b41, hover `{colors.primary-text-bg-hover}` — #c20a3a): The fill for every Rausch surface that carries white text — primary and pill buttons, the account avatar initial, map price markers. White on #ff385c is only 3.5:1; on #e00b41 it is 4.9:1, which passes WCAG AA for body-size text. Plain Rausch stays for the logo, the heart, the icon-only search orb and other non-text accents.
+- **Focus Ring** (`{colors.focus-ring}` — #222222): The 2px `:focus-visible` outline (2px offset) on every focusable element.
 - **Rausch Disabled** (`{colors.primary-disabled}` — #ffd1da): A pale tint used on disabled CTAs.
 - **Luxe Purple** (`{colors.luxe}` — #460479): Sub-brand accent for Airbnb Luxe. Only appears inside Luxe-branded surfaces — never in mainline marketing.
 - **Plus Magenta** (`{colors.plus}` — #92174d): Sub-brand accent for Airbnb Plus. Same scoping as Luxe — sub-product only.
@@ -449,7 +454,7 @@ There are no progressive elevation tiers — the system either has the one shado
 
 ### Buttons
 
-**`button-primary`** — Rausch fill, white text, 8px radius, 14×24px padding, 48px height, weight 500. The most common CTA across the system: "Reserve", "Continue", "Search", account-flow primaries.
+**`button-primary`** — Rausch text fill (`{colors.primary-text-bg}`), white text, 8px radius, 14×24px padding, 48px height, weight 500. The most common CTA across the system: "Reserve", "Continue", "Search", account-flow primaries.
 
 **`button-primary-active`** — The press state. Background flips to `{colors.primary-active}`. No transform, no shadow change.
 

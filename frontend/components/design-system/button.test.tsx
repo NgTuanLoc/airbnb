@@ -8,10 +8,11 @@ describe("Button", () => {
     expect(screen.getByRole("button", { name: "Reserve" })).toBeInTheDocument();
   });
 
-  test("primary variant uses the rausch fill and sm radius", () => {
+  test("primary variant uses the text-safe rausch fill and sm radius", () => {
     render(<Button>Reserve</Button>);
     const btn = screen.getByRole("button");
-    expect(btn.className).toContain("bg-rausch");
+    expect(btn.className).toContain("bg-rausch-text-bg");
+    expect(btn.className).toContain("hover:bg-rausch-text-bg-hover");
     expect(btn.className).toContain("rounded-sm");
   });
 
@@ -27,5 +28,10 @@ describe("Button", () => {
     const btn = screen.getByRole("button");
     expect(btn).toBeDisabled();
     expect(btn.className).toContain("disabled:bg-rausch-disabled");
+  });
+
+  test("the pill variant uses the text-safe rausch fill (white text passes 4.5:1)", () => {
+    render(<Button variant="pill">Try hosting</Button>);
+    expect(screen.getByRole("button").className).toContain("bg-rausch-text-bg");
   });
 });

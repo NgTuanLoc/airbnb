@@ -7,6 +7,9 @@
   --color-rausch: #ff385c;
   --color-rausch-active: #e00b41;
   --color-rausch-disabled: #ffd1da;
+  /* Fills that carry white text: #ff385c is only 3.5:1 against white */
+  --color-rausch-text-bg: #e00b41;
+  --color-rausch-text-bg-hover: #c20a3a;
   --color-error: #c13515;
   --color-error-hover: #b32505;
   --color-luxe: #460479;
