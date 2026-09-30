@@ -46,4 +46,13 @@ describe("StickyHomeSearch", () => {
     expect(screen.queryByTestId("search-pill")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Who" })).toBeInTheDocument();
   });
+
+  test("renders the mobile pill below md and the three-segment bar from md", () => {
+    collapsed.value = false;
+    render(<StickyHomeSearch />);
+    const pill = screen.getByRole("button", { name: /start your search/i });
+    expect(pill.parentElement?.className).toContain("md:hidden");
+    const where = screen.getByRole("button", { name: "Where" });
+    expect(where.closest(".hidden.md\\:block")).not.toBeNull();
+  });
 });

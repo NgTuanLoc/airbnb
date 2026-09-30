@@ -17,7 +17,7 @@ export function DatePanel({ checkIn, checkOut, onSelect }: DatePanelProps) {
   const [month, setMonth] = useState<Date>(() => startOfMonth(checkIn ?? new Date()));
 
   return (
-    <div className="w-[320px]">
+    <div className="w-full max-w-[320px]">
       <BookingCalendar
         month={month}
         checkIn={checkIn}
