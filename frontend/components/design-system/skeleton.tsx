@@ -18,6 +18,7 @@ export function Skeleton({ className, radius = "sm" }: SkeletonProps) {
   return (
     <div
       data-testid="skeleton"
+      aria-hidden="true"
       className={cn("animate-pulse bg-surface-strong", radii[radius], className)}
     />
   );
