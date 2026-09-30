@@ -26,11 +26,11 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto max-w-[1080px] px-6 pb-16">
+      <main className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
         <ListingOverview listing={listing} />
         <ListingGallery photos={listing.photos} title={listing.title} />
 
-        <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-[1.7fr_1fr]">
+        <div className="mt-8 grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px] lg:grid-cols-[1.7fr_1fr]">
           <div className="flex flex-col">
             <section className="border-b border-hairline pb-8">
               <h2 className="mb-3 text-display-sm text-ink">About this place</h2>
@@ -60,7 +60,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
             </section>
           </div>
 
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="md:sticky md:top-24 md:self-start">
             {isOwner ? (
               <aside className="flex flex-col gap-3 rounded-md border border-hairline p-6 shadow-airbnb">
                 <p className="text-title-md text-ink">This is your listing</p>

@@ -26,4 +26,12 @@ describe("CityLinkGrid", () => {
     render(<CityLinkGrid cities={cities} />);
     expect(screen.getByRole("link", { name: /aspen/i })).toHaveAttribute("href", "/s/Aspen");
   });
+
+  test("city links go 1 / 3 / 6 columns", () => {
+    const { container } = render(<CityLinkGrid cities={cities} />);
+    const firstGridElement = container.querySelector(".grid") as HTMLElement;
+    expect(firstGridElement.className).toContain("grid-cols-1");
+    expect(firstGridElement.className).toContain("md:grid-cols-3");
+    expect(firstGridElement.className).toContain("lg:grid-cols-6");
+  });
 });

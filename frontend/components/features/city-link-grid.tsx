@@ -6,7 +6,7 @@ export function CityLinkGrid({ cities }: { cities: City[] }) {
   return (
     <section className="flex flex-col gap-6">
       <h2 className="text-display-sm text-ink">Inspiration for future getaways</h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
         {cities.map((city) => (
           <Link key={city.id} href={`/s/${encodeURIComponent(city.name)}`} className="group flex flex-col gap-2">
             <div className="relative aspect-[3/2] w-full overflow-hidden rounded-md">

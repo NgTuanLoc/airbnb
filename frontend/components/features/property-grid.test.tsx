@@ -31,4 +31,13 @@ describe("PropertyGrid", () => {
     render(<PropertyGrid listings={[]} />);
     expect(screen.getByText(/no places/i)).toBeInTheDocument();
   });
+
+  test("cards go 1-up on mobile, 2-up on tablet and 4-up on desktop", () => {
+    const { container } = render(<PropertyGrid listings={[listing]} />);
+    const firstGridElement = container.querySelector(".grid") as HTMLElement;
+    expect(firstGridElement.className).toContain("grid-cols-1");
+    expect(firstGridElement.className).toContain("md:grid-cols-2");
+    expect(firstGridElement.className).toContain("lg:grid-cols-4");
+    expect(firstGridElement.className).not.toContain("sm:grid-cols-2");
+  });
 });

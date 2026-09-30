@@ -34,7 +34,7 @@ export default async function HostPage() {
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-16 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-editorial flex-1 flex-col gap-16 px-6 md:px-10 xl:px-20 py-12">
         <section className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
             <h1 className="text-display-xl text-ink">

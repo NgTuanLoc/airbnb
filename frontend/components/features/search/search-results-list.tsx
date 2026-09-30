@@ -10,7 +10,7 @@ export interface SearchResultsListProps {
   location: string;
 }
 
-const gridClass = "grid grid-cols-1 gap-6 sm:grid-cols-2";
+const gridClass = "grid grid-cols-1 gap-6 md:grid-cols-2";
 
 function placeLabel(location: string): string {
   return location && location.toLowerCase() !== "anywhere" ? location : "your search";

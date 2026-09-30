@@ -18,7 +18,7 @@ export default async function WishlistsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-listing flex-1 px-6 md:px-10 xl:px-20 py-8">
         <h1 className="mb-8 text-display-md text-ink">Wishlists</h1>
         {wishlists.length === 0 ? (
           <div className="flex flex-col gap-2">

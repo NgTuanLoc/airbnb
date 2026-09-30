@@ -26,7 +26,7 @@ export default async function TripPage({
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-8 px-6 py-8">
+      <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-8 px-6 md:px-10 py-8">
         {confirmed === "1" && (
           <p className="rounded-md bg-surface-soft px-6 py-4 text-title-md text-ink">
             You&apos;re going to {listing?.location.city ?? "your stay"}!

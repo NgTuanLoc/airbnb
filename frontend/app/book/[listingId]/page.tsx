@@ -47,9 +47,9 @@ export default async function BookPage({
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-[1080px] flex-1 px-6 md:px-10 py-8">
         <h1 className="mb-8 text-display-md text-ink">Confirm and pay</h1>
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px] lg:grid-cols-[1.4fr_1fr]">
           <div className="flex flex-col gap-8">
             <section className="flex flex-col gap-4 border-b border-hairline pb-8">
               <h2 className="text-title-md text-ink">Your trip</h2>

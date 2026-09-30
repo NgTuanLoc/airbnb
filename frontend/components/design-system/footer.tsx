@@ -16,7 +16,7 @@ const social: { label: string; Icon: typeof Globe }[] = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-hairline bg-canvas px-20 py-12">
+    <footer className="border-t border-hairline bg-canvas px-6 md:px-10 xl:px-20 py-12">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {columns.map((col) => (
           <div key={col.heading} className="flex flex-col gap-3">

@@ -14,7 +14,7 @@ const tabs: { id: Product; label: string; href: string; isNew?: boolean }[] = [
 
 export function TopNav({ active = "homes" }: { active?: Product }) {
   return (
-    <header className="flex h-20 items-center justify-between border-b border-hairline bg-canvas px-10">
+    <header className="flex h-20 items-center justify-between border-b border-hairline bg-canvas px-6 md:px-10 xl:px-20">
       <Link href="/" className="text-display-sm font-bold text-rausch" aria-label="Airbnb home">
         airbnb
       </Link>

@@ -19,7 +19,7 @@ export default async function WishlistPage({ params }: { params: Promise<{ id: s
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-listing flex-1 px-6 md:px-10 xl:px-20 py-8">
         <h1 className="mb-8 text-display-md text-ink">{wishlist.name}</h1>
         {listings.length === 0 ? (
           <p className="text-body-md text-muted">Nothing saved yet</p>

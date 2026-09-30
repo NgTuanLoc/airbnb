@@ -18,7 +18,7 @@ export default async function ExperienceDetailPage({ params }: { params: Promise
   return (
     <div className="min-h-screen bg-canvas">
       <TopNav active="experiences" />
-      <main className="mx-auto max-w-[1080px] px-6 pb-16">
+      <main className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
         <header className="py-6">
           <h1 className="text-display-sm text-ink">{experience.title}</h1>
           <p className="mt-1 text-body-md text-muted">
@@ -28,7 +28,7 @@ export default async function ExperienceDetailPage({ params }: { params: Promise
 
         <ListingGallery photos={experience.photos} title={experience.title} />
 
-        <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-[1.7fr_1fr]">
+        <div className="mt-8 grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px] lg:grid-cols-[1.7fr_1fr]">
           <div className="flex flex-col">
             <section className="border-b border-hairline pb-8">
               <h2 className="mb-3 text-display-sm text-ink">About this experience</h2>
@@ -50,7 +50,7 @@ export default async function ExperienceDetailPage({ params }: { params: Promise
             </section>
           </div>
 
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="md:sticky md:top-24 md:self-start">
             <div className="rounded-lg border border-hairline p-6 shadow-airbnb">
               <p className="text-title-md text-ink">${experience.pricePerPerson} <span className="text-body-sm text-muted">per person</span></p>
             </div>

@@ -43,6 +43,15 @@
 
   /* Single shadow tier */
   --shadow-airbnb: rgba(0,0,0,0.02) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 6px 0, rgba(0,0,0,0.1) 0 4px 8px 0;
+
+  /* Breakpoints (DESIGN.md Responsive Behavior) */
+  --breakpoint-md: 744px;
+  --breakpoint-lg: 1128px;
+  --breakpoint-xl: 1440px;
+
+  /* Content width caps: listing/search pages and editorial pages */
+  --container-listing: 1440px;
+  --container-editorial: 1280px;
 }
 
 /* Type-scale utilities (size / weight / line-height / tracking from DESIGN.md) */
