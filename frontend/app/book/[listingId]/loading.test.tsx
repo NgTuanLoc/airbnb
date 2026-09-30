@@ -4,10 +4,11 @@ import BookLoading from "./loading";
 
 describe("BookLoading", () => {
   test("renders the main landmark with aria-busy and the two-column grid", () => {
-    render(<BookLoading />);
+    const { container } = render(<BookLoading />);
     const main = screen.getByRole("main");
     expect(main).toHaveAttribute("id", "main");
     expect(main).toHaveAttribute("aria-busy", "true");
-    expect(screen.getAllByTestId("skeleton").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".h-24").length).toBe(3);
+    expect(container.querySelectorAll(".h-80").length).toBe(1);
   });
 });

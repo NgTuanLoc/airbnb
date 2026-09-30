@@ -7,4 +7,9 @@ describe("FormSkeleton", () => {
     render(<FormSkeleton />);
     expect(screen.getAllByTestId("form-skeleton-field")).toHaveLength(4);
   });
+
+  test("matches the host form's max-w-[720px] wrapper so the width doesn't jump on swap", () => {
+    render(<FormSkeleton />);
+    expect(screen.getByTestId("form-skeleton").className).toContain("max-w-[720px]");
+  });
 });
