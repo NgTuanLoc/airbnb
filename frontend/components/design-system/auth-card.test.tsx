@@ -28,4 +28,9 @@ describe("AuthCard", () => {
     expect(card.className).toContain("bg-canvas");
     expect(card.className).toContain("rounded-md");
   });
+
+  test("auth pages have a main landmark with the skip-link target", () => {
+    render(<AuthCard title="Welcome back">form</AuthCard>);
+    expect(screen.getByRole("main")).toHaveAttribute("id", "main");
+  });
 });

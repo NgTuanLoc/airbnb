@@ -13,3 +13,4 @@ export { TopNav } from "./top-nav";
 export { Footer } from "./footer";
 export { HostCard } from "./host-card";
 export { AuthCard } from "./auth-card";
+export { SkipLink } from "./skip-link";

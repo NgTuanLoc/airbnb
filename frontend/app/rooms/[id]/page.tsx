@@ -43,7 +43,7 @@ export default async function RoomPage({
   return (
     <div className={`min-h-screen bg-canvas ${!isOwner && !isUnlisted ? "pb-24 md:pb-0" : ""}`}>
       <TopNav active="homes" />
-      <main className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
+      <main id="main" className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
         <ListingOverview listing={listing} />
         <ListingGallery photos={listing.photos} title={listing.title} />
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { inter } from "./fonts";
+import { SkipLink } from "@/components/design-system";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="bg-canvas text-ink antialiased">
+        <SkipLink />
         <Providers>{children}</Providers>
       </body>
     </html>

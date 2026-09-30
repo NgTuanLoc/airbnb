@@ -10,9 +10,11 @@ export default async function SearchPage({ params }: { params: Promise<{ locatio
   return (
     <div className="flex min-h-screen flex-col">
       <TopNav active="homes" />
-      <Suspense fallback={<div className="px-6 py-8 text-body-md text-muted">Loading stays…</div>}>
-        <SearchResults location={decoded} />
-      </Suspense>
+      <main id="main" className="flex flex-1 flex-col">
+        <Suspense fallback={<div className="px-6 py-8 text-body-md text-muted">Loading stays…</div>}>
+          <SearchResults location={decoded} />
+        </Suspense>
+      </main>
     </div>
   );
 }

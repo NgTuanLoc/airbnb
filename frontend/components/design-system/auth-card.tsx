@@ -8,7 +8,7 @@ export interface AuthCardProps {
 
 export function AuthCard({ title, subtitle, children }: AuthCardProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-surface-soft px-6 py-12">
+    <main id="main" className="flex min-h-screen flex-col items-center justify-center bg-surface-soft px-6 py-12">
       <div
         data-testid="auth-card"
         className="w-full max-w-md rounded-md border border-hairline bg-canvas p-8 shadow-airbnb"
@@ -20,6 +20,6 @@ export function AuthCard({ title, subtitle, children }: AuthCardProps) {
         {subtitle && <p className="mt-1 text-body-md text-muted">{subtitle}</p>}
         <div className="mt-6">{children}</div>
       </div>
-    </div>
+    </main>
   );
 }

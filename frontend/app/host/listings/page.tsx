@@ -18,7 +18,7 @@ export default async function HostListingsPage({ searchParams }: { searchParams:
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="mx-auto flex w-full max-w-editorial flex-1 flex-col gap-8 px-6 md:px-10 xl:px-20 py-8">
+      <main id="main" className="mx-auto flex w-full max-w-editorial flex-1 flex-col gap-8 px-6 md:px-10 xl:px-20 py-8">
         <h1 className="text-display-md text-ink">Your listings</h1>
         <HostNav active="listings" />
         {createdListing && (

@@ -18,7 +18,7 @@ export default async function ExperienceDetailPage({ params }: { params: Promise
   return (
     <div className="min-h-screen bg-canvas">
       <TopNav active="experiences" />
-      <main className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
+      <main id="main" className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
         <header className="py-6">
           <h1 className="text-display-sm text-ink">{experience.title}</h1>
           <p className="mt-1 text-body-md text-muted">

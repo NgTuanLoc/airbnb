@@ -17,7 +17,7 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
-      <main className="w-full flex-1 px-6 py-8">
+      <main id="main" className="w-full flex-1 px-6 py-8">
         <HostListingForm mode="edit" listingId={listing.id} initial={toHostListingInput(listing)} />
       </main>
       <Footer />

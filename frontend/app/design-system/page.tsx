@@ -13,7 +13,7 @@ export default function DesignSystemPage() {
   return (
     <div>
       <TopNav active="homes" />
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 p-10">
+      <main id="main" className="mx-auto flex max-w-5xl flex-col gap-8 p-10">
         <h1 className="text-display-xl text-ink">Design System</h1>
         <SearchBar
           values={{ where: "Search destinations", when: "Add dates", who: "Add guests" }}

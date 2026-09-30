@@ -29,6 +29,7 @@
   --color-surface-strong: #f2f2f2;
   --color-scrim: #000000;
   --color-icon-scrim: rgba(0, 0, 0, 0.5);
+  --color-focus-ring: #222222;
 
   /* Radii */
   --radius-xs: 4px;
@@ -52,6 +53,11 @@
   /* Content width caps: listing/search pages and editorial pages */
   --container-listing: 1440px;
   --container-editorial: 1280px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 /* Type-scale utilities (size / weight / line-height / tracking from DESIGN.md) */
@@ -117,4 +123,15 @@
 button:not(:disabled),
 [role="button"] {
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-pop-in,
+  .search-morph-in,
+  .sheet-slide-up {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
