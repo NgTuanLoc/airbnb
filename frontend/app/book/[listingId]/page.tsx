@@ -58,14 +58,14 @@ export default async function BookPage({
                   <p className="text-title-sm text-ink">Dates</p>
                   <p className="text-body-md text-body">{formatDateRange(request.checkIn, request.checkOut)}</p>
                 </div>
-                <Link href={`/rooms/${listingId}`} className="text-title-sm text-ink underline">Edit</Link>
+                <Link href={`/rooms/${listingId}?${new URLSearchParams(query)}`} className="text-title-sm text-ink underline">Edit</Link>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-title-sm text-ink">Guests</p>
                   <p className="text-body-md text-body">{guestCount} {guestCount === 1 ? "guest" : "guests"}</p>
                 </div>
-                <Link href={`/rooms/${listingId}`} className="text-title-sm text-ink underline">Edit</Link>
+                <Link href={`/rooms/${listingId}?${new URLSearchParams(query)}`} className="text-title-sm text-ink underline">Edit</Link>
               </div>
             </section>
             <section className="flex flex-col gap-2 border-b border-hairline pb-8">

@@ -1,9 +1,15 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReservationCard } from "./reservation-card";
 
 describe("ReservationCard", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2031, 0, 15));
+  });
+  afterEach(() => vi.useRealTimers());
+
   test("shows the nightly price and a disabled Reserve button before dates are chosen", () => {
     render(<ReservationCard pricePerNight={220} maxGuests={4} listingId="l1" />);
     expect(screen.getByText(/\$220/)).toBeInTheDocument();

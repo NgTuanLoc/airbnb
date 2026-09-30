@@ -83,4 +83,14 @@ describe("BookPage", () => {
     expect(screen.getByText(/New ·/)).toBeInTheDocument();
     expect(screen.queryByText("★ 0.00")).not.toBeInTheDocument();
   });
+
+  test("the Edit links keep the dates and guests", async () => {
+    const query = { checkIn: daysFromToday(20), checkOut: daysFromToday(22), adults: "2", children: "0" };
+    render(await BookPage(props("l1", query)));
+
+    const links = screen.getAllByRole("link", { name: "Edit" });
+    for (const link of links) {
+      expect(link.getAttribute("href")).toMatch(/^\/rooms\/l1\?checkIn=\d{4}-\d{2}-\d{2}&checkOut=\d{4}-\d{2}-\d{2}&adults=\d+&children=\d+$/);
+    }
+  });
 });

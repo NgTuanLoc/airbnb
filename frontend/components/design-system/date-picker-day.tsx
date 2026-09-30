@@ -18,6 +18,7 @@ export function DatePickerDay({
   return (
     <button
       type="button"
+      data-calendar-day=""
       disabled={disabled}
       onClick={onSelect}
       className={cn(

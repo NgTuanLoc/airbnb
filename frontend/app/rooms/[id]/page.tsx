@@ -7,10 +7,27 @@ import { ListingGallery } from "@/components/features/listing-gallery";
 import { ListingOverview } from "@/components/features/listing-overview";
 import { AmenityList } from "@/components/features/amenity-list";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
-import { ReservationCard } from "@/components/features/reservation-card";
+import { ReservationPanel } from "@/components/features/reservation-panel";
+import type { ReservationQuery } from "@/lib/reservation/query";
 
-export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
+type SearchParams = Record<string, string | string[] | undefined>;
+const QUERY_KEYS = ["checkIn", "checkOut", "adults", "children"] as const;
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+
+export default async function RoomPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
   const { id } = await params;
+  const rawQuery = await searchParams;
+  const query: ReservationQuery = {};
+  for (const key of QUERY_KEYS) {
+    const value = first(rawQuery[key]);
+    if (value !== undefined) query[key] = value;
+  }
   const repos = getRepositories();
   const listing = await repos.listings.findById(id);
   if (!listing) notFound();
@@ -24,7 +41,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
   const isUnlisted = listing.status === "unlisted";
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className={`min-h-screen bg-canvas ${!isOwner && !isUnlisted ? "pb-24 md:pb-0" : ""}`}>
       <TopNav active="homes" />
       <main className="mx-auto max-w-[1080px] px-6 md:px-10 pb-16">
         <ListingOverview listing={listing} />
@@ -52,7 +69,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
                 <>
                   <RatingDisplay value={listing.rating} />
                   <p className="mb-6 mt-2 text-center text-body-sm text-muted">
-                    Guest favorite · {listing.reviewCount} reviews
+                    {listing.isGuestFavorite ? "Guest favorite · " : ""}{listing.reviewCount} reviews
                   </p>
                 </>
               )}
@@ -72,7 +89,7 @@ export default async function RoomPage({ params }: { params: Promise<{ id: strin
                 <p className="text-title-md text-ink">This place isn&apos;t taking bookings right now</p>
               </aside>
             ) : (
-              <ReservationCard pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} listingId={listing.id} />
+              <ReservationPanel listingId={listing.id} pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} query={query} />
             )}
           </div>
         </div>
