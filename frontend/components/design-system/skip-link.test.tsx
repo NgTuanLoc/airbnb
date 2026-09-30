@@ -8,4 +8,5 @@ test("a visually hidden skip link targets #main and shows on focus", () => {
   expect(link).toHaveAttribute("href", "#main");
   expect(link.className).toContain("sr-only");
   expect(link.className).toContain("focus:not-sr-only");
+  expect(link.className).toContain("text-title-sm");
 });

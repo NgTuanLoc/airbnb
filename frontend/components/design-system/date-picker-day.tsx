@@ -22,7 +22,7 @@ export function DatePickerDay({
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-full text-body-sm text-ink",
+        "flex aspect-square w-full max-w-10 items-center justify-center rounded-full text-body-sm text-ink",
         inRange && "bg-surface-soft",
         selected && "bg-ink text-on-primary",
         disabled && "cursor-not-allowed text-muted-soft line-through",

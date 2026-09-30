@@ -40,9 +40,9 @@ function MobileNavSheet({ active, onClose }: { active: Product; onClose: () => v
     };
   }, []);
 
-  // Any link choice closes the sheet; the route change happens underneath.
-  function closeOnLink(event: React.MouseEvent) {
-    if ((event.target as Element).closest("a")) onClose();
+  // A link choice or a tap on the backdrop (the dialog element itself, outside its content) closes the sheet.
+  function handleDialogClick(event: React.MouseEvent) {
+    if (event.target === dialogRef.current || (event.target as Element).closest("a")) onClose();
   }
 
   return (
@@ -50,7 +50,7 @@ function MobileNavSheet({ active, onClose }: { active: Product; onClose: () => v
       ref={dialogRef}
       aria-label="Menu"
       onClose={onClose}
-      onClick={closeOnLink}
+      onClick={handleDialogClick}
       className="sheet-slide-up fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-lg bg-canvas p-0 pb-4 backdrop:bg-scrim/50"
     >
       <div className="flex justify-end px-4 pt-4">

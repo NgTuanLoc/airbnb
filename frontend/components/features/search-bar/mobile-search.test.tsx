@@ -27,6 +27,14 @@ describe("MobileSearch", () => {
     expect(push).toHaveBeenCalledWith("/s/Aspen?guests=1");
   });
 
+  test("choosing a city moves focus to the When header, since its own button unmounts", async () => {
+    render(<MobileSearch />);
+    await userEvent.click(screen.getByRole("button", { name: /start your search/i }));
+    const dialog = screen.getByRole("dialog", { name: "Search" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Aspen" }));
+    expect(within(dialog).getByRole("button", { name: /^when/i })).toHaveFocus();
+  });
+
   test("Clear all resets the choices and closing returns focus to the pill", async () => {
     render(<MobileSearch />);
     const pill = screen.getByRole("button", { name: /start your search/i });

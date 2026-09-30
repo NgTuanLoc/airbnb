@@ -26,7 +26,7 @@ export default async function WishlistsPage() {
             <p className="text-body-md text-muted">Tap the heart on any stay to save it here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {wishlists.map((wishlist, index) => (
               <Link key={wishlist.id} href={`/wishlists/${wishlist.id}`} className="flex flex-col gap-2">
                 <div className="relative aspect-square w-full overflow-hidden rounded-md bg-surface-soft">

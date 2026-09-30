@@ -1,5 +1,22 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, logIn, unique } from "./helpers";
+
+async function createListing(page: Page, title: string) {
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("Title").fill(title);
+  await page.getByLabel("Property type").selectOption("Entire cabin");
+  await page.getByLabel("Category").selectOption("Cabins");
+  await page.getByLabel("Description").fill("A bright cabin with a deck, a fireplace and a lake view.");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByLabel("City").selectOption("aspen");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Wifi" }).check();
+  await page.getByRole("button", { name: "Photo 1", exact: true }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await page.getByLabel("Price per night").fill("150");
+  await page.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByText("Your listing is live")).toBeVisible({ timeout: 30000 });
+}
 
 test("the hamburger sheet closes on Escape and navigates", async ({ page }) => {
   await page.goto("/");
@@ -58,3 +75,11 @@ for (const path of ["/", "/s/Aspen", "/rooms/l1", "/experiences", "/services", "
     await expectNoHorizontalScroll(page);
   });
 }
+
+test("/host/listings has no horizontal scroll on a phone with a listing row", async ({ page }) => {
+  await logIn(page, `mobile-host-${unique()}@example.com`, "/host/listings/new");
+  await createListing(page, `Mobile row ${unique()}`);
+  await page.goto("/host/listings");
+  await page.waitForLoadState("networkidle");
+  await expectNoHorizontalScroll(page);
+});

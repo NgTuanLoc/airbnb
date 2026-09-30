@@ -37,7 +37,7 @@ export default async function HostListingsPage({ searchParams }: { searchParams:
             <Link href="/host/listings/new" className={`${buttonClassName("secondary")} self-start`}>Create a listing</Link>
             <ul className="flex flex-col divide-y divide-hairline">
               {listings.map((listing) => (
-                <li key={listing.id} className="flex items-center gap-4 py-4">
+                <li key={listing.id} className="flex flex-col gap-4 py-4 md:flex-row md:items-center">
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-sm">
                     <Image src={listing.photos[0]} alt="" fill sizes="80px" className="object-cover" />
                   </div>
@@ -45,12 +45,14 @@ export default async function HostListingsPage({ searchParams }: { searchParams:
                     <span className="text-title-sm text-ink">{listing.title}</span>
                     <span className="text-body-sm text-muted">{listing.location.city} · ${listing.pricePerNight} night</span>
                   </div>
-                  <span className="rounded-full border border-hairline px-3 py-1 text-caption text-ink">
-                    {listing.status === "unlisted" ? "Unlisted" : "Listed"}
-                  </span>
-                  <Link href={`/rooms/${listing.id}`} className="text-title-sm text-ink underline">View</Link>
-                  <Link href={`/host/listings/${listing.id}/edit`} className="text-title-sm text-ink underline">Edit</Link>
-                  <ListingStatusButton listingId={listing.id} status={listing.status === "unlisted" ? "unlisted" : "listed"} />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="rounded-full border border-hairline px-3 py-1 text-caption text-ink">
+                      {listing.status === "unlisted" ? "Unlisted" : "Listed"}
+                    </span>
+                    <Link href={`/rooms/${listing.id}`} className="text-title-sm text-ink underline">View</Link>
+                    <Link href={`/host/listings/${listing.id}/edit`} className="text-title-sm text-ink underline">Edit</Link>
+                    <ListingStatusButton listingId={listing.id} status={listing.status === "unlisted" ? "unlisted" : "listed"} />
+                  </div>
                 </li>
               ))}
             </ul>

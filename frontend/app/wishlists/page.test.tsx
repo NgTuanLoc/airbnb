@@ -38,4 +38,18 @@ describe("WishlistsPage", () => {
     expect(card).toHaveAttribute("href", `/wishlists/${list.id}`);
     expect(card).toHaveTextContent("1 saved");
   });
+
+  test("the card grid stays 1-up below md", async () => {
+    const guest = user();
+    session.requireSession.mockResolvedValue(guest);
+    const repos = getRepositories();
+    const list = await repos.wishlists.create(guest.id, "Summer");
+    await repos.wishlists.addListing(guest.id, list.id, "l1");
+
+    const { container } = render(await WishlistsPage());
+
+    const grid = container.querySelector(".grid");
+    expect(grid?.className).toContain("md:grid-cols-2");
+    expect(grid?.className).not.toContain("sm:grid-cols-2");
+  });
 });

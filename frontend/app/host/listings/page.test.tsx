@@ -40,4 +40,16 @@ describe("HostListingsPage", () => {
     expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute("href", `/host/listings/${listing.id}/edit`);
     expect(screen.getByRole("button", { name: "Unlist" })).toBeInTheDocument();
   });
+
+  test("stacks each row's details and actions below the actions row on phones", async () => {
+    const host = user();
+    session.requireSession.mockResolvedValue(host);
+    await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+
+    render(await HostListingsPage(props()));
+
+    const row = screen.getByRole("listitem");
+    expect(row.className).toContain("flex-col");
+    expect(row.className).toContain("md:flex-row");
+  });
 });

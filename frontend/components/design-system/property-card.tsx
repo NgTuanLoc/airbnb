@@ -52,7 +52,7 @@ export function PropertyCard({
           type="button"
           aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
           onClick={onToggleSave}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center"
+          className="absolute right-0 top-0 z-10 flex size-14 items-center justify-center"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden
             fill={saved ? "var(--color-rausch)" : "var(--color-icon-scrim)"}

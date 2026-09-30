@@ -42,6 +42,8 @@ function MobileSearchDialog({ onClose }: { onClose: () => void }) {
   const form = useSearchForm();
   const [section, setSection] = useState<Section>("where");
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const whenHeaderRef = useRef<HTMLButtonElement>(null);
+  const focusWhenNext = useRef(false);
 
   // A native modal; it unmounts on close, so focus goes back by hand to the pill.
   useEffect(() => {
@@ -53,6 +55,15 @@ function MobileSearchDialog({ onClose }: { onClose: () => void }) {
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
   }, []);
+
+  // Picking a city unmounts the Where content (and the button that had focus) as the section
+  // switches to When, so focus would otherwise drop to <body>. Move it to the When header instead.
+  useEffect(() => {
+    if (section === "when" && focusWhenNext.current) {
+      focusWhenNext.current = false;
+      whenHeaderRef.current?.focus();
+    }
+  }, [section]);
 
   const summaries: Record<Section, string> = {
     where: form.destination || "Anywhere",
@@ -92,6 +103,7 @@ function MobileSearchDialog({ onClose }: { onClose: () => void }) {
               <h3>
                 <button
                   type="button"
+                  ref={key === "when" ? whenHeaderRef : undefined}
                   aria-expanded={section === key}
                   aria-controls={`mobile-search-${key}`}
                   onClick={() => setSection(key)}
@@ -110,6 +122,7 @@ function MobileSearchDialog({ onClose }: { onClose: () => void }) {
                       onChange={form.setDestination}
                       onSelect={(name) => {
                         form.setDestination(name);
+                        focusWhenNext.current = true;
                         setSection("when");
                       }}
                     />

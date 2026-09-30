@@ -44,6 +44,15 @@ describe("MobileNav", () => {
     expect(trigger).toHaveFocus();
   });
 
+  test("tapping the backdrop closes the sheet", async () => {
+    renderWithSession(<MobileNav active="homes" />, null);
+    const trigger = screen.getByRole("button", { name: "Open menu" });
+    await userEvent.click(trigger);
+    const sheet = screen.getByRole("dialog", { name: "Menu" });
+    await userEvent.click(sheet);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   test("choosing a link closes the sheet", async () => {
     renderWithSession(<MobileNav active="homes" />, null);
     await userEvent.click(screen.getByRole("button", { name: "Open menu" }));

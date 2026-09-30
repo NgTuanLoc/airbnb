@@ -54,6 +54,11 @@ describe("PropertyCard", () => {
     expect(heart.querySelector("svg")).toHaveAttribute("fill", "var(--color-rausch)");
   });
 
+  test("the heart has a 56px hit area around its visual icon", () => {
+    render(<PropertyCard listing={listing} saved onToggleSave={() => {}} />);
+    expect(screen.getByRole("button", { name: "Remove from wishlist" }).className).toContain("size-14");
+  });
+
   test("the photo zooms on hover without resizing the card", () => {
     render(<PropertyCard listing={listing} />);
     const img = screen.getByRole("img", { name: listing.title });

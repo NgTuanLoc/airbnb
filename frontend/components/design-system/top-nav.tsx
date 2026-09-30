@@ -36,7 +36,9 @@ export function TopNav({ active = "homes" }: { active?: Product }) {
         </Link>
         <AccountMenu />
       </div>
-      <MobileNav active={active} />
+      <nav aria-label="Main menu" className="md:hidden">
+        <MobileNav active={active} />
+      </nav>
     </header>
   );
 }

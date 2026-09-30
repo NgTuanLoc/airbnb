@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { render, screen } from "@/lib/test-utils";
+import { render, screen, within } from "@/lib/test-utils";
 import { TopNav } from "./top-nav";
 
 describe("TopNav", () => {
@@ -29,5 +29,12 @@ describe("TopNav", () => {
     expect(nav.className).toContain("md:flex");
     expect(screen.getByRole("link", { name: "Become a host" }).parentElement?.className).toContain("md:flex");
     expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+  });
+
+  test("the mobile menu sits in its own labelled nav landmark, hidden from md up", () => {
+    render(<TopNav active="homes" />);
+    const mobileNav = screen.getByRole("navigation", { name: "Main menu" });
+    expect(mobileNav.className).toContain("md:hidden");
+    expect(within(mobileNav).getByRole("button", { name: "Open menu" })).toBeInTheDocument();
   });
 });
