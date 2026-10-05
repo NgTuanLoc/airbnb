@@ -1,4 +1,15 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="aspire.config.json" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="dotnet-tools.json" />
+    <File Path="global.json" />
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.gitignore" />
+    <File Path="../CLAUDE.md" />
+    <File Path="../README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Airbnb.Api/Airbnb.Api.csproj" />
     <Project Path="src/Airbnb.AppHost/Airbnb.AppHost.csproj" />
