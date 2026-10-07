@@ -6,7 +6,7 @@ import { getRepositories } from "@/lib/repositories";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 
 export const POST = withErrorEnvelope(async (request: Request) => {
-  const user = sessionFromRequest(request);
+  const user = await sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, bookingRequestSchema);
   if ("error" in body) return body.error;

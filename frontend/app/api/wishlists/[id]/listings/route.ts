@@ -5,7 +5,7 @@ import { getRepositories } from "@/lib/repositories";
 import { addListingSchema } from "@/lib/wishlists/schemas";
 
 export const POST = withErrorEnvelope(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
-  const user = sessionFromRequest(request);
+  const user = await sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, addListingSchema);
   if ("error" in body) return body.error;

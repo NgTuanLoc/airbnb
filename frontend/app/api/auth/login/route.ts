@@ -1,12 +1,14 @@
 import { ok } from "@/lib/api/envelope";
-import { parseBody, withErrorEnvelope } from "@/lib/api/request";
+import { jsonError, parseBody, withErrorEnvelope } from "@/lib/api/request";
+import { clientIp } from "@/lib/auth/client-ip";
+import { getAuthGateway } from "@/lib/auth/gateway";
 import { loginSchema } from "@/lib/auth/schemas";
-import { sessionCookie, userFromCredentials } from "@/lib/auth/session";
+import { sessionCookie } from "@/lib/auth/session";
 
-// Mock auth: any valid email and password logs in; nothing is checked against stored credentials.
 export const POST = withErrorEnvelope(async (request: Request) => {
   const body = await parseBody(request, loginSchema);
   if ("error" in body) return body.error;
-  const user = userFromCredentials(body.data.email);
-  return Response.json(ok(user), { headers: { "Set-Cookie": sessionCookie(user) } });
+  const result = await getAuthGateway().login(body.data, { clientIp: clientIp(request) });
+  if (!result.ok) return jsonError(result.error, result.status);
+  return Response.json(ok(result.session.user), { headers: { "Set-Cookie": sessionCookie(result.session.token) } });
 });

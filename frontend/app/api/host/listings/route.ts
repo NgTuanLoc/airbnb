@@ -5,7 +5,7 @@ import { hostListingInputSchema } from "@/lib/host/schemas";
 import { getRepositories } from "@/lib/repositories";
 
 export const POST = withErrorEnvelope(async (request: Request) => {
-  const user = sessionFromRequest(request);
+  const user = await sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, hostListingInputSchema);
   if ("error" in body) return body.error;

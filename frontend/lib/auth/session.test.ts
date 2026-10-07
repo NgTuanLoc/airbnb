@@ -38,13 +38,13 @@ describe("session cookie", () => {
   });
 
   test("sets an httpOnly lax cookie for 7 days and clears it with Max-Age=0", () => {
-    expect(sessionCookie(user)).toBe(`${SESSION_COOKIE}=${encodeSession(user)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
+    expect(sessionCookie(encodeSession(user))).toBe(`${SESSION_COOKIE}=${encodeSession(user)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
     expect(clearedSessionCookie()).toBe(`${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
   });
 
-  test("reads the session from a request's cookie header among other cookies", () => {
+  test("reads the session from a request's cookie header among other cookies", async () => {
     const request = new Request("http://localhost/", { headers: { cookie: `theme=dark; ${SESSION_COOKIE}=${encodeSession(user)}; x=1` } });
-    expect(sessionFromRequest(request)).toEqual(user);
-    expect(sessionFromRequest(new Request("http://localhost/"))).toBeNull();
+    expect(await sessionFromRequest(request)).toEqual(user);
+    expect(await sessionFromRequest(new Request("http://localhost/"))).toBeNull();
   });
 });

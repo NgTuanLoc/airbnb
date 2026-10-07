@@ -5,13 +5,13 @@ import { getRepositories } from "@/lib/repositories";
 import { createWishlistSchema } from "@/lib/wishlists/schemas";
 
 export const GET = withErrorEnvelope(async (request: Request) => {
-  const user = sessionFromRequest(request);
+  const user = await sessionFromRequest(request);
   if (!user) return unauthorized();
   return Response.json(ok(await getRepositories().wishlists.listForUser(user.id)));
 });
 
 export const POST = withErrorEnvelope(async (request: Request) => {
-  const user = sessionFromRequest(request);
+  const user = await sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, createWishlistSchema);
   if ("error" in body) return body.error;

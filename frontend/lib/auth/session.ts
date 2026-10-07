@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { User } from "@/lib/types";
+import { getAuthGateway } from "./gateway";
 
 export const SESSION_COOKIE = "session";
 const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
@@ -28,19 +29,35 @@ export function decodeSession(value: string | undefined): User | null {
   }
 }
 
-export function sessionCookie(user: User): string {
-  return `${SESSION_COOKIE}=${encodeSession(user)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SECONDS}`;
+export function sessionCookie(token: string): string {
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SECONDS}`;
 }
 
 export function clearedSessionCookie(): string {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-/** The session of a route handler's request. */
-export function sessionFromRequest(request: Request): User | null {
+/** The session token in a request's cookie header, if any. */
+export function cookieValue(request: Request): string | undefined {
   const entry = (request.headers.get("cookie") ?? "")
     .split(";")
     .map((part) => part.trim())
     .find((part) => part.startsWith(`${SESSION_COOKIE}=`));
-  return decodeSession(entry?.slice(SESSION_COOKIE.length + 1));
+  return entry?.slice(SESSION_COOKIE.length + 1) || undefined;
+}
+
+/** The session of a route handler's request; a backend outage reads as logged out (plan ruling). */
+export async function sessionFromRequest(request: Request): Promise<User | null> {
+  const token = cookieValue(request);
+  return token ? userForToken(token) : null;
+}
+
+/** The user for a session token through the auth gateway; null when unknown, expired or unreachable. */
+export async function userForToken(token: string): Promise<User | null> {
+  try {
+    return await getAuthGateway().me(token);
+  } catch (error) {
+    console.error("Reading the session failed", error);
+    return null;
+  }
 }
