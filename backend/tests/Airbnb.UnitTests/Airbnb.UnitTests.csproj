@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\Identity\Airbnb.Modules.Identity\Airbnb.Modules.Identity.csproj" />
     <ProjectReference Include="..\..\src\Airbnb.Api\Airbnb.Api.csproj" />
     <ProjectReference Include="..\..\src\Airbnb.MigrationService\Airbnb.MigrationService.csproj" />
     <ProjectReference Include="..\..\src\Airbnb.SharedKernel\Airbnb.SharedKernel.csproj" />

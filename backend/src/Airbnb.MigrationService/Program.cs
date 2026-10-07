@@ -1,6 +1,7 @@
 using Airbnb.MigrationService;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Identity;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
@@ -16,6 +17,7 @@ builder.AddHostsModuleDatabase();
 builder.AddExperiencesModuleDatabase();
 builder.AddServicesModuleDatabase();
 builder.AddReviewsModuleDatabase();
+builder.AddIdentityModuleDatabase();
 
 builder.Services.AddHostedService<MigrationWorker>();
 

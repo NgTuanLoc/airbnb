@@ -25,6 +25,9 @@
   <Folder Name="/src/Modules/Hosts/">
     <Project Path="src/Modules/Hosts/Airbnb.Modules.Hosts/Airbnb.Modules.Hosts.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Airbnb.Modules.Identity/Airbnb.Modules.Identity.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Reviews/">
     <Project Path="src/Modules/Reviews/Airbnb.Modules.Reviews/Airbnb.Modules.Reviews.csproj" />
     <Project Path="src/Modules/Reviews/Airbnb.Modules.Reviews.Contracts/Airbnb.Modules.Reviews.Contracts.csproj" />

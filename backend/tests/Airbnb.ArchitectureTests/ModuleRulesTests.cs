@@ -2,6 +2,7 @@ using System.Reflection;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Identity;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Reviews.Contracts;
 using Airbnb.Modules.Services;
@@ -16,6 +17,7 @@ public sealed class ModuleRulesTests
     {
         ["Airbnb.Modules.Experiences"] = typeof(ExperiencesModule),
         ["Airbnb.Modules.Hosts"] = typeof(HostsModule),
+        ["Airbnb.Modules.Identity"] = typeof(IdentityModule),
         ["Airbnb.Modules.Reviews"] = typeof(ReviewsModule),
         ["Airbnb.Modules.Services"] = typeof(ServicesModule),
         ["Airbnb.Modules.Stays"] = typeof(StaysModule),

@@ -4,6 +4,7 @@ using Airbnb.Api.RateLimiting;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
+using Airbnb.Modules.Identity;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Reviews.Contracts;
 using Airbnb.Modules.Services;
@@ -44,6 +45,7 @@ builder.AddHostsModule();
 builder.AddExperiencesModule();
 builder.AddServicesModule();
 builder.AddReviewsModule();
+builder.AddIdentityModule();
 
 // The one write flow (spec §3): a review and its ReviewSubmitted event commit in one Postgres transaction (outbox),
 // then Wolverine relays the event to a durable RabbitMQ queue that this API also listens on (durable inbox).
@@ -102,5 +104,6 @@ api.MapHostsEndpoints();
 api.MapExperiencesEndpoints();
 api.MapServicesEndpoints();
 api.MapReviewsEndpoints();
+api.MapIdentityEndpoints();
 
 app.Run();
