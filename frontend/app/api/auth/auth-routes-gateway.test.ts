@@ -24,6 +24,26 @@ describe("auth routes over the gateway", () => {
     expect(response.headers.get("set-cookie")).toMatch(/^session=tok_abc; Path=\/; HttpOnly; SameSite=Lax; Max-Age=604800$/);
   });
 
+  test("login revokes the session the request already carried, and a revoke failure never fails the login", async () => {
+    gateway.login.mockResolvedValue(okSession);
+    gateway.logout.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("down"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const attempt = (cookie: string) => login(jsonRequest("http://localhost/api/auth/login", "POST", { email: "ana@example.com", password: "pw-12345" }, cookie));
+
+    expect((await attempt("session=tok_old")).status).toBe(200);
+    expect(gateway.logout).toHaveBeenCalledWith("tok_old", { clientIp: undefined });
+    expect((await attempt("session=tok_older")).status).toBe(200);
+    gateway.logout.mockClear();
+    await attempt("session=tok_abc");
+    expect(gateway.logout).not.toHaveBeenCalled();
+  });
+
+  test("register revokes the session the request already carried", async () => {
+    gateway.register.mockResolvedValueOnce(okSession);
+    await register(jsonRequest("http://localhost/api/auth/register", "POST", { name: "Ana", email: "ana@example.com", password: "pw-12345", confirmPassword: "pw-12345" }, "session=tok_old"));
+    expect(gateway.logout).toHaveBeenCalledWith("tok_old", { clientIp: undefined });
+  });
+
   test("a refused login keeps the gateway's status and message and sets no cookie", async () => {
     gateway.login.mockResolvedValueOnce({ ok: false, status: 401, error: "Email or password is incorrect" });
     const response = await login(jsonRequest("http://localhost/api/auth/login", "POST", { email: "ana@example.com", password: "pw-12345" }));
@@ -43,7 +63,7 @@ describe("auth routes over the gateway", () => {
   test("logout revokes the cookie's token and clears the cookie", async () => {
     gateway.logout.mockResolvedValueOnce(undefined);
     const response = await logout(jsonRequest("http://localhost/api/auth/logout", "POST", undefined, "session=tok_abc"));
-    expect(gateway.logout).toHaveBeenCalledWith("tok_abc");
+    expect(gateway.logout).toHaveBeenCalledWith("tok_abc", { clientIp: undefined });
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
   });
 
@@ -58,8 +78,9 @@ describe("auth routes over the gateway", () => {
   test("session reads the user through the gateway, and a backend outage reads as logged out", async () => {
     gateway.me.mockResolvedValueOnce(user).mockRejectedValueOnce(new Error("down"));
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const request = () => new Request("http://localhost/api/auth/session", { headers: { cookie: "session=tok_abc" } });
+    const request = () => new Request("http://localhost/api/auth/session", { headers: { cookie: "session=tok_abc", "x-forwarded-for": "203.0.113.7" } });
     expect(await (await session(request())).json()).toEqual({ success: true, data: user });
+    expect(gateway.me).toHaveBeenCalledWith("tok_abc", { clientIp: "203.0.113.7" });
     expect(await (await session(request())).json()).toEqual({ success: true, data: null });
   });
 });

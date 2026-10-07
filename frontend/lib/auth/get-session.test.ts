@@ -4,7 +4,8 @@ import { encodeSession, sessionCookie, userFromCredentials } from "./session";
 import { getSession, requireSession } from "./get-session";
 
 const cookieStore = vi.hoisted(() => ({ get: vi.fn() }));
-vi.mock("next/headers", () => ({ cookies: () => Promise.resolve(cookieStore) }));
+const headerStore = vi.hoisted(() => ({ get: vi.fn() }));
+vi.mock("next/headers", () => ({ cookies: () => Promise.resolve(cookieStore), headers: () => Promise.resolve(headerStore) }));
 
 const redirect = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ redirect }));
@@ -25,6 +26,16 @@ describe("getSession", () => {
     await expect(getSession()).resolves.toBeNull();
     expect(log).toHaveBeenCalledWith("Reading the session failed", failure);
     log.mockRestore();
+  });
+
+  test("forwards the client ip from x-forwarded-for to the gateway", async () => {
+    cookieStore.get.mockReturnValue({ value: "tok_abc" });
+    headerStore.get.mockReturnValue("203.0.113.7, 10.0.0.1");
+    const me = vi.fn().mockResolvedValueOnce(null);
+    gatewayModule.getAuthGateway.mockReturnValueOnce({ me });
+    await getSession();
+    expect(headerStore.get).toHaveBeenCalledWith("x-forwarded-for");
+    expect(me).toHaveBeenCalledWith("tok_abc", { clientIp: "10.0.0.1" });
   });
 
   test("reads the user from the session cookie", async () => {

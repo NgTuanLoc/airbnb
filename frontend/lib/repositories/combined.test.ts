@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { hostListingInputSchema } from "@/lib/host/schemas";
 import { validInput } from "@/lib/host/test-fixtures";
 import { mockHostListingRepository } from "./mock/mock-host-listing-repository";
@@ -53,5 +53,13 @@ describe("combineHosts", () => {
     expect((await hosts.findById(id))?.name).toBe("Ana");
     expect((await hosts.findById("h1"))?.id).toBe("h1");
     expect(await hosts.findById("u-nobody@example.com")).toBeNull();
+  });
+
+  test("a profile stored for a real account id resolves without asking the catalog", async () => {
+    await mockHostProfileRepository.upsertFromUser({ id: "usr_abc", name: "Real", email: "real@example.com" });
+    const catalog = { findById: vi.fn() };
+
+    expect((await combineHosts(catalog, mockHostProfileRepository).findById("usr_abc"))?.name).toBe("Real");
+    expect(catalog.findById).not.toHaveBeenCalled();
   });
 });

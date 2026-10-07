@@ -66,6 +66,28 @@ describe("createHttpAuthGateway", () => {
     expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("authorization")).toBe("Bearer tok_abc");
   });
 
+  test("me and logout forward the client ip, and logout throws on a non-2xx answer", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(json(200, { success: true, data: user }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(json(429, { success: false, error: "Too Many Requests" }));
+    const gateway = createHttpAuthGateway(base);
+    const context = { clientIp: "203.0.113.7" };
+
+    await gateway.me("tok_abc", context);
+    await gateway.logout("tok_abc", context);
+    await expect(gateway.logout("tok_abc", context)).rejects.toThrow("POST /api/auth/logout failed with 429");
+
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get("x-forwarded-for")).toBe("203.0.113.7");
+    expect(new Headers(fetchMock.mock.calls[1][1]?.headers).get("x-forwarded-for")).toBe("203.0.113.7");
+  });
+
+  test("a 429 with the throttle message reaches the caller", async () => {
+    const error = "Too many failed attempts. Try again in a few minutes.";
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(json(429, { success: false, error }));
+    expect(await createHttpAuthGateway(base).login({ email: "a@b.co", password: "pw-12345" })).toEqual({ ok: false, status: 429, error });
+  });
+
   test("a network failure throws with the path", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new TypeError("fetch failed"));
     await expect(createHttpAuthGateway(base).me("tok")).rejects.toThrow("GET /api/auth/me failed: fetch failed");

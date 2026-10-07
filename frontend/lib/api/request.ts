@@ -14,6 +14,9 @@ export async function parseBody<T extends z.ZodType>(
   request: Request,
   schema: T,
 ): Promise<{ data: z.infer<T> } | { error: Response }> {
+  if (!request.headers.get("content-type")?.startsWith("application/json")) {
+    return { error: jsonError("Request body must be JSON", 415) };
+  }
   let body: unknown;
   try {
     body = await request.json();

@@ -47,12 +47,13 @@ export function createHttpAuthGateway(baseUrl: string): AuthGateway {
   return {
     register: (input, context) => authenticate(baseUrl, "/api/auth/register", input, context),
     login: (input, context) => authenticate(baseUrl, "/api/auth/login", input, context),
-    async logout(token) {
-      const response = await send(baseUrl, "POST", "/api/auth/logout", { headers: headers(undefined, token) });
+    async logout(token, context) {
+      const response = await send(baseUrl, "POST", "/api/auth/logout", { headers: headers(context, token) });
       await response.body?.cancel();
+      if (!response.ok) throw new Error(`POST /api/auth/logout failed with ${response.status}`);
     },
-    async me(token): Promise<User | null> {
-      const response = await send(baseUrl, "GET", "/api/auth/me", { headers: headers(undefined, token) });
+    async me(token, context): Promise<User | null> {
+      const response = await send(baseUrl, "GET", "/api/auth/me", { headers: headers(context, token) });
       if (response.status === 401) {
         await response.body?.cancel();
         return null;

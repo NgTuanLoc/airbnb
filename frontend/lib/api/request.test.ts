@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test, vi } from "vitest";
-import { withErrorEnvelope } from "./request";
+import { z } from "zod";
+import { parseBody, withErrorEnvelope } from "./request";
 
 describe("withErrorEnvelope", () => {
   test("passes a handler's response through", async () => {
@@ -21,5 +22,23 @@ describe("withErrorEnvelope", () => {
     expect(await response.json()).toEqual({ success: false, error: "Something went wrong. Try again." });
     expect(log).toHaveBeenCalled();
     log.mockRestore();
+  });
+});
+
+describe("parseBody", () => {
+  const schema = z.object({ a: z.string() });
+  const post = (contentType?: string) =>
+    new Request("http://localhost/api/x", { method: "POST", headers: contentType ? { "content-type": contentType } : {}, body: '{"a":"b"}' });
+
+  test("refuses a body that is not declared as JSON with a 415, so a text/plain form post cannot reach a handler", async () => {
+    for (const type of [undefined, "text/plain", "application/x-www-form-urlencoded"]) {
+      const result = await parseBody(post(type), schema);
+      expect("error" in result && result.error.status).toBe(415);
+    }
+  });
+
+  test("accepts application/json, with or without a charset", async () => {
+    expect(await parseBody(post("application/json"), schema)).toEqual({ data: { a: "b" } });
+    expect(await parseBody(post("application/json; charset=utf-8"), schema)).toEqual({ data: { a: "b" } });
   });
 });

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   SESSION_COOKIE,
   clearedSessionCookie,
@@ -40,6 +40,15 @@ describe("session cookie", () => {
   test("sets an httpOnly lax cookie for 7 days and clears it with Max-Age=0", () => {
     expect(sessionCookie(encodeSession(user))).toBe(`${SESSION_COOKIE}=${encodeSession(user)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
     expect(clearedSessionCookie()).toBe(`${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+  });
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  test("adds Secure to both cookies in production only", () => {
+    expect(sessionCookie("tok")).not.toContain("Secure");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(sessionCookie("tok")).toMatch(/; Max-Age=604800; Secure$/);
+    expect(clearedSessionCookie()).toMatch(/; Max-Age=0; Secure$/);
   });
 
   test("reads the session from a request's cookie header among other cookies", async () => {

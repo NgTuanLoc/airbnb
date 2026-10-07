@@ -16,7 +16,7 @@ export function combineListings(catalog: ListingRepository, hostListings: HostLi
   };
 }
 
-/** Hosts: users who host (ids "u-…") come from host profiles, everyone else from the catalog. */
+/** Hosts: a host profile (account ids are opaque) wins; everyone else comes from the catalog. */
 export function combineHosts(catalog: HostRepository, profiles: HostProfileRepository): HostRepository {
-  return { findById: (id) => (id.startsWith("u-") ? profiles.findById(id) : catalog.findById(id)) };
+  return { findById: async (id) => (await profiles.findById(id)) ?? catalog.findById(id) };
 }
