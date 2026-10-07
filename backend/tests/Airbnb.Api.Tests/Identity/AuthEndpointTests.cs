@@ -209,4 +209,21 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
 
         Assert.Equal(HttpStatusCode.Unauthorized, me.StatusCode);
     }
+
+    [Fact]
+    public async Task Concurrent_requests_with_the_same_expired_token_all_get_401()
+    {
+        var clock = new MutableTimeProvider(DateTimeOffset.UtcNow);
+        await using var factory = new ApiFactory(infrastructure).WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(clock)));
+        using var client = factory.CreateClient();
+        using var registered = await RegisterAsync(client, NewEmail());
+        var token = (await DataAsync(registered)).GetProperty("token").GetString()!;
+
+        clock.Now = clock.Now.AddDays(7).AddSeconds(1);
+        var responses = await Task.WhenAll(MeAsync(client, token), MeAsync(client, token), MeAsync(client, token));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.Unauthorized, r.StatusCode));
+        foreach (var response in responses) response.Dispose();
+    }
 }

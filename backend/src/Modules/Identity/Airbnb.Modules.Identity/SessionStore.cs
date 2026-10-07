@@ -26,8 +26,11 @@ internal static class SessionStore
     {
         var header = request.Headers.Authorization.ToString();
         const string prefix = "Bearer ";
-        return header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && header.Length > prefix.Length
-            ? header[prefix.Length..].Trim()
-            : null;
+        if (!header.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+        var token = header[prefix.Length..].Trim();
+        return token.Length > 0 ? token : null;
     }
 }

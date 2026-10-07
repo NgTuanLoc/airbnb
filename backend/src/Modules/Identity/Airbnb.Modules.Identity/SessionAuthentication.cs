@@ -32,7 +32,7 @@ internal sealed class SessionAuthenticationHandler(
         }
 
         var hash = SessionTokens.Hash(token);
-        var session = await db.Sessions.Include(s => s.User).SingleOrDefaultAsync(s => s.TokenHash == hash, Context.RequestAborted);
+        var session = await db.Sessions.AsNoTracking().Include(s => s.User).SingleOrDefaultAsync(s => s.TokenHash == hash, Context.RequestAborted);
         if (session is null)
         {
             return AuthenticateResult.NoResult();
@@ -40,8 +40,7 @@ internal sealed class SessionAuthenticationHandler(
         if (session.ExpiresAt <= time.GetUtcNow())
         {
             // ponytail: expired rows are deleted only when presented; add a scheduled purge if the table grows.
-            db.Sessions.Remove(session);
-            await db.SaveChangesAsync(Context.RequestAborted);
+            await db.Sessions.Where(s => s.TokenHash == hash).ExecuteDeleteAsync(Context.RequestAborted);
             return AuthenticateResult.NoResult();
         }
 
