@@ -1,6 +1,7 @@
+import { withErrorEnvelope } from "@/lib/api/request";
 import { ok } from "@/lib/api/envelope";
 import { sessionFromRequest } from "@/lib/auth/session";
 
-export async function GET(request: Request): Promise<Response> {
+export const GET = withErrorEnvelope(async (request: Request) => {
   return Response.json(ok(sessionFromRequest(request)));
-}
+});

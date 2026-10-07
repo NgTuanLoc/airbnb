@@ -60,7 +60,7 @@ describe("POST /api/auth/register", () => {
 });
 
 test("POST /api/auth/logout clears the cookie", async () => {
-  const res = await logout();
+  const res = await logout(new Request("http://localhost/api/auth/logout", { method: "POST" }));
 
   expect(res.status).toBe(200);
   expect(res.headers.get("set-cookie")).toBe(`${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);

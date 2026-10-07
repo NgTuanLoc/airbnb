@@ -25,3 +25,17 @@ export async function parseBody<T extends z.ZodType>(
     ? { data: parsed.data }
     : { error: jsonError(parsed.error.issues[0]?.message ?? "Invalid request", 400) };
 }
+
+/** Route handlers never answer with a bare 500: anything thrown becomes the error envelope (and is logged here). */
+export function withErrorEnvelope<A extends unknown[]>(
+  handler: (request: Request, ...rest: A) => Promise<Response>,
+): (request: Request, ...rest: A) => Promise<Response> {
+  return async (request, ...rest) => {
+    try {
+      return await handler(request, ...rest);
+    } catch (error) {
+      console.error(`${request.method} ${new URL(request.url).pathname} failed`, error);
+      return jsonError("Something went wrong. Try again.", 500);
+    }
+  };
+}

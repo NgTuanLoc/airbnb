@@ -1,11 +1,11 @@
 import { ok } from "@/lib/api/envelope";
-import { jsonError, parseBody, unauthorized } from "@/lib/api/request";
+import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
 import { getRepositories } from "@/lib/repositories";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withErrorEnvelope(async (request: Request) => {
   const user = sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, bookingRequestSchema);
@@ -26,4 +26,4 @@ export async function POST(request: Request): Promise<Response> {
   const booking = await repos.bookings.create(user.id, { listingId, checkIn, checkOut, guests: { adults, children }, priceBreakdown });
   if (booking === "unavailable") return jsonError("Those dates are no longer available", 409);
   return Response.json(ok(booking), { status: 201 });
-}
+});

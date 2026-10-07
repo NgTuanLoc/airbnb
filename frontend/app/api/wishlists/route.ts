@@ -1,16 +1,16 @@
 import { ok } from "@/lib/api/envelope";
-import { jsonError, parseBody, unauthorized } from "@/lib/api/request";
+import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { getRepositories } from "@/lib/repositories";
 import { createWishlistSchema } from "@/lib/wishlists/schemas";
 
-export async function GET(request: Request): Promise<Response> {
+export const GET = withErrorEnvelope(async (request: Request) => {
   const user = sessionFromRequest(request);
   if (!user) return unauthorized();
   return Response.json(ok(await getRepositories().wishlists.listForUser(user.id)));
-}
+});
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withErrorEnvelope(async (request: Request) => {
   const user = sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, createWishlistSchema);
@@ -25,4 +25,4 @@ export async function POST(request: Request): Promise<Response> {
   const created = await repos.wishlists.create(user.id, name);
   const wishlist = listingId ? await repos.wishlists.addListing(user.id, created.id, listingId) : created;
   return Response.json(ok(wishlist), { status: 201 });
-}
+});

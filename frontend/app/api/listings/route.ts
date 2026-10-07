@@ -1,3 +1,4 @@
+import { withErrorEnvelope } from "@/lib/api/request";
 import { getRepositories } from "@/lib/repositories";
 import { ok } from "@/lib/api/envelope";
 
@@ -7,7 +8,7 @@ function num(value: string | null): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export async function GET(request: Request): Promise<Response> {
+export const GET = withErrorEnvelope(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const data = await getRepositories().listings.findAll({
     location: searchParams.get("location") ?? undefined,
@@ -20,4 +21,4 @@ export async function GET(request: Request): Promise<Response> {
     baths: num(searchParams.get("baths")),
   });
   return Response.json(ok(data, { total: data.length, page: 1, limit: data.length }));
-}
+});

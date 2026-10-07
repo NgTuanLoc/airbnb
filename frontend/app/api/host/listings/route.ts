@@ -1,10 +1,10 @@
 import { ok } from "@/lib/api/envelope";
-import { parseBody, unauthorized } from "@/lib/api/request";
+import { parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { hostListingInputSchema } from "@/lib/host/schemas";
 import { getRepositories } from "@/lib/repositories";
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withErrorEnvelope(async (request: Request) => {
   const user = sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, hostListingInputSchema);
@@ -14,4 +14,4 @@ export async function POST(request: Request): Promise<Response> {
   await repos.hostProfiles.upsertFromUser(user);
   const listing = await repos.hostListings.create(user.id, body.data);
   return Response.json(ok(listing), { status: 201 });
-}
+});

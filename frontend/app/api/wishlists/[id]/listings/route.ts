@@ -1,10 +1,10 @@
 import { ok } from "@/lib/api/envelope";
-import { jsonError, parseBody, unauthorized } from "@/lib/api/request";
+import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { getRepositories } from "@/lib/repositories";
 import { addListingSchema } from "@/lib/wishlists/schemas";
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+export const POST = withErrorEnvelope(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const user = sessionFromRequest(request);
   if (!user) return unauthorized();
   const body = await parseBody(request, addListingSchema);
@@ -17,4 +17,4 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const wishlist = await repos.wishlists.addListing(user.id, id, body.data.listingId);
   return wishlist ? Response.json(ok(wishlist)) : jsonError("Wishlist not found", 404);
-}
+});
