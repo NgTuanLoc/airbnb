@@ -596,6 +596,7 @@ One implementation plan per phase. Each phase updates `README.md` and
    update and cache invalidation; end-to-end integration test.
    *Done when:* a submitted review updates the listing's rating and appears as
    one trace in the dashboard.
+5. **Identity** — Phase 5 (identity): see `2026-10-07-backend-identity-design.md`.
 
 ## 10. Risks and mitigations
 
