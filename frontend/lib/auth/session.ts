@@ -13,7 +13,7 @@ export function userFromCredentials(email: string, name?: string): User {
   return { id: `u-${normalized}`, name: name?.trim() || normalized.split("@")[0], email: normalized };
 }
 
-// Deliberately unsigned: this is a mock session and no real credentials exist (spec §1).
+// The mock gateway's token format (dev/test only). Deliberately unsigned: no real credentials exist in mock mode.
 export function encodeSession(user: User): string {
   return Buffer.from(JSON.stringify(user), "utf8").toString("base64url");
 }

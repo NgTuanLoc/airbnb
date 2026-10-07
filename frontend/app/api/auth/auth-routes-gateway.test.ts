@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { POST as login } from "./login/route";
 import { POST as register } from "./register/route";
 import { POST as logout } from "./logout/route";
@@ -14,6 +14,7 @@ const okSession = { ok: true, session: { user, token: "tok_abc", expiresAt: "203
 
 describe("auth routes over the gateway", () => {
   beforeEach(() => Object.values(gateway).forEach((fn) => fn.mockReset()));
+  afterEach(() => vi.restoreAllMocks());
 
   test("login sets the cookie to the gateway token and returns the user", async () => {
     gateway.login.mockResolvedValueOnce(okSession);

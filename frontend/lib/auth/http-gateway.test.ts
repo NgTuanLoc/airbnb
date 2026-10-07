@@ -43,6 +43,11 @@ describe("createHttpAuthGateway", () => {
     await expect(gateway.login({ email: "a@b.co", password: "pw-12345" })).rejects.toThrow("invalid payload");
   });
 
+  test("a token that is not base64url is an invalid payload", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(json(200, { success: true, data: { ...session, token: "abc; Domain=evil.example" } }));
+    await expect(createHttpAuthGateway(base).login({ email: "a@b.co", password: "pw-12345" })).rejects.toThrow("invalid payload");
+  });
+
   test("me sends the bearer token, returns the user, and null on 401", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(json(200, { success: true, data: user }))

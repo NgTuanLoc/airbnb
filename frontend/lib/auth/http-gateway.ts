@@ -8,7 +8,7 @@ const REQUEST_TIMEOUT_MS = 5_000;
 const USER_FACING_STATUSES = new Set([400, 401, 409, 429]);
 
 const userSchema = z.object({ id: z.string().min(1), name: z.string().min(1), email: z.email() });
-const sessionSchema = z.object({ user: userSchema, token: z.string().min(1), expiresAt: z.string().min(1) });
+const sessionSchema = z.object({ user: userSchema, token: z.string().regex(/^[A-Za-z0-9_-]+$/), expiresAt: z.string().min(1) });
 
 function headers(context?: RequestContext, token?: string): HeadersInit {
   const result: Record<string, string> = { "content-type": "application/json" };
