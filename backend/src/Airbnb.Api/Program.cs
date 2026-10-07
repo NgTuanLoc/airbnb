@@ -10,6 +10,7 @@ using Airbnb.Modules.Reviews.Contracts;
 using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
 using Airbnb.Modules.Stays.Contracts;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
 using Scalar.AspNetCore;
@@ -78,7 +79,13 @@ builder.UseWolverine(options =>
         .Then.MoveToErrorQueue();
 });
 
+// The browser's IP arrives as X-Forwarded-For from the Next.js server; the defaults trust only loopback proxies,
+// which is where Aspire runs Next. Behind other proxies, add them to KnownProxies/KnownNetworks.
+builder.Services.Configure<ForwardedHeadersOptions>(options => options.ForwardedHeaders = ForwardedHeaders.XForwardedFor);
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // A malformed request (an unparsable JSON body, "?page=abc") is the client's fault: keep its 400 instead of the default 500.
 app.UseExceptionHandler(new ExceptionHandlerOptions

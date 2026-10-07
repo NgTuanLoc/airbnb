@@ -29,8 +29,7 @@ internal static class ApiRateLimiting
                 }
 
                 var isRead = HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method);
-                // ponytail: keyed by client IP. Behind the Next.js server every browser shares its IP (spec §2);
-                // forward client IPs from Next to make this per-user.
+                // The browser's IP: UseForwardedHeaders resolves X-Forwarded-For from the local Next.js server.
                 var client = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
                 return RateLimitPartition.GetFixedWindowLimiter(
