@@ -18,41 +18,54 @@ internal static class Login
         [property: Required, StringLength(254)] string? Email,
         [property: Required, StringLength(128)] string? Password);
 
-    internal sealed class Handler(IdentityDbContext db, IPasswordHasher<User> hasher, TimeProvider time)
+    internal sealed class Handler(IdentityDbContext db, IPasswordHasher<User> hasher, TimeProvider time, LoginThrottle throttle)
     {
         // A real hash to verify against when the email is unknown, so both failures take the same time (spec §1).
         private static readonly Lazy<string> DummyHash = new(() =>
             new PasswordHasher<User>().HashPassword(null!, Guid.NewGuid().ToString()));
 
-        // Null when the email or password is wrong.
-        public async Task<AuthSessionDto?> HandleAsync(Command command, CancellationToken cancellationToken)
+        // Session null when the email or password is wrong; Blocked when the email has too many recent failures.
+        public async Task<(AuthSessionDto? Session, bool Blocked)> HandleAsync(Command command, CancellationToken cancellationToken)
         {
             var email = Emails.Normalize(command.Email!);
+            if (throttle.IsBlocked(email))
+            {
+                return (null, true);
+            }
+
             var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email, cancellationToken);
             if (user is null)
             {
                 hasher.VerifyHashedPassword(null!, DummyHash.Value, command.Password!);
-                return null;
+                throttle.RecordFailure(email);
+                return (null, false);
             }
 
             var result = hasher.VerifyHashedPassword(user, user.PasswordHash, command.Password!);
             if (result == PasswordVerificationResult.Failed)
             {
-                return null;
+                throttle.RecordFailure(email);
+                return (null, false);
             }
+            throttle.Reset(email);
             if (result == PasswordVerificationResult.SuccessRehashNeeded)
             {
                 user.PasswordHash = hasher.HashPassword(user, command.Password!);
             }
 
-            return await SessionStore.StartAsync(db, user, time, cancellationToken);
+            return (await SessionStore.StartAsync(db, user, time, cancellationToken), false);
         }
     }
 
+    internal const string TooManyAttempts = "Too many failed attempts. Try again in a few minutes.";
+
     internal static void Map(IEndpointRouteBuilder api) =>
-        api.MapPost("/auth/login", async Task<Results<Ok<ApiResponse<AuthSessionDto>>, UnauthorizedHttpResult, JsonHttpResult<ApiResponse<object>>>> (
+        api.MapPost("/auth/login", async Task<Results<Ok<ApiResponse<AuthSessionDto>>, JsonHttpResult<ApiResponse<object>>>> (
             Command command, Handler handler, CancellationToken cancellationToken) =>
-            await handler.HandleAsync(command, cancellationToken) is { } session
-                ? TypedResults.Ok(ApiResponse.Ok(session))
-                : TypedResults.Json(ApiResponse.Fail(InvalidCredentials), statusCode: StatusCodes.Status401Unauthorized));
+            await handler.HandleAsync(command, cancellationToken) switch
+            {
+                (_, true) => TypedResults.Json(ApiResponse.Fail(TooManyAttempts), statusCode: StatusCodes.Status429TooManyRequests),
+                ({ } session, _) => TypedResults.Ok(ApiResponse.Ok(session)),
+                _ => TypedResults.Json(ApiResponse.Fail(InvalidCredentials), statusCode: StatusCodes.Status401Unauthorized),
+            });
 }

@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Airbnb.Api.Tests.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -225,5 +226,98 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
 
         Assert.All(responses, r => Assert.Equal(HttpStatusCode.Unauthorized, r.StatusCode));
         foreach (var response in responses) response.Dispose();
+    }
+
+    private const string ThrottleMessage = "Too many failed attempts. Try again in a few minutes.";
+
+    private WebApplicationFactory<Program> ThrottleFactory(MutableTimeProvider clock) =>
+        new ApiFactory(infrastructure).WithWebHostBuilder(builder => builder
+            .UseSetting("RateLimiting:WritesPerMinute", "1000")
+            .ConfigureTestServices(services => services.AddSingleton<TimeProvider>(clock)));
+
+    private static async Task FailLoginsAsync(HttpClient client, string email, int times)
+    {
+        for (var i = 0; i < times; i++)
+        {
+            using var response = await LoginAsync(client, email, "wrong-password");
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Ten_failed_logins_block_the_email_even_with_the_correct_password()
+    {
+        await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        using var registered = await RegisterAsync(client, email);
+        await FailLoginsAsync(client, email, 10);
+
+        using var blocked = await LoginAsync(client, email, "correct-horse");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, blocked.StatusCode);
+        var body = await blocked.Content.ReadFromJsonAsync<JsonElement>(Ct);
+        Assert.Equal(ThrottleMessage, body.GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public async Task Failed_logins_for_unknown_emails_are_throttled_too()
+    {
+        await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        await FailLoginsAsync(client, email, 10);
+
+        using var blocked = await LoginAsync(client, email, "wrong-password");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, blocked.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_throttle_of_one_email_leaves_another_email_alone()
+    {
+        await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));
+        using var client = factory.CreateClient();
+        var blockedEmail = NewEmail();
+        var otherEmail = NewEmail();
+        using var registered = await RegisterAsync(client, otherEmail);
+        await FailLoginsAsync(client, blockedEmail, 10);
+
+        using var login = await LoginAsync(client, otherEmail, "correct-horse");
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_correct_password_works_again_after_the_window_passes()
+    {
+        var clock = new MutableTimeProvider(DateTimeOffset.UtcNow);
+        await using var factory = ThrottleFactory(clock);
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        using var registered = await RegisterAsync(client, email);
+        await FailLoginsAsync(client, email, 10);
+
+        clock.Now = clock.Now.AddMinutes(15).AddSeconds(1);
+        using var login = await LoginAsync(client, email, "correct-horse");
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_successful_login_resets_the_failure_count()
+    {
+        await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        using var registered = await RegisterAsync(client, email);
+        await FailLoginsAsync(client, email, 9);
+        using var success = await LoginAsync(client, email, "correct-horse");
+        Assert.Equal(HttpStatusCode.OK, success.StatusCode);
+        await FailLoginsAsync(client, email, 9);
+
+        using var login = await LoginAsync(client, email, "correct-horse");
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
     }
 }

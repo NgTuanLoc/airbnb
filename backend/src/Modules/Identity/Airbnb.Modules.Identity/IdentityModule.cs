@@ -18,6 +18,8 @@ public static class IdentityModule
         // The validation generator only registers request types for AddValidation() calls in this assembly.
         builder.Services.AddValidation();
         builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<LoginThrottle>();
         builder.Services.AddScoped<Register.Handler>();
         builder.Services.AddScoped<Login.Handler>();
         builder.Services
