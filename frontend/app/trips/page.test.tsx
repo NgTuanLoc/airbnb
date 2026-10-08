@@ -24,8 +24,8 @@ describe("TripsPage", () => {
   test("lists an upcoming trip linking to its page", async () => {
     const guest = user();
     session.requireSession.mockResolvedValue(guest);
-    const booking = await getRepositories().bookings.create(guest.id, {
-      listingId: "l1", checkIn: "2031-07-01", checkOut: "2031-07-04", guests: { adults: 1, children: 0 },
+    const booking = await getRepositories().bookings.create({ id: guest.id, name: guest.name, email: guest.email }, {
+      listingId: "l1", hostId: "h1", checkIn: "2031-07-01", checkOut: "2031-07-04", guests: { adults: 1, children: 0 },
       priceBreakdown: calculatePriceBreakdown(100, 3),
     });
     if (booking === "unavailable") throw new Error("unexpected");

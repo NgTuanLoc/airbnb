@@ -11,8 +11,8 @@ import TripPage from "./page";
 const user = () => ({ id: `u-${crypto.randomUUID()}`, name: "ana", email: "ana@example.com" });
 
 async function bookFor(userId: string, checkIn: string, checkOut: string) {
-  const booking = await getRepositories().bookings.create(userId, {
-    listingId: "l1", checkIn, checkOut, guests: { adults: 2, children: 0 }, priceBreakdown: calculatePriceBreakdown(100, 2),
+  const booking = await getRepositories().bookings.create({ id: userId, name: "ana", email: "ana@example.com" }, {
+    listingId: "l1", hostId: "h1", checkIn, checkOut, guests: { adults: 2, children: 0 }, priceBreakdown: calculatePriceBreakdown(100, 2),
   });
   if (booking === "unavailable") throw new Error("unexpected");
   return booking;

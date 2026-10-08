@@ -6,6 +6,8 @@ const request: BookingRequest = { listingId: "l1", checkIn: "2027-01-01", checkO
 const booking = {
   id: "b1",
   listingId: "l1",
+  hostId: "h1",
+  guestId: "g1",
   checkIn: "2027-01-01",
   checkOut: "2027-01-03",
   guests: { adults: 2, children: 0 },

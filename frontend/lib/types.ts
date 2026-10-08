@@ -130,12 +130,22 @@ export interface Wishlist {
 export interface Booking {
   id: string;
   listingId: string;
+  hostId: string;
+  guestId: string;
+  guestName?: string;
+  guestEmail?: string;
   /** YYYY-MM-DD */
   checkIn: string;
   /** YYYY-MM-DD */
   checkOut: string;
   guests: { adults: number; children: number };
   priceBreakdown: PriceBreakdown;
-  status: "confirmed";
+  status: "confirmed" | "cancelled";
   createdAt: string;
+  cancelledAt?: string;
+}
+
+export interface Stay {
+  checkIn: string;
+  checkOut: string;
 }

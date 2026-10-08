@@ -138,10 +138,17 @@ export const wishlistSchema = z.object({
 export const bookingSchema = z.object({
   id: z.string(),
   listingId: z.string(),
+  hostId: z.string(),
+  guestId: z.string(),
+  guestName: z.string().optional(),
+  guestEmail: z.string().optional(),
   checkIn: z.string(),
   checkOut: z.string(),
   guests: z.object({ adults: z.number(), children: z.number() }),
   priceBreakdown: priceBreakdownSchema,
-  status: z.literal("confirmed"),
+  status: z.enum(["confirmed", "cancelled"]),
   createdAt: z.string(),
+  cancelledAt: z.string().optional(),
 });
+
+export const staySchema = z.object({ checkIn: z.string(), checkOut: z.string() });

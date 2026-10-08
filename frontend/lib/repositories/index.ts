@@ -6,6 +6,7 @@ import { combineHosts, combineListings } from "./combined";
 import type { HostListingRepository } from "./host-listing-repository";
 import type { HostProfileRepository } from "./host-profile-repository";
 import type { WishlistRepository } from "./wishlist-repository";
+import { createHttpBookingRepository } from "./http/http-booking-repository";
 import { mockBookingRepository } from "./mock/mock-booking-repository";
 import { mockCityRepository } from "./mock/mock-city-repository";
 import { mockExperienceRepository } from "./mock/mock-experience-repository";
@@ -26,32 +27,35 @@ export interface AppRepositories extends Repositories {
   hostProfiles: HostProfileRepository;
 }
 
-// Wishlists, bookings and host data are frontend mocks in both data modes: the backend doesn't serve them yet.
-const accountRepositories = {
+// Wishlists and host data are frontend mocks in both data modes; bookings are the backend's in api mode.
+const accountRepositories = (bookings: BookingRepository) => ({
   wishlists: mockWishlistRepository,
-  bookings: mockBookingRepository,
+  bookings,
   hostListings: mockHostListingRepository,
   hostProfiles: mockHostProfileRepository,
-};
+});
 
 /** The catalog plus host-created listings and host profiles, so guests see and book host listings anywhere. */
-function withHostData(catalog: Repositories): AppRepositories {
+function withHostData(catalog: Repositories, bookings: BookingRepository): AppRepositories {
   return {
     ...catalog,
     listings: combineListings(catalog.listings, mockHostListingRepository),
     hosts: combineHosts(catalog.hosts, mockHostProfileRepository),
-    ...accountRepositories,
+    ...accountRepositories(bookings),
   };
 }
 
-const mockRepositories: AppRepositories = withHostData({
-  listings: mockListingRepository,
-  experiences: mockExperienceRepository,
-  services: mockServiceRepository,
-  hosts: mockHostRepository,
-  reviews: mockReviewRepository,
-  cities: mockCityRepository,
-});
+const mockRepositories: AppRepositories = withHostData(
+  {
+    listings: mockListingRepository,
+    experiences: mockExperienceRepository,
+    services: mockServiceRepository,
+    hosts: mockHostRepository,
+    reviews: mockReviewRepository,
+    cities: mockCityRepository,
+  },
+  mockBookingRepository,
+);
 
 /**
  * The one switch between mock data and the backend, driven by `dataSource()`
@@ -59,5 +63,5 @@ const mockRepositories: AppRepositories = withHostData({
  */
 export function getRepositories(): AppRepositories {
   const source = dataSource();
-  return source.kind === "mock" ? mockRepositories : withHostData(createHttpRepositories(source.baseUrl));
+  return source.kind === "mock" ? mockRepositories : withHostData(createHttpRepositories(source.baseUrl), createHttpBookingRepository(source.baseUrl));
 }

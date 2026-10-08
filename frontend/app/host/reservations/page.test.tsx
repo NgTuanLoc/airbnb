@@ -28,8 +28,8 @@ describe("HostReservationsPage", () => {
     const repos = getRepositories();
     const listing = await repos.hostListings.create(host.id, hostListingInputSchema.parse(validInput));
     const guestEmail = `guest-${crypto.randomUUID()}@example.com`;
-    await repos.bookings.create(`u-${guestEmail}`, {
-      listingId: listing.id, checkIn: "2033-03-01", checkOut: "2033-03-04", guests: { adults: 2, children: 0 },
+    await repos.bookings.create({ id: `u-${guestEmail}`, name: "guest", email: guestEmail }, {
+      listingId: listing.id, hostId: host.id, checkIn: "2033-03-01", checkOut: "2033-03-04", guests: { adults: 2, children: 0 },
       priceBreakdown: calculatePriceBreakdown(180, 3),
     });
     await repos.hostListings.setStatus(host.id, listing.id, "unlisted");

@@ -2,6 +2,7 @@ import { ok } from "@/lib/api/envelope";
 import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
+import { HOST_LISTING_ID_PREFIX } from "@/lib/host/options";
 import { getRepositories } from "@/lib/repositories";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 
@@ -23,7 +24,14 @@ export const POST = withErrorEnvelope(async (request: Request) => {
 
   // Priced here from the listing, never from anything the client sent.
   const priceBreakdown = calculatePriceBreakdown(listing.pricePerNight, nightsBetweenDates(checkIn, checkOut));
-  const booking = await repos.bookings.create(user.id, { listingId, checkIn, checkOut, guests: { adults, children }, priceBreakdown });
-  if (booking === "unavailable") return jsonError("Those dates are no longer available", 409);
+  const quote = listing.id.startsWith(HOST_LISTING_ID_PREFIX)
+    ? { hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests }
+    : undefined;
+  const booking = await repos.bookings.create(
+    { id: user.id, name: user.name, email: user.email },
+    { listingId, hostId: listing.hostId, checkIn, checkOut, guests: { adults, children }, priceBreakdown },
+    quote,
+  );
+  if (booking === "unavailable") return jsonError("Those dates were just booked. Pick different dates.", 409);
   return Response.json(ok(booking), { status: 201 });
 });

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { POST } from "./route";
 import { jsonRequest, sessionCookieHeader } from "@/lib/auth/test-helpers";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
@@ -62,7 +62,7 @@ describe("POST /api/bookings", () => {
     const res = await book({ listingId: "l1", checkIn: daysFromToday(203), checkOut: daysFromToday(207), adults: 1 });
 
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe("Those dates are no longer available");
+    expect((await res.json()).error).toBe("Those dates were just booked. Pick different dates.");
   });
 
   test("refuses to book your own listing", async () => {
@@ -93,5 +93,17 @@ describe("POST /api/bookings", () => {
     const listing = await getRepositories().hostListings.create(`u-host-${crypto.randomUUID()}@example.com`, hostListingInputSchema.parse(validInput));
     const res = await book({ listingId: listing.id, checkIn: daysFromToday(320), checkOut: daysFromToday(322), adults: 1 });
     expect(res.status).toBe(201);
+  });
+
+  test("a host listing is booked with a quote, a catalog listing without", async () => {
+    const listing = await getRepositories().hostListings.create(`u-host-${crypto.randomUUID()}@example.com`, hostListingInputSchema.parse(validInput));
+    const create = vi.spyOn(getRepositories().bookings, "create");
+
+    await book({ listingId: listing.id, checkIn: daysFromToday(330), checkOut: daysFromToday(332), adults: 1 });
+    await book({ listingId: "l1", checkIn: daysFromToday(340), checkOut: daysFromToday(342), adults: 1 });
+
+    expect(create.mock.calls[0][2]).toEqual({ hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests });
+    expect(create.mock.calls[1][2]).toBeUndefined();
+    create.mockRestore();
   });
 });

@@ -9,9 +9,7 @@ import type { Booking } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Reservations · Airbnb" };
 
-type Reservation = Booking & { guestId: string };
-
-function ReservationList({ title, reservations, titles }: { title: string; reservations: Reservation[]; titles: Map<string, string> }) {
+function ReservationList({ title, reservations, titles }: { title: string; reservations: Booking[]; titles: Map<string, string> }) {
   if (reservations.length === 0) return null;
   return (
     <section className="flex flex-col gap-4">
@@ -22,7 +20,7 @@ function ReservationList({ title, reservations, titles }: { title: string; reser
           return (
             <li key={r.id} className="grid grid-cols-1 gap-1 py-4 md:grid-cols-4">
               <span className="text-title-sm text-ink">{titles.get(r.listingId) ?? "Your listing"}</span>
-              <span className="text-body-sm text-body">{r.guestId.replace(/^u-/, "")}</span>
+              <span className="text-body-sm text-body">{r.guestEmail ?? r.guestId}</span>
               <span className="text-body-sm text-body">
                 <span>{formatDateRange(r.checkIn, r.checkOut)}</span> · {guests} {guests === 1 ? "guest" : "guests"}
               </span>
@@ -39,7 +37,7 @@ export default async function HostReservationsPage() {
   const user = await requireSession("/host/reservations");
   const repos = getRepositories();
   const listings = await repos.hostListings.listForHost(user.id);
-  const reservations = await repos.bookings.listForListings(listings.map((l) => l.id));
+  const reservations = await repos.bookings.listForHost(user.id);
   const titles = new Map(listings.map((l) => [l.id, l.title]));
   const { upcoming, past } = splitTrips(reservations, new Date().toISOString().slice(0, 10));
 
