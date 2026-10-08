@@ -15,11 +15,17 @@ public static class BookingsModule
         builder.AddBookingsModuleDatabase();
         // The validation generator only registers request types for AddValidation() calls in this assembly.
         builder.Services.AddValidation();
+        builder.Services.AddScoped<CreateBooking.Handler>();
         return builder;
     }
 
     public static IHostApplicationBuilder AddBookingsModuleDatabase(this IHostApplicationBuilder builder) =>
         builder.AddModuleDbContext<BookingsDbContext>(Schema, BookingsDbContext.SeedAsync);
 
-    public static IEndpointRouteBuilder MapBookingsEndpoints(this IEndpointRouteBuilder api) => api;
+    public static IEndpointRouteBuilder MapBookingsEndpoints(this IEndpointRouteBuilder api)
+    {
+        CreateBooking.Map(api);
+        GetAvailability.Map(api);
+        return api;
+    }
 }
