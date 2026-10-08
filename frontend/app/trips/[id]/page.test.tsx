@@ -56,7 +56,7 @@ describe("TripPage", () => {
     render(await TripPage(props(booking.id)));
 
     expect(screen.getByRole("button", { name: "Cancel trip" })).toBeInTheDocument();
-    expect(screen.getByText(`Booking ${booking.id.slice(0, 8)} · Confirmed`)).toBeInTheDocument();
+    expect(screen.getByText(`Booking ${booking.id.slice(-8)} · Confirmed`)).toBeInTheDocument();
   });
 
   test("a cancelled trip says Cancelled and has no cancel button", async () => {
@@ -67,7 +67,7 @@ describe("TripPage", () => {
 
     render(await TripPage(props(booking.id)));
 
-    expect(screen.getByText(`Booking ${booking.id.slice(0, 8)} · Cancelled`)).toBeInTheDocument();
+    expect(screen.getByText(`Booking ${booking.id.slice(-8)} · Cancelled`)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel trip" })).not.toBeInTheDocument();
   });
 

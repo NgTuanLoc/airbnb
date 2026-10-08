@@ -59,6 +59,49 @@ public sealed class CreateBookingTests(InfrastructureFixture infrastructure)
         Assert.Equal(303m, booking.GetProperty("priceBreakdown").GetProperty("total").GetDecimal()); // 200 + 75 + 28
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("wrong-key")]
+    public async Task A_quote_without_the_right_key_is_refused(string? key)
+    {
+        await using var factory = Factory();
+        using var client = factory.CreateClient();
+        var (token, _, _) = await AuthHelpers.RegisterAsync(client);
+
+        using var response = await BookAsync(client, token,
+            Stay($"hl-{Guid.NewGuid()}", RandomMonth(), 2, quote: new { hostId = "usr_host", pricePerNight = 100, maxGuests = 4 }), key);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("A quote is required for host listings", await ErrorAsync(response));
+    }
+
+    [Fact]
+    public async Task With_no_key_configured_every_quote_is_refused()
+    {
+        await using var factory = BookingRequests.Factory(infrastructure, quoteKey: null);
+        using var client = factory.CreateClient();
+        var (token, _, _) = await AuthHelpers.RegisterAsync(client);
+
+        using var response = await BookAsync(client, token,
+            Stay($"hl-{Guid.NewGuid()}", RandomMonth(), 2, quote: new { hostId = "usr_host", pricePerNight = 100, maxGuests = 4 }), "anything");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("A quote is required for host listings", await ErrorAsync(response));
+    }
+
+    [Fact]
+    public async Task A_quoted_price_under_one_is_refused()
+    {
+        await using var factory = Factory();
+        using var client = factory.CreateClient();
+        var (token, _, _) = await AuthHelpers.RegisterAsync(client);
+
+        using var response = await BookAsync(client, token,
+            Stay($"hl-{Guid.NewGuid()}", RandomMonth(), 2, quote: new { hostId = "usr_host", pricePerNight = 0.6, maxGuests = 4 }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task Overlapping_nights_get_409_and_back_to_back_stays_are_fine()
     {

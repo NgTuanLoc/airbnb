@@ -32,12 +32,21 @@ describe("CancelTripButton", () => {
   });
 
   test("confirming cancels the booking and refreshes the page", async () => {
-    cancelBooking.mockResolvedValue({ id: "bk_1" });
+    cancelBooking.mockResolvedValue({ id: "bk_1", listingId: "l9" });
     render(<CancelTripButton bookingId="bk_1" />);
     await open();
     await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel trip" }));
     expect(cancelBooking).toHaveBeenCalledWith("bk_1");
     expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  test("confirming invalidates the listing's availability", async () => {
+    cancelBooking.mockResolvedValue({ id: "bk_1", listingId: "l9" });
+    const { queryClient } = render(<CancelTripButton bookingId="bk_1" />);
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    await open();
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel trip" }));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["availability", "l9"] });
   });
 
   test("shows why a cancel failed", async () => {

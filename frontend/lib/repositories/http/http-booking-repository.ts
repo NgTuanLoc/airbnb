@@ -14,9 +14,10 @@ async function sessionToken(): Promise<string> {
 }
 
 /** One call to the backend's Bookings module; returns the status and the parsed envelope (data validated by `schema`). */
-async function call<T extends z.ZodType>(baseUrl: string, method: string, path: string, schema: T, options: { body?: unknown; auth?: boolean } = {}) {
+async function call<T extends z.ZodType>(baseUrl: string, method: string, path: string, schema: T, options: { body?: unknown; auth?: boolean; quoteKey?: string } = {}) {
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (options.auth !== false) headers.authorization = `Bearer ${await sessionToken()}`;
+  if (options.quoteKey) headers["x-quote-key"] = options.quoteKey;
   let response: Response;
   try {
     response = await fetch(new URL(path, baseUrl), {
@@ -61,7 +62,10 @@ export function createHttpBookingRepository(baseUrl: string): BookingRepository 
         children: booking.guests.children,
         quote,
       };
-      const result = await call(baseUrl, "POST", "/api/bookings", bookingSchema, { body });
+      // Only this server may vouch for a host-listing quote; the backend refuses quotes without the shared key.
+      const quoteKey = process.env.BOOKINGS_QUOTE_KEY;
+      if (quote && !quoteKey) throw new Error("BOOKINGS_QUOTE_KEY is required to book host listings");
+      const result = await call(baseUrl, "POST", "/api/bookings", bookingSchema, { body, quoteKey: quote ? quoteKey : undefined });
       return result.status === 409 ? "unavailable" : (expectData(result, "POST", "/api/bookings") as Booking);
     },
     async cancel(_userId, id) {

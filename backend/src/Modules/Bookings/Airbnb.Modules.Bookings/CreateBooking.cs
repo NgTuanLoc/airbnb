@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Airbnb.Modules.Bookings.Data;
 using Airbnb.Modules.Stays.Contracts;
 using Airbnb.SharedKernel;
@@ -7,7 +9,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace Airbnb.Modules.Bookings;
@@ -16,11 +20,12 @@ internal static class CreateBooking
 {
     // Host listings live in the frontend until roadmap phase 4 (spec §1); only they may carry a quote.
     internal const string HostListingPrefix = "hl-";
+    internal const string QuoteKeyHeader = "X-Quote-Key";
     internal const string Taken = "Those dates were just booked. Pick different dates.";
 
     public sealed record QuoteInput(
         [property: Required, StringLength(50, MinimumLength = 1)] string? HostId,
-        [property: Range(1, 100_000)] decimal PricePerNight,
+        [property: Range(typeof(decimal), "1", "100000")] decimal PricePerNight,
         [property: Range(1, 16)] int MaxGuests);
 
     public sealed record Command(
@@ -31,7 +36,7 @@ internal static class CreateBooking
         [property: Range(0, 15)] int Children,
         QuoteInput? Quote);
 
-    internal sealed class Handler(BookingsDbContext db, IListingLookup listings, TimeProvider time)
+    internal sealed class Handler(BookingsDbContext db, IListingLookup listings, TimeProvider time, IConfiguration configuration)
     {
         private const int MaxInsertAttempts = 3;
 
@@ -56,8 +61,19 @@ internal static class CreateBooking
         private static bool IsDeadlock(Exception exception) =>
             Postgres(exception) is { SqlState: PostgresErrorCodes.DeadlockDetected };
 
+        // Only the Next server, which knows the listing, may vouch for a quote. No configured key refuses every quote.
+        private bool IsTrusted(string? presentedKey)
+        {
+            var expected = configuration["Bookings:QuoteKey"];
+            if (string.IsNullOrEmpty(expected) || string.IsNullOrEmpty(presentedKey))
+            {
+                return false;
+            }
+            return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(presentedKey));
+        }
+
         public async Task<Results<Created<ApiResponse<BookingDto>>, BadRequest<ApiResponse<object>>, NotFound<ApiResponse<object>>, Conflict<ApiResponse<object>>>> HandleAsync(
-            Command command, ClaimsPrincipal user, CancellationToken cancellationToken)
+            Command command, ClaimsPrincipal user, string? quoteKey, CancellationToken cancellationToken)
         {
             var dates = BookingDates.Parse(command.CheckIn!, command.CheckOut!, BookingDates.Today(time), out var dateError);
             if (dates is not { } stay)
@@ -68,7 +84,7 @@ internal static class CreateBooking
             ListingBookingInfo? info;
             if (command.ListingId!.StartsWith(HostListingPrefix, StringComparison.Ordinal))
             {
-                if (command.Quote is not { } quote)
+                if (command.Quote is not { } quote || !IsTrusted(quoteKey))
                 {
                     return TypedResults.BadRequest(ApiResponse.Fail("A quote is required for host listings"));
                 }
@@ -141,7 +157,7 @@ internal static class CreateBooking
     }
 
     internal static void Map(IEndpointRouteBuilder api) =>
-        api.MapPost("/bookings", (Command command, ClaimsPrincipal user, Handler handler, CancellationToken cancellationToken) =>
-                handler.HandleAsync(command, user, cancellationToken))
+        api.MapPost("/bookings", (Command command, ClaimsPrincipal user, Handler handler, [FromHeader(Name = QuoteKeyHeader)] string? quoteKey, CancellationToken cancellationToken) =>
+                handler.HandleAsync(command, user, quoteKey, cancellationToken))
             .RequireAuthorization();
 }

@@ -40,6 +40,14 @@ test("a booked night is blocked for other guests until the trip is cancelled", a
 
     const reserveB2 = await openMonth(pageB, monthsAhead);
     await expect(night(reserveB2)).toBeEnabled();
+
+    // B can now book the released nights.
+    const daysB = reserveB2.locator("[data-calendar-day]:not(:disabled)");
+    await daysB.nth(2).click();
+    await daysB.nth(3).click();
+    await reserveB2.getByRole("link", { name: "Reserve" }).click();
+    await pageB.getByRole("button", { name: "Confirm and pay" }).click();
+    await expect(pageB).toHaveURL(/\/trips\/[^/?]+\?confirmed=1/, { timeout: 30000 });
   } finally {
     await contextA.close();
     await contextB.close();

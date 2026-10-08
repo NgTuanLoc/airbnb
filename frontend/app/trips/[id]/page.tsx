@@ -50,7 +50,7 @@ export default async function TripPage({
             <p className="text-body-md text-body">Reservation by {booking.guestName ?? booking.guestEmail ?? booking.guestId}</p>
           )}
           <p className="text-body-sm text-muted">
-            Booking {booking.id.slice(0, 8)} · {booking.status === "cancelled" ? "Cancelled" : "Confirmed"}
+            Booking {booking.id.slice(-8)} · {booking.status === "cancelled" ? "Cancelled" : "Confirmed"}
           </p>
           {canCancel && <CancelTripButton bookingId={booking.id} />}
         </section>

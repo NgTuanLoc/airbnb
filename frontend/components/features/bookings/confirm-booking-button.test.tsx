@@ -38,6 +38,17 @@ describe("ConfirmBookingButton", () => {
     expect(createBooking).toHaveBeenCalledOnce();
   });
 
+  test("a failed booking refreshes the listing's availability", async () => {
+    createBooking.mockRejectedValueOnce(new Error("Those dates were just booked. Pick different dates."));
+    const { queryClient } = render(<ConfirmBookingButton request={request} />);
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+
+    await userEvent.click(screen.getByRole("button", { name: "Confirm and pay" }));
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["availability", "l1"] });
+  });
+
   test("shows why it failed and lets the guest try again", async () => {
     createBooking.mockRejectedValueOnce(new Error("Those dates are no longer available"));
     render(<ConfirmBookingButton request={request} />);

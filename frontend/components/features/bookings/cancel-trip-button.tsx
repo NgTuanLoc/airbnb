@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/design-system";
 import { cancelBooking } from "@/lib/api-client/availability";
 
 function CancelTripDialog({ bookingId, onClose }: { bookingId: string; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +27,8 @@ function CancelTripDialog({ bookingId, onClose }: { bookingId: string; onClose: 
     setBusy(true);
     setError(null);
     try {
-      await cancelBooking(bookingId);
+      const booking = await cancelBooking(bookingId);
+      await queryClient.invalidateQueries({ queryKey: ["availability", booking.listingId] });
       router.refresh();
       onClose();
     } catch (e) {

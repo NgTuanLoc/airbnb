@@ -15,15 +15,28 @@ internal static class BookingRequests
     internal static DateOnly RandomMonth() =>
         DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Random.Shared.Next(13, 600));
 
-    internal static WebApplicationFactory<Program> Factory(InfrastructureFixture infrastructure) =>
-        new ApiFactory(infrastructure).WithWebHostBuilder(builder => builder.UseSetting("RateLimiting:WritesPerMinute", "1000"));
+    internal const string QuoteKey = "test-quote-key";
 
-    internal static async Task<HttpResponseMessage> BookAsync(HttpClient client, string token, object body)
+    internal static WebApplicationFactory<Program> Factory(InfrastructureFixture infrastructure, string? quoteKey = QuoteKey) =>
+        new ApiFactory(infrastructure).WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("RateLimiting:WritesPerMinute", "1000");
+            if (quoteKey is not null)
+            {
+                builder.UseSetting("Bookings:QuoteKey", quoteKey);
+            }
+        });
+
+    internal static async Task<HttpResponseMessage> BookAsync(HttpClient client, string token, object body, string? quoteKey = QuoteKey)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/bookings")
         {
             Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"),
         }.Authorized(token);
+        if (quoteKey is not null)
+        {
+            request.Headers.Add("X-Quote-Key", quoteKey);
+        }
         return await client.SendAsync(request, Ct);
     }
 

@@ -28,7 +28,10 @@ beforeEach(() => {
   store.token = "tok_abc";
   fetchSpy = vi.spyOn(globalThis, "fetch");
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 
 const lastCall = () => {
   const [url, init] = fetchSpy.mock.calls.at(-1)!;
@@ -55,6 +58,7 @@ describe("createHttpBookingRepository", () => {
   });
 
   test("create posts the request with the quote and maps 201 and 409", async () => {
+    vi.stubEnv("BOOKINGS_QUOTE_KEY", "k-test");
     const quote = { hostId: "h1", pricePerNight: 100, maxGuests: 4 };
     fetchSpy.mockResolvedValueOnce(okReply(booking, 201)).mockResolvedValueOnce(reply(409, { success: false, error: "taken" }));
 
@@ -65,6 +69,26 @@ describe("createHttpBookingRepository", () => {
       listingId: "hl-1", checkIn: "2030-01-01", checkOut: "2030-01-03", adults: 2, children: 1, quote,
     });
     expect(await repo.create(guest, input)).toBe("unavailable");
+  });
+
+  test("create sends the quote key header only with a quote", async () => {
+    vi.stubEnv("BOOKINGS_QUOTE_KEY", "k-123");
+    const quote = { hostId: "h1", pricePerNight: 100, maxGuests: 4 };
+    fetchSpy.mockResolvedValueOnce(okReply(booking, 201)).mockResolvedValueOnce(okReply(booking, 201));
+
+    await repo.create(guest, input, quote);
+    expect(lastCall().init.headers).toMatchObject({ "x-quote-key": "k-123" });
+    await repo.create(guest, { ...input, listingId: "l1" });
+    expect(lastCall().init.headers).not.toHaveProperty("x-quote-key");
+  });
+
+  test("create with a quote throws when BOOKINGS_QUOTE_KEY is missing", async () => {
+    vi.stubEnv("BOOKINGS_QUOTE_KEY", "");
+
+    await expect(repo.create(guest, input, { hostId: "h1", pricePerNight: 100, maxGuests: 4 })).rejects.toThrow(
+      "BOOKINGS_QUOTE_KEY is required to book host listings",
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   test("cancel maps 200, 404 and 409", async () => {

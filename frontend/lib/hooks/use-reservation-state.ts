@@ -30,9 +30,13 @@ export function useReservationState(listingId: string, pricePerNight: number, ma
     init && init.adults + init.children <= maxGuests ? { adults: init.adults, children: init.children } : { adults: 1, children: 0 };
   const [month, setMonth] = useState<Date>(() => startOfMonth(init?.checkIn ?? new Date()));
   const [checkIn, setCheckIn] = useState<Date | null>(init?.checkIn ?? null);
-  const [checkOut, setCheckOut] = useState<Date | null>(init?.checkOut ?? null);
+  const [pickedCheckOut, setCheckOut] = useState<Date | null>(init?.checkOut ?? null);
   const [guests, setGuests] = useState<GuestCounts>(initialGuests);
   const blockedRanges = useListingAvailability(listingId);
+
+  // Prefilled (or since-booked) dates over booked nights keep only the check-in, so no stale Reserve link is offered.
+  const spansBooked = checkIn !== null && pickedCheckOut !== null && !isStayFree(toIsoDate(checkIn), toIsoDate(pickedCheckOut), blockedRanges);
+  const checkOut = spansBooked ? null : pickedCheckOut;
 
   function select(date: Date) {
     // The calendar greys out such days, but query-param dates and races can still reach here.

@@ -36,6 +36,15 @@ describe("useReservationState with booked nights", () => {
     expect(result.current.checkOut).toBeNull();
   });
 
+  test("prefilled dates over booked nights lose their check-out", async () => {
+    const init = { checkIn: new Date(2031, 1, 8), checkOut: new Date(2031, 1, 12), adults: 1, children: 0 };
+    const { result } = renderHook(() => useReservationState("l1", 100, 4, init), { wrapper });
+    await waitFor(() => expect(result.current.blockedRanges).toHaveLength(1));
+    await waitFor(() => expect(result.current.checkOut).toBeNull());
+    expect(result.current.checkIn).toEqual(init.checkIn);
+    expect(result.current.bookHref).toBeNull();
+  });
+
   test("checking out on the day a booking starts is allowed", async () => {
     const { result } = await ready();
     act(() => result.current.select(new Date(2031, 1, 7)));
