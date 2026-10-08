@@ -261,6 +261,22 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
     }
 
     [Fact]
+    public async Task A_concurrent_burst_gets_no_more_than_ten_password_checks()
+    {
+        await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        using var registered = await RegisterAsync(client, email);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 25).Select(_ => LoginAsync(client, email, "wrong-password")));
+
+        var statuses = responses.Select(r => r.StatusCode).ToArray();
+        Assert.Equal(10, statuses.Count(s => s == HttpStatusCode.Unauthorized));
+        Assert.Equal(15, statuses.Count(s => s == HttpStatusCode.TooManyRequests));
+        foreach (var response in responses) response.Dispose();
+    }
+
+    [Fact]
     public async Task Failed_logins_for_unknown_emails_are_throttled_too()
     {
         await using var factory = ThrottleFactory(new MutableTimeProvider(DateTimeOffset.UtcNow));

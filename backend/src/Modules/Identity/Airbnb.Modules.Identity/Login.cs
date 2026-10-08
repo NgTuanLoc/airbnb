@@ -28,7 +28,8 @@ internal static class Login
         public async Task<(AuthSessionDto? Session, bool Blocked)> HandleAsync(Command command, CancellationToken cancellationToken)
         {
             var email = Emails.Normalize(command.Email!);
-            if (throttle.IsBlocked(email))
+            // The attempt is counted before the password check, so concurrent requests can't all slip past the limit.
+            if (!throttle.TryBeginAttempt(email))
             {
                 return (null, true);
             }
@@ -37,14 +38,12 @@ internal static class Login
             if (user is null)
             {
                 hasher.VerifyHashedPassword(null!, DummyHash.Value, command.Password!);
-                throttle.RecordFailure(email);
                 return (null, false);
             }
 
             var result = hasher.VerifyHashedPassword(user, user.PasswordHash, command.Password!);
             if (result == PasswordVerificationResult.Failed)
             {
-                throttle.RecordFailure(email);
                 return (null, false);
             }
             throttle.Reset(email);
