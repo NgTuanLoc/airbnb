@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Airbnb.Api.Tests.Infrastructure;
-using Microsoft.AspNetCore.Hosting;
+using static Airbnb.Api.Tests.Bookings.BookingRequests;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Airbnb.Api.Tests.Bookings;
@@ -13,33 +13,7 @@ public sealed class CreateBookingTests(InfrastructureFixture infrastructure)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private static DateOnly RandomMonth() =>
-        DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Random.Shared.Next(13, 600));
-
-    private WebApplicationFactory<Program> Factory() =>
-        new ApiFactory(infrastructure).WithWebHostBuilder(builder => builder.UseSetting("RateLimiting:WritesPerMinute", "1000"));
-
-    private static async Task<HttpResponseMessage> BookAsync(HttpClient client, string token, object body)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/bookings")
-        {
-            Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"),
-        }.Authorized(token);
-        return await client.SendAsync(request, Ct);
-    }
-
-    private static object Stay(string listingId, DateOnly checkIn, int nights, int adults = 2, object? quote = null) => new
-    {
-        listingId,
-        checkIn = checkIn.ToString("yyyy-MM-dd"),
-        checkOut = checkIn.AddDays(nights).ToString("yyyy-MM-dd"),
-        adults,
-        children = 0,
-        quote,
-    };
-
-    private static async Task<string> ErrorAsync(HttpResponseMessage response) =>
-        (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("error").GetString()!;
+    private WebApplicationFactory<Program> Factory() => BookingRequests.Factory(infrastructure);
 
     [Fact]
     public async Task A_catalog_booking_is_priced_on_the_server_whatever_the_quote_says()

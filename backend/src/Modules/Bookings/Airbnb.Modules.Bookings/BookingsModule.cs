@@ -26,6 +26,10 @@ public static class BookingsModule
     {
         CreateBooking.Map(api);
         GetAvailability.Map(api);
+        ListMyBookings.Map(api);
+        ListHosting.Map(api);
+        GetBooking.Map(api);
+        CancelBooking.Map(api);
         return api;
     }
 }
