@@ -24,7 +24,12 @@ function ReservationList({ title, reservations, titles }: { title: string; reser
               <span className="text-body-sm text-body">
                 <span>{formatDateRange(r.checkIn, r.checkOut)}</span> · {guests} {guests === 1 ? "guest" : "guests"}
               </span>
-              <span className="text-body-sm text-ink">${r.priceBreakdown.total}</span>
+              <span className="flex items-center gap-2 text-body-sm text-ink">
+                ${r.priceBreakdown.total}
+                {r.status === "cancelled" && (
+                  <span className="rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">Cancelled</span>
+                )}
+              </span>
             </li>
           );
         })}
@@ -39,7 +44,7 @@ export default async function HostReservationsPage() {
   const listings = await repos.hostListings.listForHost(user.id);
   const reservations = await repos.bookings.listForHost(user.id);
   const titles = new Map(listings.map((l) => [l.id, l.title]));
-  const { upcoming, past } = splitTrips(reservations, new Date().toISOString().slice(0, 10));
+  const { upcoming, past, cancelled } = splitTrips(reservations, new Date().toISOString().slice(0, 10));
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -53,6 +58,7 @@ export default async function HostReservationsPage() {
           <>
             <ReservationList title="Upcoming" reservations={upcoming} titles={titles} />
             <ReservationList title="Past" reservations={past} titles={titles} />
+            <ReservationList title="Cancelled" reservations={cancelled} titles={titles} />
           </>
         )}
       </main>

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen, userEvent, within } from "@/lib/test-utils";
+vi.mock("@/lib/api-client/availability", () => ({ fetchAvailability: () => Promise.resolve([]) }));
+
 import { ReservationPanel } from "./reservation-panel";
 
 describe("ReservationPanel", () => {

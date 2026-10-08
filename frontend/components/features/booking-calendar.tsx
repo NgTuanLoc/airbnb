@@ -1,12 +1,16 @@
 "use client";
 
 import { DatePickerDay } from "@/components/design-system";
+import { isNightBooked, isStayFree } from "@/lib/reservation/availability";
+import { toIsoDate } from "@/lib/reservation/dates";
+import type { Stay } from "@/lib/types";
 
 export interface BookingCalendarProps {
   month: Date;
   checkIn: Date | null;
   checkOut: Date | null;
   minDate?: Date;
+  blockedRanges?: Stay[];
   onSelect: (date: Date) => void;
   onMonthChange: (next: Date) => void;
 }
@@ -21,7 +25,7 @@ function sameDay(a: Date | null, b: Date): boolean {
   return a !== null && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export function BookingCalendar({ month, checkIn, checkOut, minDate, onSelect, onMonthChange }: BookingCalendarProps) {
+export function BookingCalendar({ month, checkIn, checkOut, minDate, blockedRanges = [], onSelect, onMonthChange }: BookingCalendarProps) {
   const floor = startOfDay(minDate ?? new Date());
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
@@ -52,7 +56,11 @@ export function BookingCalendar({ month, checkIn, checkOut, minDate, onSelect, o
         ))}
         {days.map((day) => {
           const date = new Date(year, monthIndex, day);
-          const disabled = startOfDay(date).getTime() < floor.getTime();
+          const iso = toIsoDate(date);
+          const choosingCheckOut = checkIn !== null && checkOut === null && date > checkIn;
+          const bookedOut =
+            isNightBooked(iso, blockedRanges) && !(choosingCheckOut && isStayFree(toIsoDate(checkIn), iso, blockedRanges));
+          const disabled = startOfDay(date).getTime() < floor.getTime() || bookedOut;
           const selected = sameDay(checkIn, date) || sameDay(checkOut, date);
           const inRange =
             checkIn !== null &&

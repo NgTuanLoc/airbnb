@@ -20,6 +20,9 @@ function TripCard({ booking, listing }: { booking: Booking; listing: Listing | u
         <span className="text-title-sm text-ink">{listing?.location.city ?? "Your stay"}</span>
         <span className="text-body-sm text-body">{formatDateRange(booking.checkIn, booking.checkOut)}</span>
         <span className="text-body-sm text-muted">Total ${booking.priceBreakdown.total}</span>
+        {booking.status === "cancelled" && (
+          <span className="w-fit rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">Cancelled</span>
+        )}
       </div>
     </Link>
   );
@@ -49,7 +52,7 @@ export default async function TripsPage() {
       .filter((listing): listing is Listing => listing !== null)
       .map((listing) => [listing.id, listing]),
   );
-  const { upcoming, past } = splitTrips(bookings, new Date().toISOString().slice(0, 10));
+  const { upcoming, past, cancelled } = splitTrips(bookings, new Date().toISOString().slice(0, 10));
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -65,6 +68,7 @@ export default async function TripsPage() {
           <>
             <TripSection title="Upcoming" trips={upcoming} listings={listings} />
             <TripSection title="Past" trips={past} listings={listings} />
+            <TripSection title="Cancelled" trips={cancelled} listings={listings} />
           </>
         )}
       </main>

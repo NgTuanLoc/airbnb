@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import type { GuestCounts } from "@/components/features/guest-stepper";
+import { useListingAvailability } from "@/lib/hooks/use-listing-availability";
+import { isStayFree } from "@/lib/reservation/availability";
 import { toIsoDate } from "@/lib/reservation/dates";
 import { calculatePriceBreakdown, nightsBetween } from "@/lib/reservation/pricing";
 import type { ReservationInit } from "@/lib/reservation/query";
+import type { Stay } from "@/lib/types";
 
 export interface ReservationState {
   month: Date;
@@ -14,6 +17,7 @@ export interface ReservationState {
   guests: GuestCounts;
   setGuests: (guests: GuestCounts) => void;
   select: (date: Date) => void;
+  blockedRanges: Stay[];
   breakdown: ReturnType<typeof calculatePriceBreakdown> | null;
   bookHref: string | null;
 }
@@ -28,9 +32,12 @@ export function useReservationState(listingId: string, pricePerNight: number, ma
   const [checkIn, setCheckIn] = useState<Date | null>(init?.checkIn ?? null);
   const [checkOut, setCheckOut] = useState<Date | null>(init?.checkOut ?? null);
   const [guests, setGuests] = useState<GuestCounts>(initialGuests);
+  const blockedRanges = useListingAvailability(listingId);
 
   function select(date: Date) {
-    if (checkIn === null || checkOut !== null || date.getTime() <= checkIn.getTime()) {
+    // The calendar greys out such days, but query-param dates and races can still reach here.
+    const spansBookedNights = checkIn !== null && !isStayFree(toIsoDate(checkIn), toIsoDate(date), blockedRanges);
+    if (checkIn === null || checkOut !== null || date.getTime() <= checkIn.getTime() || spansBookedNights) {
       setCheckIn(date);
       setCheckOut(null);
       return;
@@ -50,5 +57,5 @@ export function useReservationState(listingId: string, pricePerNight: number, ma
         })}`
       : null;
 
-  return { month, setMonth, checkIn, checkOut, guests, setGuests, select, breakdown, bookHref };
+  return { month, setMonth, checkIn, checkOut, guests, setGuests, select, blockedRanges, breakdown, bookHref };
 }

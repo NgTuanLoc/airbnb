@@ -27,6 +27,7 @@ export function ReservationCard({ pricePerNight, maxGuests, listingId, state }: 
         month={s.month}
         checkIn={s.checkIn}
         checkOut={s.checkOut}
+        blockedRanges={s.blockedRanges}
         onSelect={s.select}
         onMonthChange={s.setMonth}
       />

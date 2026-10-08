@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer, TopNav } from "@/components/design-system";
+import { CancelTripButton } from "@/components/features/bookings/cancel-trip-button";
 import { PriceBreakdownList } from "@/components/features/price-breakdown-list";
 import { requireSession } from "@/lib/auth/get-session";
 import { getRepositories } from "@/lib/repositories";
@@ -21,6 +22,8 @@ export default async function TripPage({
   const booking = await repos.bookings.findById(user.id, id);
   if (!booking) notFound();
   const listing = await repos.listings.findById(booking.listingId);
+  const isGuest = booking.guestId === user.id;
+  const canCancel = isGuest && booking.status === "confirmed" && booking.checkIn > new Date().toISOString().slice(0, 10);
   const guestCount = booking.guests.adults + booking.guests.children;
 
   return (
@@ -43,7 +46,13 @@ export default async function TripPage({
         <section className="flex flex-col gap-2 border-b border-hairline pb-6">
           <p className="text-body-md text-body">{formatDateRange(booking.checkIn, booking.checkOut)}</p>
           <p className="text-body-md text-body">{guestCount} {guestCount === 1 ? "guest" : "guests"}</p>
-          <p className="text-body-sm text-muted">Booking {booking.id.slice(0, 8)} · Confirmed</p>
+          {!isGuest && (
+            <p className="text-body-md text-body">Reservation by {booking.guestName ?? booking.guestEmail ?? booking.guestId}</p>
+          )}
+          <p className="text-body-sm text-muted">
+            Booking {booking.id.slice(0, 8)} · {booking.status === "cancelled" ? "Cancelled" : "Confirmed"}
+          </p>
+          {canCancel && <CancelTripButton bookingId={booking.id} />}
         </section>
         <PriceBreakdownList breakdown={booking.priceBreakdown} />
       </main>

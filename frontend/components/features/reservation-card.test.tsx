@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, userEvent } from "@/lib/test-utils";
+vi.mock("@/lib/api-client/availability", () => ({ fetchAvailability: () => Promise.resolve([]) }));
+
 import { ReservationCard } from "./reservation-card";
 
 describe("ReservationCard", () => {

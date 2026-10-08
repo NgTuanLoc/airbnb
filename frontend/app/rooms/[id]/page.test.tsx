@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@/lib/test-utils";
 import { getRepositories } from "@/lib/repositories";
 import { hostListingInputSchema } from "@/lib/host/schemas";
 import { validInput } from "@/lib/host/test-fixtures";
 
 const session = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/lib/auth/get-session", () => session);
+
+vi.mock("@/lib/api-client/availability", () => ({ fetchAvailability: () => Promise.resolve([]) }));
 
 import RoomPage from "./page";
 

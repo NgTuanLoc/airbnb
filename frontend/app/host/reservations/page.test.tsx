@@ -41,4 +41,25 @@ describe("HostReservationsPage", () => {
     expect(screen.getByText(guestEmail)).toBeInTheDocument();
     expect(screen.getByText("Mar 1, 2033 – Mar 4, 2033")).toBeInTheDocument();
   });
+
+  test("shows a Cancelled badge, and a host whose reservations are all cancelled still sees the section", async () => {
+    const host = user();
+    session.requireSession.mockResolvedValue(host);
+    const repos = getRepositories();
+    const listing = await repos.hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+    const guestEmail = `guest-${crypto.randomUUID()}@example.com`;
+    const guest = { id: `u-${guestEmail}`, name: "guest", email: guestEmail };
+    const booking = await repos.bookings.create(guest, {
+      listingId: listing.id, hostId: host.id, checkIn: "2034-03-01", checkOut: "2034-03-04", guests: { adults: 2, children: 0 },
+      priceBreakdown: calculatePriceBreakdown(180, 3),
+    });
+    if (booking === "unavailable") throw new Error("unexpected");
+    await repos.bookings.cancel(guest.id, booking.id);
+
+    render(await HostReservationsPage());
+
+    expect(screen.getByRole("heading", { name: "Cancelled" })).toBeInTheDocument();
+    expect(screen.getByText("Cancelled", { selector: "span" })).toBeInTheDocument();
+    expect(screen.queryByText("No reservations yet")).not.toBeInTheDocument();
+  });
 });
