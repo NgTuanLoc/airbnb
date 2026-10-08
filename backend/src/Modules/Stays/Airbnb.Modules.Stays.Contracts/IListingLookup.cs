@@ -4,4 +4,7 @@ namespace Airbnb.Modules.Stays.Contracts;
 public interface IListingLookup
 {
     Task<bool> ExistsAsync(string listingId, CancellationToken cancellationToken);
+
+    // Null when the listing does not exist.
+    Task<ListingBookingInfo?> FindForBookingAsync(string listingId, CancellationToken cancellationToken);
 }

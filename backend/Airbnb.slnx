@@ -18,6 +18,9 @@
     <Project Path="src/Airbnb.SharedKernel/Airbnb.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Bookings/">
+    <Project Path="src/Modules/Bookings/Airbnb.Modules.Bookings/Airbnb.Modules.Bookings.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Experiences/">
     <Project Path="src/Modules/Experiences/Airbnb.Modules.Experiences/Airbnb.Modules.Experiences.csproj" />
     <Project Path="src/Modules/Experiences/Airbnb.Modules.Experiences.Contracts/Airbnb.Modules.Experiences.Contracts.csproj" />

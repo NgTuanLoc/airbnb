@@ -1,4 +1,5 @@
 using System.Reflection;
+using Airbnb.Modules.Bookings;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
@@ -15,6 +16,7 @@ public sealed class ModuleRulesTests
 {
     private static readonly Dictionary<string, Type> Modules = new()
     {
+        ["Airbnb.Modules.Bookings"] = typeof(BookingsModule),
         ["Airbnb.Modules.Experiences"] = typeof(ExperiencesModule),
         ["Airbnb.Modules.Hosts"] = typeof(HostsModule),
         ["Airbnb.Modules.Identity"] = typeof(IdentityModule),
