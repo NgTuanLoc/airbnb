@@ -104,6 +104,7 @@ public sealed class CreateBookingTests(InfrastructureFixture infrastructure)
         Assert.Equal(HttpStatusCode.Created, backToBack.StatusCode);
     }
 
+    // Chain-overlap races (A=1-5, B=3-8, C=7-10) aren't covered: they can't be made deterministic.
     [Fact]
     public async Task Concurrent_overlapping_bookings_give_exactly_one_201()
     {

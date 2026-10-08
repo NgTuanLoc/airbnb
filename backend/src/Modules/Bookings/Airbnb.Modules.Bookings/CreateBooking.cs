@@ -33,19 +33,28 @@ internal static class CreateBooking
 
     internal sealed class Handler(BookingsDbContext db, IListingLookup listings, TimeProvider time)
     {
-        // Two inserts racing on the same nights either hit the exclusion constraint or deadlock on it; Npgsql
-        // reports the deadlock victim wrapped (InvalidOperationException > DbUpdateException > PostgresException).
-        private static bool IsOverlap(Exception exception)
+        private const int MaxInsertAttempts = 3;
+
+        // Npgsql's default strategy wraps transient errors (InvalidOperationException > DbUpdateException > PostgresException).
+        private static PostgresException? Postgres(Exception exception)
         {
             for (var e = exception; e is not null; e = e.InnerException)
             {
-                if (e is PostgresException { SqlState: PostgresErrorCodes.ExclusionViolation or PostgresErrorCodes.DeadlockDetected })
+                if (e is PostgresException postgres)
                 {
-                    return true;
+                    return postgres;
                 }
             }
-            return false;
+            return null;
         }
+
+        // Only the exclusion constraint proves the nights are taken.
+        private static bool IsOverlap(Exception exception) =>
+            Postgres(exception) is { SqlState: PostgresErrorCodes.ExclusionViolation, ConstraintName: BookingsDbContext.NoOverlapConstraint };
+
+        // A deadlock only says two racing inserts collided; with chained ranges the nights may still be free, so retry.
+        private static bool IsDeadlock(Exception exception) =>
+            Postgres(exception) is { SqlState: PostgresErrorCodes.DeadlockDetected };
 
         public async Task<Results<Created<ApiResponse<BookingDto>>, BadRequest<ApiResponse<object>>, NotFound<ApiResponse<object>>, Conflict<ApiResponse<object>>>> HandleAsync(
             Command command, ClaimsPrincipal user, CancellationToken cancellationToken)
@@ -107,14 +116,24 @@ internal static class CreateBooking
                 CreatedAt = time.GetUtcNow(),
             };
             db.Bookings.Add(booking);
-            try
+            for (var attempt = 1; ; attempt++)
             {
-                await db.SaveChangesAsync(cancellationToken);
-            }
-            catch (Exception exception) when (IsOverlap(exception))
-            {
-                // The database refuses overlapping confirmed stays, however many guests confirm at once (spec §1).
-                return TypedResults.Conflict(ApiResponse.Fail(Taken));
+                try
+                {
+                    // A failed statement rolls back and leaves the entity Added, so calling again re-inserts it.
+                    await db.SaveChangesAsync(cancellationToken);
+                    break;
+                }
+                catch (Exception exception) when (IsOverlap(exception) || (IsDeadlock(exception) && attempt >= MaxInsertAttempts))
+                {
+                    // The database refuses overlapping confirmed stays, however many guests confirm at once (spec §1).
+                    // A deadlock that survives every retry is reported the same way.
+                    return TypedResults.Conflict(ApiResponse.Fail(Taken));
+                }
+                catch (Exception exception) when (IsDeadlock(exception))
+                {
+                    // Retry: the other insert has finished or been rolled back by now.
+                }
             }
 
             return TypedResults.Created($"/api/bookings/{booking.Id}", ApiResponse.Ok(BookingDto.From(booking)));
