@@ -31,6 +31,11 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.10" />
   </ItemGroup>
 
+  <ItemGroup Label="Identity">
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Messaging">
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.40.0" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.40.0" />
