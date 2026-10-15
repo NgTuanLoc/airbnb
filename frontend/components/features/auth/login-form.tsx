@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, TextInput } from "@/components/design-system";
 import { login } from "@/lib/api-client/auth";
@@ -60,12 +59,6 @@ export function LoginForm({ next = "/" }: { next?: string }) {
       <Button type="submit" disabled={submitting} className="w-full">
         {submitting ? "Logging in…" : "Log in"}
       </Button>
-      <p className="text-body-sm text-muted">
-        Don&apos;t have an account?{" "}
-        <Link href={next === "/" ? "/register" : `/register?next=${encodeURIComponent(next)}`} className="text-ink underline">
-          Sign up
-        </Link>
-      </p>
     </form>
   );
 }

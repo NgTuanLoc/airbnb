@@ -68,10 +68,11 @@ describe("AccountMenu", () => {
     expect(logout).toHaveBeenCalled();
   });
 
-  test("logged in: links to the host dashboard", async () => {
+  test("logged in: links to the host dashboard and Login & security", async () => {
     renderWith(loggedIn());
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
     expect(screen.getByRole("link", { name: "Host dashboard" })).toHaveAttribute("href", "/host/listings");
+    expect(screen.getByRole("link", { name: "Login & security" })).toHaveAttribute("href", "/account/security");
   });
 
   test("a failed logout shows an inline error instead of failing silently", async () => {

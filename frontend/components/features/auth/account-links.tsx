@@ -38,6 +38,7 @@ export function AccountLinks({ itemClass }: { itemClass: string }) {
       <Link href="/wishlists" className={itemClass}>Wishlists</Link>
       <Link href="/trips" className={itemClass}>Trips</Link>
       <Link href="/host/listings" className={itemClass}>Host dashboard</Link>
+      <Link href="/account/security" className={itemClass}>Login &amp; security</Link>
       <button type="button" onClick={() => void logout()} className={itemClass}>Log out</button>
       {error && <p role="alert" className="px-4 py-2 text-body-sm text-error">{error}</p>}
     </>

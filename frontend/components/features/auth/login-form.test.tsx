@@ -54,11 +54,6 @@ describe("LoginForm", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  test("keeps the next path on the sign-up link", () => {
-    render(<LoginForm next="/trips" />);
-    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/register?next=%2Ftrips");
-  });
-
   test("keeps the next path through a submit before hydration", () => {
     const { container } = render(<LoginForm next="/trips" />);
     expect(container.querySelector('input[type="hidden"][name="next"]')).toHaveValue("/trips");
