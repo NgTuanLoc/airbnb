@@ -18,7 +18,8 @@ var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
 
 // Enterprise SSO demo (OAuth spec §3): Keycloak plays Acme Corp's identity provider for @acme.test emails
-// (alex@acme.test / acme-demo). The realm file reads its client secret from the environment, so it is generated here.
+// (alex@acme.test / acme-demo). The realm file reads its client secret and redirect URI from the environment, so the
+// secret is generated here rather than committed.
 var acmeClientSecret = builder.AddParameter("sso-acme-client-secret",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
 var keycloak = builder.AddKeycloak("keycloak")
@@ -61,8 +62,12 @@ var frontend = builder.AddJavaScriptApp("frontend", "../../../frontend")
     .WithEnvironment("BOOKINGS_QUOTE_KEY", quoteKey)
     .WithEnvironment("DATA_SOURCE", builder.Configuration["Frontend:DataSource"] ?? "api");
 
-// Identity providers send the browser back to the frontend's callback route, which hands the code to the API.
+// Identity providers send the browser back to the frontend's callback route, which hands the code to the API. Keycloak
+// only accepts that exact URI, so it gets the frontend's port too (the testing builder randomizes ports) with the host
+// the browser uses: from inside a container the frontend's own URL would be aspire.dev.internal.
 api.WithEnvironment("Identity__External__RedirectBaseUrl", ReferenceExpression.Create($"{frontend.GetEndpoint("http")}/api/auth/callback"));
+keycloak.WithEnvironment("ACME_REDIRECT_URI",
+    ReferenceExpression.Create($"http://localhost:{frontend.GetEndpoint("http").Property(EndpointProperty.Port)}/api/auth/callback/sso-acme"));
 
 builder.Build().Run();
 

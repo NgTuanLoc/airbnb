@@ -21,8 +21,8 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:3000/api/auth/callback/sso-acme"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": ["${ACME_REDIRECT_URI}"],
+      "webOrigins": ["+"],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
