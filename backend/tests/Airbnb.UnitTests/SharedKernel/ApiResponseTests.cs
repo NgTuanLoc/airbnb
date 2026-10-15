@@ -28,4 +28,12 @@ public sealed class ApiResponseTests
 
         Assert.Equal("""{"success":false,"error":"Listing was not found"}""", json);
     }
+
+    [Fact]
+    public void Fail_with_a_code_adds_the_machine_readable_code()
+    {
+        var json = JsonSerializer.Serialize(ApiResponse.Fail("An account with this email already exists", "account_exists"), JsonSerializerOptions.Web);
+
+        Assert.Equal("""{"success":false,"error":"An account with this email already exists","code":"account_exists"}""", json);
+    }
 }

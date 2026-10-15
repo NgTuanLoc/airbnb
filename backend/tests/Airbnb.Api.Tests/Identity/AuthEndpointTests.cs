@@ -158,6 +158,30 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
         Assert.Equal(expected, await unknownEmail.Content.ReadAsStringAsync(Ct));
     }
 
+    [Fact]
+    public async Task An_account_without_a_password_answers_like_an_unknown_email()
+    {
+        await using var factory = new ApiFactory(infrastructure);
+        using var client = factory.CreateClient();
+        var email = NewEmail();
+        // What an external sign-in creates: an account with no password.
+        await using (var connection = new NpgsqlConnection(infrastructure.PostgresConnectionString))
+        {
+            await connection.OpenAsync(Ct);
+            await using var insert = new NpgsqlCommand(
+                """INSERT INTO identity.users ("Id", "Email", "Name", "PasswordHash", "EmailVerifiedAt", "CreatedAt") VALUES (@id, @email, 'Ana', NULL, now(), now())""",
+                connection);
+            insert.Parameters.AddWithValue("id", $"usr_{Guid.NewGuid():N}");
+            insert.Parameters.AddWithValue("email", email);
+            await insert.ExecuteNonQueryAsync(Ct);
+        }
+
+        using var login = await LoginAsync(client, email, "any-password");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        Assert.Equal("""{"success":false,"error":"Email or password is incorrect"}""", await login.Content.ReadAsStringAsync(Ct));
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("not-a-real-token")]
