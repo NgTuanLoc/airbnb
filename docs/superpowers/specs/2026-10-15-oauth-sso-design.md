@@ -201,12 +201,12 @@ Failures are `{ ok: false, status, error, code? }`; anything that isn't a user-f
 ## 3. Aspire
 
 - **`Aspire.Hosting.Keycloak`** (13.5.4 preview) adds a `keycloak` container: persistent, with the realm from `src/Airbnb.AppHost/Realms/acme-realm.json` imported. That realm has:
-  - client `airbnb` with the callback `http://localhost:3000/api/auth/callback/sso-acme`;
+  - client `airbnb`, whose one allowed redirect URI is the frontend's callback (`http://localhost:<frontend port>/api/auth/callback/sso-acme`, from the environment like the secret, because the testing builder randomizes ports);
   - users `alex@acme.test` and `sam@acme.test`, password `acme-demo`, with fixed ids so subjects survive container re-creation.
-- **The client secret** is an Aspire secret parameter `sso-acme-client-secret`, given to Keycloak through an environment placeholder in the realm file and to the API as `Identity__External__Sso__acme__ClientSecret`.
+- **The client secret** is an Aspire secret parameter `sso-acme-client-secret`, given to Keycloak through an environment placeholder in the realm file (Keycloak substitutes `${VAR}` in imported realms) and to the API as `Identity__External__Sso__acme__ClientSecret`.
 - **The API** gets the redirect base from the frontend's endpoint and the Acme authority from Keycloak's endpoint. The browser and the API both reach Keycloak at `localhost:<port>`, so the issuer matches.
 - **Google and GitHub** are passed to the API only when `Identity:Google:*` / `Identity:GitHub:*` exist in the AppHost's user secrets (as secret parameters, masked in the dashboard). Callback URLs to register with them: `http://localhost:3000/api/auth/callback/google` and `/github`.
-- **The AppHost smoke test** waits for Keycloak too and checks that `POST /api/auth/external/start` for `alex@acme.test` returns a Keycloak authorization URL that serves its login page.
+- **The AppHost smoke test** waits for Keycloak too and signs `alex@acme.test` in end to end: the frontend's start route, Keycloak's real login form, the frontend's callback, then the session.
 
 ## 4. Testing
 
