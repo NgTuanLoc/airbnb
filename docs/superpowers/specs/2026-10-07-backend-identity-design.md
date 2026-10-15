@@ -201,6 +201,6 @@ The auth handler itself is covered by the integration tests, so it needs no fake
 
 ## Out of scope
 
-- Email verification, password reset, OAuth and social login, 2FA, account deletion, profile editing.
+- Email verification, password reset, OAuth and social login, 2FA, account deletion, profile editing. (OAuth, social login and enterprise SSO later landed in `2026-10-15-oauth-sso-design.md`.)
 - Moving wishlists, bookings and host data to the backend. They stay frontend mocks keyed by user id until phases 2 and 4.
 - Account lockout beyond IP rate limiting.
