@@ -30,7 +30,7 @@ export function decodeSession(value: string | undefined): User | null {
   }
 }
 
-const secureFlag = () => (process.env.NODE_ENV === "production" ? "; Secure" : "");
+export const secureFlag = () => (process.env.NODE_ENV === "production" ? "; Secure" : "");
 
 export function sessionCookie(token: string): string {
   return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SECONDS}${secureFlag()}`;
@@ -40,13 +40,18 @@ export function clearedSessionCookie(): string {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secureFlag()}`;
 }
 
-/** The session token in a request's cookie header, if any. */
-export function cookieValue(request: Request): string | undefined {
+/** A cookie's value in a request's cookie header, if any. */
+export function readCookie(request: Request, name: string): string | undefined {
   const entry = (request.headers.get("cookie") ?? "")
     .split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${SESSION_COOKIE}=`));
-  return entry?.slice(SESSION_COOKIE.length + 1) || undefined;
+    .find((part) => part.startsWith(`${name}=`));
+  return entry?.slice(name.length + 1) || undefined;
+}
+
+/** The session token in a request's cookie header, if any. */
+export function cookieValue(request: Request): string | undefined {
+  return readCookie(request, SESSION_COOKIE);
 }
 
 /** The session of a route handler's request; a backend outage reads as logged out (plan ruling). */

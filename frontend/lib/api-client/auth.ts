@@ -21,3 +21,14 @@ export function register(input: RegisterInput): Promise<User> {
 export async function logout(): Promise<void> {
   await callApi("/api/auth/logout", z.null(), { method: "POST" });
 }
+
+const startSchema = z.object({ redirectUrl: z.string().min(1) });
+
+/** Starts Google, GitHub or SSO (`provider: "sso"` with a work email); the caller sends the browser to `redirectUrl`. */
+export function startOAuth(input: { provider: string; next?: string; email?: string; link?: boolean }): Promise<{ redirectUrl: string }> {
+  return callApi("/api/auth/oauth/start", startSchema, { method: "POST", body: JSON.stringify(input) });
+}
+
+export async function disconnectProvider(provider: string): Promise<void> {
+  await callApi(`/api/auth/connections/${encodeURIComponent(provider)}`, z.null(), { method: "DELETE" });
+}
