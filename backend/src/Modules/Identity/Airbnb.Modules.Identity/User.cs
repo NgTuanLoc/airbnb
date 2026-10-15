@@ -2,6 +2,9 @@ namespace Airbnb.Modules.Identity;
 
 internal sealed class User
 {
+    // "usr_" + a UUID v7: time-ordered, and distinct from the mock "u-<email>" ids.
+    internal static string NewId() => "usr_" + Guid.CreateVersion7().ToString("N");
+
     public required string Id { get; init; }
     public required string Email { get; init; }
     public required string Name { get; init; }
