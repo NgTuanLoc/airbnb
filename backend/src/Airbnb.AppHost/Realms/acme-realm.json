@@ -1,0 +1,53 @@
+{
+  "realm": "acme",
+  "displayName": "Acme Corp",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "clients": [
+    {
+      "clientId": "airbnb",
+      "name": "Airbnb (local demo)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${ACME_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/api/auth/callback/sso-acme"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "6f1c2a4e-0b7d-4c3e-9a51-3d2f8e4b7a10",
+      "username": "alex",
+      "email": "alex@acme.test",
+      "emailVerified": true,
+      "firstName": "Alex",
+      "lastName": "Rivera",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "acme-demo", "temporary": false }]
+    },
+    {
+      "id": "0b9e7d3c-5a2f-4e18-8c6d-1f4a9b2e7c35",
+      "username": "sam",
+      "email": "sam@acme.test",
+      "emailVerified": true,
+      "firstName": "Sam",
+      "lastName": "Okafor",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "acme-demo", "temporary": false }]
+    }
+  ]
+}
