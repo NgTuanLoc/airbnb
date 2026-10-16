@@ -52,8 +52,9 @@ export function AccountMenu() {
           <UserCircle aria-hidden className="size-7 text-muted" />
         )}
       </button>
+      {/* z-50: above the sticky search bar (z-40), which the header doesn't contain. */}
       {open && (
-        <div className="absolute right-0 top-12 z-20 flex w-56 flex-col rounded-sm bg-canvas py-2 shadow-airbnb">
+        <div className="absolute right-0 top-12 z-50 flex w-56 flex-col rounded-sm bg-canvas py-2 shadow-airbnb">
           <AccountLinks itemClass={itemClass} />
         </div>
       )}

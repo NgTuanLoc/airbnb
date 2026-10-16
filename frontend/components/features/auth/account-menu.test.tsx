@@ -17,6 +17,14 @@ const loggedIn = (logout = vi.fn()): SessionState => ({
 });
 
 describe("AccountMenu", () => {
+  test("the open menu stacks above the sticky search bar (z-40)", async () => {
+    renderWith(loggedIn());
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    const panel = screen.getByRole("link", { name: "Trips" }).parentElement!;
+    expect(panel.className).toContain("z-50");
+  });
+
   test("logged out (or outside the provider): offers log in and sign up", async () => {
     renderWith(null);
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
