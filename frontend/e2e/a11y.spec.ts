@@ -18,7 +18,7 @@ async function visit(page: Page, path: string) {
 
 const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1280) < 744;
 
-for (const path of ["/", "/s/Aspen", "/rooms/l1", "/experiences", "/experiences/e1", "/services", "/services/s1", "/login", "/register", "/host"]) {
+for (const path of ["/", "/s/Aspen", "/rooms/l1", "/experiences", "/experiences/e1", "/services", "/services/s1", "/login", "/login/sso", "/register", "/host"]) {
   test(`${path} has no serious accessibility violations`, async ({ page }) => {
     await visit(page, path);
     await expectNoSeriousViolations(page);
@@ -31,7 +31,7 @@ test.describe("logged-in pages", () => {
   });
 
   const book = `/book/l1?checkIn=${isoDaysAhead(40)}&checkOut=${isoDaysAhead(43)}&adults=1&children=0`;
-  for (const path of ["/wishlists", "/trips", book, "/host/listings", "/host/listings/new", "/host/reservations"]) {
+  for (const path of ["/wishlists", "/trips", book, "/host/listings", "/host/listings/new", "/host/reservations", "/account/security"]) {
     test(`${path.split("?")[0]} has no serious accessibility violations`, async ({ page }) => {
       await visit(page, path);
       await expectNoSeriousViolations(page);
@@ -44,6 +44,13 @@ test.describe("logged-in pages", () => {
     await expect(page.getByRole("dialog", { name: "Save to wishlist" })).toBeVisible();
     await expectNoSeriousViolations(page);
   });
+});
+
+test("the demo sign-in provider has no serious accessibility violations", async ({ page }) => {
+  const path = "/auth/mock-provider?provider=google&state=a11y&redirect_uri=%2Fapi%2Fauth%2Fcallback%2Fgoogle";
+  test.skip((await page.request.get(path)).status() === 404, "mock mode only");
+  await visit(page, path);
+  await expectNoSeriousViolations(page);
 });
 
 test("the open account menu has no serious accessibility violations", async ({ page }) => {

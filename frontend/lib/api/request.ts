@@ -1,8 +1,8 @@
 import type { z } from "zod";
 import { fail } from "./envelope";
 
-export function jsonError(message: string, status: number): Response {
-  return Response.json(fail(message), { status });
+export function jsonError(message: string, status: number, code?: string): Response {
+  return Response.json(fail(message, code), { status });
 }
 
 export function unauthorized(): Response {

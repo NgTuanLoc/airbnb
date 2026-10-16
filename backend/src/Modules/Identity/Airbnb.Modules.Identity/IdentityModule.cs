@@ -1,10 +1,12 @@
 using Airbnb.Modules.Identity.Data;
+using Airbnb.Modules.Identity.External;
 using Airbnb.SharedKernel.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Airbnb.Modules.Identity;
 
@@ -26,6 +28,7 @@ public static class IdentityModule
             .AddAuthentication(SessionAuthentication.Scheme)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthentication.Scheme, configureOptions: null);
         builder.Services.AddAuthorization();
+        builder.AddExternalLogins();
         return builder;
     }
 
@@ -38,6 +41,23 @@ public static class IdentityModule
         Login.Map(api);
         Logout.Map(api);
         Me.Map(api);
+        ListProviders.Map(api);
+        StartExternalLogin.Map(api);
+        CompleteExternalLogin.Map(api);
+        ListConnections.Map(api);
+        RemoveConnection.Map(api);
         return api;
+    }
+
+    // Google, GitHub and SSO sign-in (OAuth spec §1). Misconfigured providers fail the host at startup.
+    private static void AddExternalLogins(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddOptions<ExternalLoginOptions>().BindConfiguration(ExternalLoginOptions.SectionName).ValidateOnStart();
+        builder.Services.AddSingleton<IValidateOptions<ExternalLoginOptions>, ExternalLoginOptionsValidator>();
+        // GitHub's API refuses requests without a User-Agent.
+        builder.Services.AddHttpClient(ExternalHttp.ClientName, client => client.DefaultRequestHeaders.UserAgent.ParseAdd("airbnb-clone"));
+        builder.Services.AddSingleton<ExternalProviders>();
+        builder.Services.AddScoped<StartExternalLogin.Handler>();
+        builder.Services.AddScoped<CompleteExternalLogin.Handler>();
     }
 }

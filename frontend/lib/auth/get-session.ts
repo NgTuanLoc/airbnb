@@ -13,6 +13,11 @@ export const getSession = cache(async (): Promise<User | null> => {
   return userForToken(token, { clientIp: clientIpFromHeader((await headers()).get("x-forwarded-for")) });
 });
 
+/** The session cookie's token for a server component, to call the gateway as that user. */
+export async function getSessionToken(): Promise<string | null> {
+  return (await cookies()).get(SESSION_COOKIE)?.value ?? null;
+}
+
 /** The logged-in user, or a redirect to /login that comes back to `path` afterwards. */
 export async function requireSession(path: string): Promise<User> {
   const user = await getSession();

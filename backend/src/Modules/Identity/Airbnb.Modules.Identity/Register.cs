@@ -34,7 +34,7 @@ internal static class Register
 
             var user = new User
             {
-                Id = "usr_" + Guid.CreateVersion7().ToString("N"),
+                Id = User.NewId(),
                 Email = email,
                 Name = command.Name!.Trim(),
                 CreatedAt = time.GetUtcNow(),

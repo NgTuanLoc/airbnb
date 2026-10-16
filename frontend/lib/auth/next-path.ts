@@ -20,3 +20,8 @@ export function safeNextPath(next: string | null | undefined): string {
 export function loginPath(next: string): string {
   return `/login?next=${encodeURIComponent(next)}`;
 }
+
+/** A page that comes back to `next` afterwards; plain when `next` is the homepage. */
+export function pathWithNext(path: string, next: string): string {
+  return next === "/" ? path : `${path}?next=${encodeURIComponent(next)}`;
+}

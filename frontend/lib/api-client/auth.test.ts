@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { fetchSession, login, logout, register } from "./auth";
+import { disconnectProvider, fetchSession, login, logout, register, startOAuth } from "./auth";
 
 const user = { id: "u-ana@example.com", name: "ana", email: "ana@example.com" };
 
@@ -35,4 +35,21 @@ test("logout posts to the logout endpoint", async () => {
   vi.stubGlobal("fetch", f);
   await expect(logout()).resolves.toBeUndefined();
   expect(f).toHaveBeenCalledWith("/api/auth/logout", expect.objectContaining({ method: "POST" }));
+});
+
+test("startOAuth posts the provider and returns where to go", async () => {
+  const f = mockFetch({ success: true, data: { redirectUrl: "/auth/mock-provider?provider=google" } });
+  vi.stubGlobal("fetch", f);
+  await expect(startOAuth({ provider: "google", next: "/trips" })).resolves.toEqual({ redirectUrl: "/auth/mock-provider?provider=google" });
+  expect(f).toHaveBeenCalledWith("/api/auth/oauth/start", expect.objectContaining({ method: "POST", body: JSON.stringify({ provider: "google", next: "/trips" }) }));
+});
+
+test("disconnectProvider deletes the connection, and a refusal throws its message", async () => {
+  const f = mockFetch({ success: true, data: null });
+  vi.stubGlobal("fetch", f);
+  await expect(disconnectProvider("sso-acme")).resolves.toBeUndefined();
+  expect(f).toHaveBeenCalledWith("/api/auth/connections/sso-acme", expect.objectContaining({ method: "DELETE" }));
+
+  vi.stubGlobal("fetch", mockFetch({ success: false, error: "Connect another sign-in method first.", code: "last_login_method" }, false));
+  await expect(disconnectProvider("google")).rejects.toThrow("Connect another sign-in method first.");
 });

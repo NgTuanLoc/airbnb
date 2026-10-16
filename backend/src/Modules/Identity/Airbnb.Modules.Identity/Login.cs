@@ -35,7 +35,8 @@ internal static class Login
             }
 
             var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email, cancellationToken);
-            if (user is null)
+            // An account created by an external sign-in has no password: same work, same answer as an unknown email.
+            if (user?.PasswordHash is null)
             {
                 hasher.VerifyHashedPassword(null!, DummyHash.Value, command.Password!);
                 return (null, false);

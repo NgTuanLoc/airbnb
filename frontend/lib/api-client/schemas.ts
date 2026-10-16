@@ -87,6 +87,7 @@ export function envelopeSchema<T extends z.ZodType>(data: T) {
     data: data.optional(),
     error: z.string().optional(),
     meta: pageMetaSchema.optional(),
+    code: z.string().optional(),
   });
 }
 

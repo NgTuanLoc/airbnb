@@ -23,6 +23,82 @@ namespace Airbnb.Modules.Identity.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Airbnb.Modules.Identity.External.ExternalLogin", b =>
+                {
+                    b.Property<string>("Provider")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Provider", "Subject");
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("external_logins", "identity");
+                });
+
+            modelBuilder.Entity("Airbnb.Modules.Identity.External.ExternalLoginFlow", b =>
+                {
+                    b.Property<string>("IdHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CodeVerifier")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LinkUserId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Nonce")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("IdHash");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("LinkUserId");
+
+                    b.ToTable("external_login_flows", "identity");
+                });
+
             modelBuilder.Entity("Airbnb.Modules.Identity.Session", b =>
                 {
                     b.Property<string>("TokenHash")
@@ -61,13 +137,15 @@ namespace Airbnb.Modules.Identity.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.Property<DateTimeOffset?>("EmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -76,6 +154,25 @@ namespace Airbnb.Modules.Identity.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("users", "identity");
+                });
+
+            modelBuilder.Entity("Airbnb.Modules.Identity.External.ExternalLogin", b =>
+                {
+                    b.HasOne("Airbnb.Modules.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Airbnb.Modules.Identity.External.ExternalLoginFlow", b =>
+                {
+                    b.HasOne("Airbnb.Modules.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("LinkUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Airbnb.Modules.Identity.Session", b =>
