@@ -83,3 +83,21 @@ test("/host/listings has no horizontal scroll on a phone with a listing row", as
   await page.waitForLoadState("networkidle");
   await expectNoHorizontalScroll(page);
 });
+
+test("tapping the cover opens the photo viewer, and a swipe moves to the next photo", async ({ page }) => {
+  await page.goto("/rooms/l1");
+  await page.waitForLoadState("networkidle");
+
+  await page.getByRole("button", { name: /^Open photo 1 of/ }).click();
+  const viewer = page.getByRole("dialog", { name: /^Photos of/ });
+  await expect(viewer.getByText(/^1 \/ \d+$/)).toBeVisible();
+
+  // A swipe scrolls the snap track by one slide; the counter follows the slide in view.
+  await viewer.getByRole("group", { name: /^Photo 1 of/ }).locator("xpath=..").evaluate((track) =>
+    track.scrollBy({ left: track.clientWidth, behavior: "instant" }),
+  );
+  await expect(viewer.getByText(/^2 \/ \d+$/)).toBeVisible();
+
+  await viewer.getByRole("button", { name: "Close" }).click();
+  await expect(viewer).toBeHidden();
+});

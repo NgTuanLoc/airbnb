@@ -75,3 +75,10 @@ test("the mobile search overlay has no serious accessibility violations", async 
   await expect(page.getByRole("dialog", { name: "Search" })).toBeVisible();
   await expectNoSeriousViolations(page);
 });
+
+test("the open photo viewer has no serious accessibility violations", async ({ page }) => {
+  await visit(page, "/rooms/l1");
+  await page.getByRole("button", { name: /^Open photo 1 of/ }).click();
+  await expect(page.getByRole("dialog", { name: /^Photos of/ })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, userEvent, within } from "@/lib/test-utils";
 import { ListingGallery } from "./listing-gallery";
 
 const photos = ["/a.jpg", "/b.jpg", "/c.jpg", "/d.jpg", "/e.jpg"];
@@ -32,5 +32,37 @@ describe("ListingGallery", () => {
     expect(classes).toContain("col-span-4");
     expect(classes).toContain("md:col-span-2");
     expect(screen.getAllByRole("img")[1].parentElement!.className).toContain("hidden md:block");
+  });
+
+  test("clicking a photo opens the viewer on that photo", async () => {
+    render(<ListingGallery photos={photos} title="Cozy cabin" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Open photo 3 of 5" }));
+
+    const viewer = screen.getByRole("dialog", { name: "Photos of Cozy cabin" });
+    expect(within(viewer).getByText("3 / 5")).toBeInTheDocument();
+  });
+
+  test("Show all photos opens the viewer on the first photo", async () => {
+    render(<ListingGallery photos={photos} title="Cozy cabin" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Show all photos" }));
+
+    expect(within(screen.getByRole("dialog")).getByText("1 / 5")).toBeInTheDocument();
+  });
+
+  test("phones see how many photos there are on the cover", () => {
+    render(<ListingGallery photos={photos} title="Cozy cabin" />);
+
+    const count = screen.getByText("1 / 5");
+    expect(count.className).toContain("md:hidden");
+  });
+
+  test("a single photo still opens the viewer but needs no photo count", async () => {
+    render(<ListingGallery photos={["/only.jpg"]} title="Solo" />);
+
+    expect(screen.queryByText("1 / 1")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Open photo 1 of 1" }));
+    expect(screen.getByRole("dialog", { name: "Photos of Solo" })).toBeInTheDocument();
   });
 });
