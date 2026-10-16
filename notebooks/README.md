@@ -1,6 +1,6 @@
 # Notebooks
 
-`airbnb-sql-essentials.ipynb` teaches the SQL you use most, using queries against the backend's PostgreSQL database:
+`airbnb-sql-essentials.sql` is a SQL-only notebook that teaches the SQL you use most, with queries against the backend's PostgreSQL database:
 - filtering
 - `GROUP BY`/`HAVING`
 - joins across module schemas
@@ -10,18 +10,24 @@
 - date ranges and overlaps
 - `EXPLAIN`
 
-Each query is followed by a short analysis of its result. The connection is read-only.
+Each query is followed by a short analysis of its result. Every query is a read-only `select` or `explain`.
 
 ## Run it
 
 1. Start the stack: `aspire run` from `backend/`.
-2. Install the packages: `pip install -r notebooks/requirements.txt`.
-3. Point it at the database. The password is in the Aspire dashboard (postgres resource) and the port is in `docker ps --filter name=postgres`:
+2. In VS Code, install the **SQL Notebook** extension (`cmoog.sqlnotebook`).
+3. Right-click `airbnb-sql-essentials.sql` and choose **Open With… → SQL Notebook**.
+4. In the **SQL Notebook** side panel, add a PostgreSQL connection:
+   - host `127.0.0.1`
+   - port from `docker ps --filter name=postgres`
+   - database `airbnb`
+   - user `postgres`
+   - password from the Aspire dashboard (postgres resource)
 
-   ```powershell
-   $env:AIRBNB_DB_URL = "postgresql://postgres:<url-encoded password>@127.0.0.1:<port>/airbnb"
-   jupyter notebook notebooks/airbnb-sql-essentials.ipynb
-   ```
+**Use `127.0.0.1`, not `localhost`.** Docker publishes Postgres on IPv4 only, and `localhost` can resolve to IPv6 first and hang.
 
-   - **Use `127.0.0.1`, not `localhost`.** Docker publishes Postgres on IPv4 only, and `localhost` can resolve to IPv6 first and hang.
-   - **URL-encode special characters in the password**, for example `!` → `%21` and `)` → `%29`.
+The file is also plain SQL, so `psql -f notebooks/airbnb-sql-essentials.sql` runs it top to bottom.
+
+## Editing
+
+One blank line separates cells, so a cell can't contain a blank line. Markdown cells are block comments whose first line is `/*markdown`.
