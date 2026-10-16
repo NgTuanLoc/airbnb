@@ -19,7 +19,8 @@ export function ListingGallery({ photos, title }: ListingGalleryProps) {
             i === 0
               ? mosaic.length === 1
                 ? "relative col-span-4 row-span-2"
-                : "relative col-span-2 row-span-2"
+                : // The other photos are hidden below md, so there the cover takes the whole width.
+                  "relative col-span-4 row-span-2 md:col-span-2"
               : "relative hidden md:block"
           }
         >

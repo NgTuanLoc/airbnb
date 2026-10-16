@@ -23,4 +23,14 @@ describe("ListingGallery", () => {
     expect(cover?.className).toContain("col-span-4");
     expect(cover?.className).not.toContain("col-span-2");
   });
+
+  test("on phones the cover fills the width; from md up it shares the mosaic", () => {
+    render(<ListingGallery photos={photos} title="Cozy cabin" />);
+    const cover = screen.getAllByRole("img")[0].parentElement!;
+    const classes = cover.className.split(" ");
+    // The other photos are hidden below md, so a half-width cover would leave the right half empty.
+    expect(classes).toContain("col-span-4");
+    expect(classes).toContain("md:col-span-2");
+    expect(screen.getAllByRole("img")[1].parentElement!.className).toContain("hidden md:block");
+  });
 });
