@@ -9,7 +9,7 @@ export interface CategoryStripProps {
   onSelect: (category: string) => void;
 }
 
-export function CategoryStrip({ categories, active, onSelect }: CategoryStripProps) {
+export function CategoryStrip({ categories, active, onSelect }: Readonly<CategoryStripProps>) {
   return (
     <div className="flex gap-8 overflow-x-auto border-b border-hairline py-4">
       {categories.map((category) => {

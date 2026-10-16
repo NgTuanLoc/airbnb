@@ -8,7 +8,7 @@ export default function BookLoading() {
         id="main"
         aria-busy="true"
         aria-label="Loading page"
-        className="mx-auto w-full max-w-[1080px] flex-1 px-6 md:px-10 py-8"
+        className="mx-auto w-full max-w-270 flex-1 px-6 md:px-10 py-8"
       >
         <Skeleton radius="sm" className="mb-8 h-8 w-64" />
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px] lg:grid-cols-[1.4fr_1fr]">

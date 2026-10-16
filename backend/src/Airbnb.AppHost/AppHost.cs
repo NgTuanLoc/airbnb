@@ -69,7 +69,7 @@ api.WithEnvironment("Identity__External__RedirectBaseUrl", ReferenceExpression.C
 keycloak.WithEnvironment("ACME_REDIRECT_URI",
     ReferenceExpression.Create($"http://localhost:{frontend.GetEndpoint("http").Property(EndpointProperty.Port)}/api/auth/callback/sso-acme"));
 
-builder.Build().Run();
+await builder.Build().RunAsync();
 
 // Passed to the API as secret parameters (masked in the dashboard), and only when both values are configured:
 // an unset parameter would hold every `aspire run` at a prompt.
