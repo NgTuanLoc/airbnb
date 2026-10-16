@@ -18,9 +18,9 @@ const navButton =
  * Full-screen photo viewer. Slides sit in a horizontal scroll-snap track, so touch devices swipe natively;
  * the buttons and arrow keys scroll the same track, and the counter follows whichever slide is in view.
  */
-export function PhotoLightbox({ photos, title, startIndex, onClose }: PhotoLightboxProps) {
+export function PhotoLightbox({ photos, title, startIndex, onClose }: Readonly<PhotoLightboxProps>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLElement>(null);
   const [index, setIndex] = useState(startIndex);
   const last = photos.length - 1;
 
@@ -87,12 +87,11 @@ export function PhotoLightbox({ photos, title, startIndex, onClose }: PhotoLight
         </div>
 
         <div className="relative min-h-0 flex-1">
-          <div
+          <section
             ref={trackRef}
             onScroll={onScroll}
             // A scrollable region must be reachable by keyboard; focused, it scrolls with the arrow keys too.
             tabIndex={0}
-            role="region"
             aria-roledescription="carousel"
             aria-label={`${title} photos`}
             className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scrollbar-none"
@@ -111,7 +110,7 @@ export function PhotoLightbox({ photos, title, startIndex, onClose }: PhotoLight
                 </div>
               </div>
             ))}
-          </div>
+          </section>
 
           <button
             type="button"
