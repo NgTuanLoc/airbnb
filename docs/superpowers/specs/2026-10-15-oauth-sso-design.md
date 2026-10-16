@@ -200,7 +200,7 @@ Failures are `{ ok: false, status, error, code? }`; anything that isn't a user-f
 
 ## 3. Aspire
 
-- **`Aspire.Hosting.Keycloak`** (13.5.4 preview) adds a `keycloak` container: persistent, with the realm from `src/Airbnb.AppHost/Realms/acme-realm.json` imported. That realm has:
+- **`Aspire.Hosting.Keycloak`** (13.6.1 preview) adds a `keycloak` container: persistent, with the realm from `src/Airbnb.AppHost/Realms/acme-realm.json` imported. That realm has:
   - client `airbnb`, whose one allowed redirect URI is the frontend's callback (`http://localhost:<frontend port>/api/auth/callback/sso-acme`, from the environment like the secret, because the testing builder randomizes ports);
   - users `alex@acme.test` and `sam@acme.test`, password `acme-demo`, with fixed ids so subjects survive container re-creation.
 - **The client secret** is an Aspire secret parameter `sso-acme-client-secret`, given to Keycloak through an environment placeholder in the realm file (Keycloak substitutes `${VAR}` in imported realms) and to the API as `Identity__External__Sso__acme__ClientSecret`.

@@ -5,7 +5,7 @@ Monorepo with a Next.js frontend and an ASP.NET Core backend.
 | Folder | What | Stack |
 |---|---|---|
 | `frontend/` | Web app | Next.js 16, React 19, TypeScript, Tailwind v4 |
-| `backend/` | API | ASP.NET Core (.NET 10) modular monolith, orchestrated by Aspire 13.5 |
+| `backend/` | API | ASP.NET Core (.NET 10) modular monolith, orchestrated by Aspire 13.6 |
 | `docs/` | Specs and plans | Markdown |
 
 ## Prerequisites
