@@ -118,4 +118,4 @@ api.MapReviewsEndpoints();
 api.MapIdentityEndpoints();
 api.MapBookingsEndpoints();
 
-app.Run();
+await app.RunAsync();

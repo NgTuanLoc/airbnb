@@ -23,4 +23,4 @@ builder.AddBookingsModuleDatabase();
 
 builder.Services.AddHostedService<MigrationWorker>();
 
-builder.Build().Run();
+await builder.Build().RunAsync();
