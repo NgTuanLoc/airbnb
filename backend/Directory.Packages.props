@@ -11,6 +11,8 @@
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.6.1" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.1" />
+    <!-- Transitive via Aspire.Hosting; 2.5.302 fails restore on GHSA-qhrr-8q5h-9q3h. Drop once Aspire ships a fixed version. -->
+    <PackageVersion Include="MessagePack" Version="2.5.303" />
   </ItemGroup>
 
   <ItemGroup Label="Service defaults">
