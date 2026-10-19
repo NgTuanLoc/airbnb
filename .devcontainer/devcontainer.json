@@ -1,0 +1,33 @@
+// The whole stack on Linux: for Macs older than macOS 15 (Aspire's macOS orchestrator needs 15+) and GitHub Codespaces.
+// Aspire forwards each resource's port to the host by itself (it detects Dev Containers and Codespaces).
+{
+  "name": "Airbnb",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:2-10.0-noble",
+  "features": {
+    // Aspire's containers run in here, so bind mounts (the Keycloak realm) resolve to paths inside this container.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:2": { "version": "24" }
+  },
+  // .NET builds into the container (MSBuild reads environment variables as properties). Sharing bin/obj with the host
+  // breaks the first `aspire run` after each switch: restore output holds the other side's absolute package paths.
+  "containerEnv": { "ArtifactsPath": "/home/vscode/artifacts" },
+  // Volumes, not the host's folders: node_modules holds macOS builds of Next's native binaries, and Turbopack's cache in
+  // .next holds absolute paths (each side would write to the other's). ~/.microsoft holds the user secrets with the
+  // AppHost's generated passwords, which must outlive a rebuild as the Postgres data volume does (docker-in-docker keeps it).
+  "mounts": [
+    "source=airbnb-node-modules-${devcontainerId},target=${containerWorkspaceFolder}/frontend/node_modules,type=volume",
+    "source=airbnb-next-${devcontainerId},target=${containerWorkspaceFolder}/frontend/.next,type=volume",
+    "source=airbnb-user-secrets-${devcontainerId},target=/home/vscode/.microsoft,type=volume"
+  ],
+  // The Aspire CLI version follows Aspire.AppHost.Sdk in backend/src/Airbnb.AppHost.
+  "postCreateCommand": "sudo chown vscode frontend/node_modules frontend/.next ~/.microsoft && npm ci --prefix frontend && dotnet tool install -g Aspire.Cli --version 13.6.1",
+  "hostRequirements": { "cpus": 4 },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "microsoft-aspire.aspire-vscode"
+      ]
+    }
+  }
+}

@@ -29,7 +29,7 @@ Data comes from in-repo mock data by default. `DATA_SOURCE=api` (server-only; ne
 
 ## Backend
 
-Run from PowerShell; Docker must be running.
+Run from PowerShell; Docker must be running. On a Mac older than macOS 15 (Aspire's orchestrator needs 15+), or in GitHub Codespaces, open the repo in the dev container (VS Code: **Dev Containers: Reopen in Container**) and run the same commands in its terminal.
 
 ```powershell
 cd backend
@@ -39,6 +39,8 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 
 - The dashboard URL is printed on start. The API answers at http://localhost:5283 (`/health`, and `/scalar` for the API reference in Development).
 - Without the Aspire CLI: `dotnet run --project src/Airbnb.AppHost`.
+- In VS Code, start it from a regular terminal (or F5): a plain `aspire run` in the Aspire extension's own terminal fails with "Aspire debug session is not initialized".
+- In the local dev container the dashboard and Keycloak are served with the container's own development certificate, which your browser doesn't trust: continue past the warning.
 - Containers are persistent between runs. `aspire stop --force` removes them; the Postgres data volume survives until `docker volume rm`.
 - Read API (all under `/api`, try them in `/scalar`): `GET /listings`, `/listings/{id}`, `/cities`, `/experiences`, `/experiences/{id}`, `/services`, `/services/{id}`, `/hosts/{id}`, `/reviews?subjectId=…`. Data is seeded from the frontend mock (`npm run seed:export` in `frontend/` regenerates it).
 - Write API: `POST /api/reviews` with `{ subjectType: "stay" | "experience", subjectId, authorName, rating (1–5), body }` → 201 with the review. The listing's or experience's rating and review count update a moment later, via RabbitMQ; the trace shows up in the dashboard. Try it in `/scalar`.

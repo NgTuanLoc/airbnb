@@ -8,6 +8,7 @@ Monorepo:
 - `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
 - `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.6. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`, modules (`src/Modules/<Name>`: Stays, Experiences, Services, Hosts, Reviews, Identity, Bookings), module Contracts projects (`src/Modules/<Name>/Airbnb.Modules.<Name>.Contracts`: plain interfaces and records other modules may reference); tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration), `tests/Airbnb.AppHost.Tests` (Aspire smoke test). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
 - `docs/` — specs and plans (repo root).
+- `.devcontainer/` — Linux dev container (docker-in-docker, Node 24, the Aspire CLI pinned in `postCreateCommand` to the AppHost's Aspire version) for Macs older than macOS 15, which can't run Aspire's orchestrator, and for Codespaces. .NET builds go to `$ArtifactsPath` (`/home/vscode/artifacts`), not `bin/`/`obj/`, and `frontend/node_modules`, `frontend/.next` and `~/.microsoft` (user secrets) are volumes: sharing them with the host breaks the other side.
 
 ## Commands
 
