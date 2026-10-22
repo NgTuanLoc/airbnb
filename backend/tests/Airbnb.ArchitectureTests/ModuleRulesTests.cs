@@ -4,6 +4,7 @@ using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Identity;
+using Airbnb.Modules.Media;
 using Airbnb.Modules.Media.Contracts;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Reviews.Contracts;
@@ -21,6 +22,7 @@ public sealed class ModuleRulesTests
         ["Airbnb.Modules.Experiences"] = typeof(ExperiencesModule),
         ["Airbnb.Modules.Hosts"] = typeof(HostsModule),
         ["Airbnb.Modules.Identity"] = typeof(IdentityModule),
+        ["Airbnb.Modules.Media"] = typeof(MediaModule),
         ["Airbnb.Modules.Reviews"] = typeof(ReviewsModule),
         ["Airbnb.Modules.Services"] = typeof(ServicesModule),
         ["Airbnb.Modules.Stays"] = typeof(StaysModule),

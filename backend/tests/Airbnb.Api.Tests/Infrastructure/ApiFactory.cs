@@ -17,7 +17,8 @@ public sealed class ApiFactory(
         builder
             .UseSetting("ConnectionStrings:airbnb", postgresConnectionString ?? infrastructure.PostgresConnectionString)
             .UseSetting("ConnectionStrings:redis", redisConnectionString ?? infrastructure.RedisConnectionString)
-            .UseSetting("ConnectionStrings:rabbitmq", infrastructure.RabbitMqConnectionString);
+            .UseSetting("ConnectionStrings:rabbitmq", infrastructure.RabbitMqConnectionString)
+            .UseSetting("ConnectionStrings:blobs", infrastructure.BlobConnectionString);
 
         // Wolverine can't start without a reachable Postgres; tests that point the API at a dead database switch it off.
         if (!withMessaging)

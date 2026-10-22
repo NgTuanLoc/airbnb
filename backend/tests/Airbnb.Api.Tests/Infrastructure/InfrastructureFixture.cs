@@ -10,6 +10,7 @@ using Airbnb.SharedKernel;
 using DotNet.Testcontainers.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Testcontainers.Azurite;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Testcontainers.Redis;
@@ -32,22 +33,29 @@ public sealed class InfrastructureFixture : IAsyncLifetime
         .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672))
         .Build();
 
+    // Blob storage for the Media module's photos; the photo-processor function itself is not hosted here.
+    private readonly AzuriteContainer _azurite = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0").Build();
+
     public string PostgresConnectionString => _postgres.GetConnectionString();
 
     public string RedisConnectionString => _redis.GetConnectionString();
 
     public string RabbitMqConnectionString => _rabbitMq.GetConnectionString();
 
+    public string BlobConnectionString => _azurite.GetConnectionString();
+
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
         await _redis.StartAsync();
         await _rabbitMq.StartAsync();
+        await _azurite.StartAsync();
         await MigrateAndSeedAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
+        await _azurite.DisposeAsync();
         await _rabbitMq.DisposeAsync();
         await _redis.DisposeAsync();
         await _postgres.DisposeAsync();
