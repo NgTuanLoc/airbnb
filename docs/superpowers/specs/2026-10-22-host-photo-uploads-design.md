@@ -59,8 +59,10 @@ var photoProcessor = builder.AddAzureFunctionsProject<Projects.Airbnb_Functions>
 api.WithReference(blobs).WaitFor(storage);
 ```
 
-Both containers (`photo-uploads`, `photos`) are created by the API at startup if missing (`CreateIfNotExistsAsync`), so
-the AppHost, the integration tests and Azure behave alike.
+Both containers (`photo-uploads`, `photos`) are created on first use (`CreateIfNotExistsAsync`: the API before storing
+an original, the function before writing its output; reads treat a missing container as a missing photo), so the
+AppHost, the integration tests and Azure behave alike. Container names and metadata keys live in a new
+`Airbnb.Modules.Media.Contracts` project, which both the module and the function reference.
 
 ### Backend: Media module
 
