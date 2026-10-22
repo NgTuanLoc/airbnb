@@ -8,7 +8,7 @@ import { Button, TextInput } from "@/components/design-system";
 import { createHostListing, updateHostListing } from "@/lib/api-client/host";
 import { AMENITY_OPTIONS, HOST_CATEGORIES, HOST_CITIES, MAX_PHOTOS, PHOTO_OPTIONS, PROPERTY_TYPES } from "@/lib/host/options";
 import { hostListingInputSchema, type HostListingInput } from "@/lib/host/schemas";
-import { uploadedPhotoId } from "@/lib/host/uploaded-photos";
+import { PHOTOS_PROCESSING, uploadedPhotoId } from "@/lib/host/uploaded-photos";
 import { cn } from "@/lib/utils";
 import { PhotoUploader } from "./photo-uploader";
 
@@ -40,6 +40,8 @@ export function HostListingForm(props: HostListingFormProps) {
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Uploads still being processed: they hold a photo slot, and the form waits for them rather than saving without them.
+  const [pendingUploads, setPendingUploads] = useState(0);
   const isLast = step === STEPS.length - 1;
 
   function set<K extends Field>(field: K, value: HostListingInput[K]) {
@@ -60,6 +62,7 @@ export function HostListingForm(props: HostListingFormProps) {
 
   function goNext() {
     const stepErrors = errorsFor(STEPS[step].fields);
+    if (STEPS[step].fields.includes("photos") && pendingUploads > 0) stepErrors.photos = PHOTOS_PROCESSING;
     setErrors(stepErrors);
     if (Object.keys(stepErrors).length === 0) setStep((s) => s + 1);
   }
@@ -95,7 +98,7 @@ export function HostListingForm(props: HostListingFormProps) {
 
   function togglePhoto(url: string) {
     if (values.photos.includes(url)) set("photos", values.photos.filter((p) => p !== url));
-    else if (values.photos.length < MAX_PHOTOS) set("photos", [...values.photos, url]);
+    else if (values.photos.length + pendingUploads < MAX_PHOTOS) set("photos", [...values.photos, url]);
   }
 
   // Uploaded photos show only while selected: deselecting one drops it from the listing.
@@ -180,7 +183,7 @@ export function HostListingForm(props: HostListingFormProps) {
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-title-sm text-ink">Photos (pick up to {MAX_PHOTOS}; the first is the cover)</legend>
             {props.uploadsEnabled && (
-              <PhotoUploader remaining={MAX_PHOTOS - values.photos.length} onReady={addUploadedPhoto} />
+              <PhotoUploader remaining={MAX_PHOTOS - values.photos.length} onReady={addUploadedPhoto} onPendingChange={setPendingUploads} />
             )}
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {uploadedPhotos.map((url, index) => (

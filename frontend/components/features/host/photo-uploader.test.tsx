@@ -107,6 +107,42 @@ describe("PhotoUploader", () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
   });
 
+  test("reports how many photos are still on their way", async () => {
+    const onPendingChange = vi.fn();
+    render(<PhotoUploader remaining={5} onReady={vi.fn()} onPendingChange={onPendingChange} />);
+
+    pick(file("home.jpg", "image/jpeg"));
+    await screen.findByText("Processing…");
+    expect(onPendingChange).toHaveBeenLastCalledWith(1);
+
+    statuses.push({ status: "ready" });
+    await tick(2000);
+    expect(onPendingChange).toHaveBeenLastCalledWith(0);
+  });
+
+  test("unfinished uploads stop counting when the uploader goes away", async () => {
+    const onPendingChange = vi.fn();
+    const { unmount } = render(<PhotoUploader remaining={5} onReady={vi.fn()} onPendingChange={onPendingChange} />);
+    pick(file("home.jpg", "image/jpeg"));
+    await screen.findByText("Processing…");
+
+    unmount();
+
+    expect(onPendingChange).toHaveBeenLastCalledWith(0);
+  });
+
+  test("takes photos dropped on it", async () => {
+    render(<PhotoUploader remaining={5} onReady={vi.fn()} />);
+    fireEvent.drop(screen.getByText("Upload photos"), { dataTransfer: { files: [file("dropped.jpg", "image/jpeg")] } });
+    expect(await screen.findByText("Processing…")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/host/photos", expect.objectContaining({ method: "POST" }));
+  });
+
+  test("shows keyboard focus on the drop zone", () => {
+    render(<PhotoUploader remaining={5} onReady={vi.fn()} />);
+    expect(screen.getByText("Upload photos").className).toContain("has-[:focus-visible]:border-ink");
+  });
+
   test("is disabled when the listing has no photo slots left, and uploads no more than remain", () => {
     const { rerender } = render(<PhotoUploader remaining={0} onReady={vi.fn()} />);
     expect(input()).toBeDisabled();

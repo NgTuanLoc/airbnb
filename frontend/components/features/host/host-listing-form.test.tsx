@@ -11,8 +11,11 @@ vi.mock("@/lib/api-client/host", () => api);
 const UPLOADED_URL = "/api/photos/0192f3a4b5c6d7e8f9a0b1c2d3e4f5a6";
 // The uploader has its own tests; here it is a button that hands over one finished upload.
 vi.mock("./photo-uploader", () => ({
-  PhotoUploader: ({ remaining, onReady }: { remaining: number; onReady: (url: string) => void }) => (
-    <button type="button" onClick={() => onReady(UPLOADED_URL)}>{`fake upload, ${remaining} left`}</button>
+  PhotoUploader: ({ remaining, onReady, onPendingChange }: { remaining: number; onReady: (url: string) => void; onPendingChange?: (count: number) => void }) => (
+    <>
+      <button type="button" onClick={() => onReady(UPLOADED_URL)}>{`fake upload, ${remaining} left`}</button>
+      <button type="button" onClick={() => onPendingChange?.(1)}>fake start</button>
+    </>
   ),
 }));
 
@@ -101,6 +104,23 @@ describe("HostListingForm", () => {
     expect(uploaded).toHaveAttribute("aria-pressed", "true");
     expect(uploaded).toHaveTextContent("2");
     expect(screen.getByRole("button", { name: "fake upload, 3 left" })).toBeInTheDocument();
+  });
+
+  test("an upload still processing holds its photo slot and keeps the host on the photos step", async () => {
+    render(<HostListingForm mode="create" uploadsEnabled />);
+    await fillStepOne();
+    await next();
+    await userEvent.selectOptions(screen.getByLabelText("City"), "aspen");
+    await next();
+    for (let n = 1; n <= 4; n++) await userEvent.click(screen.getByRole("button", { name: `Photo ${n}` }));
+    await userEvent.click(screen.getByRole("button", { name: "fake start" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Photo 5" }));
+    expect(screen.getByRole("button", { name: "Photo 5" })).toHaveAttribute("aria-pressed", "false");
+
+    await next();
+    expect(screen.getByText("Wait for photos to finish processing")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Amenities and photos" })).toBeInTheDocument();
   });
 
   test("editing shows the listing's uploaded photos as selected", async () => {

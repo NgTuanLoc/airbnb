@@ -81,4 +81,22 @@ public sealed class PhotoJobTests(InfrastructureFixture infrastructure)
         Assert.Equal("u-owner", metadata[PhotoStorage.OwnerMetadata]);
         Assert.False(await Processed(id).ExistsAsync(Ct));
     }
+
+    // Marking the original changes its ETag, which the blob trigger sees as a new version and fires again: a second
+    // run must leave the rejected original untouched, or every rejected upload loops forever.
+    [Fact]
+    public async Task Rejected_photo_is_not_marked_again()
+    {
+        var bytes = new byte[2048];
+        new Random(8).NextBytes(bytes);
+        var id = await StoreOriginalAsync(bytes);
+        var job = new functions::Airbnb.Functions.PhotoJob(Blobs);
+        await job.RunAsync(id, new MemoryStream(bytes), Ct);
+        var original = Blobs.GetBlobContainerClient(PhotoStorage.UploadsContainer).GetBlobClient(id);
+        var marked = (await original.GetPropertiesAsync(cancellationToken: Ct)).Value.ETag;
+
+        await job.RunAsync(id, new MemoryStream(bytes), Ct);
+
+        Assert.Equal(marked, (await original.GetPropertiesAsync(cancellationToken: Ct)).Value.ETag);
+    }
 }

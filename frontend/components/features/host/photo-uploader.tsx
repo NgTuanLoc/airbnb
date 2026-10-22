@@ -16,10 +16,12 @@ export interface PhotoUploaderProps {
   remaining: number;
   /** Called once per photo the photo-processor has finished, with the URL the listing stores. */
   onReady: (url: string) => void;
+  /** How many photos are still uploading or processing, so the form can hold their slots and wait for them. */
+  onPendingChange?: (count: number) => void;
 }
 
 /** Uploads host photos and waits for the backend to process them; finished photos leave this list via onReady. */
-export function PhotoUploader({ remaining, onReady }: PhotoUploaderProps) {
+export function PhotoUploader({ remaining, onReady, onPendingChange }: PhotoUploaderProps) {
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [pickError, setPickError] = useState<string | null>(null);
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -34,7 +36,15 @@ export function PhotoUploader({ remaining, onReady }: PhotoUploaderProps) {
     return () => pending.forEach(clearTimeout);
   }, []);
 
-  const slots = remaining - uploads.filter((upload) => upload.message === null).length;
+  const pending = uploads.filter((upload) => upload.message === null).length;
+  const slots = remaining - pending;
+
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
+
+  // Leaving the photos step drops unfinished uploads, so they stop holding slots.
+  useEffect(() => () => onPendingChange?.(0), [onPendingChange]);
 
   function update(key: string, message: string | null) {
     setUploads((current) => current.map((upload) => (upload.key === key ? { ...upload, message } : upload)));
@@ -105,7 +115,14 @@ export function PhotoUploader({ remaining, onReady }: PhotoUploaderProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex h-14 cursor-pointer items-center justify-center rounded-sm border border-dashed border-hairline text-body-md text-ink has-[:disabled]:cursor-not-allowed has-[:disabled]:text-muted">
+      <label
+        className="flex h-14 cursor-pointer items-center justify-center rounded-sm border border-dashed border-hairline text-body-md text-ink has-[:disabled]:cursor-not-allowed has-[:disabled]:text-muted has-[:focus-visible]:border-2 has-[:focus-visible]:border-ink"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          if (slots > 0) pick(event.dataTransfer.files);
+        }}
+      >
         Upload photos
         <input
           type="file"
@@ -121,7 +138,7 @@ export function PhotoUploader({ remaining, onReady }: PhotoUploaderProps) {
       </label>
       {pickError && <span className="text-body-sm text-error">{pickError}</span>}
       {uploads.length > 0 && (
-        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-live="polite">
           {uploads.map((upload) => (
             <li key={upload.key} className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- a local blob: preview, not optimizable */}
