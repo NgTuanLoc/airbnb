@@ -6,6 +6,23 @@ import { check, fail, sleep } from "k6";
 const API = __ENV.API_URL;
 const K6_USER = { name: "k6 Load Test", email: "k6@perf.test", password: __ENV.K6_USER_PASSWORD };
 const JSON_HEADERS = { "Content-Type": "application/json" };
+// The `name` tag of every load request. k6's summary breaks a metric down by tag only where a threshold names it,
+// so each endpoint gets its own p95 and failure-rate rows.
+const ENDPOINTS = [
+  "GET /listings",
+  "GET /listings/{id}",
+  "GET /hosts/{id}",
+  "GET /reviews",
+  "GET /cities",
+  "GET /bookings/availability",
+  "GET /auth/me",
+  "GET /bookings/mine",
+  "GET /bookings/hosting",
+];
+const perEndpoint = ENDPOINTS.flatMap((name) => [
+  [`http_req_duration{name:${name}}`, ["p(95)<500"]],
+  [`http_req_failed{name:${name}}`, ["rate<0.01"]],
+]);
 
 export const options = {
   scenarios: {
@@ -17,6 +34,7 @@ export const options = {
     "http_req_duration{scenario:members}": ["p(95)<500"],
     "http_req_failed{scenario:guests}": ["rate<0.01"],
     "http_req_failed{scenario:members}": ["rate<0.01"],
+    ...Object.fromEntries(perEndpoint),
   },
 };
 
