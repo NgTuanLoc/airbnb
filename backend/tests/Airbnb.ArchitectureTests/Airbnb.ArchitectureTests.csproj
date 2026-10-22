@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Modules\Services\Airbnb.Modules.Services\Airbnb.Modules.Services.csproj" />
     <ProjectReference Include="..\..\src\Modules\Stays\Airbnb.Modules.Stays\Airbnb.Modules.Stays.csproj" />
     <ProjectReference Include="..\..\src\Modules\Stays\Airbnb.Modules.Stays.Contracts\Airbnb.Modules.Stays.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Media\Airbnb.Modules.Media.Contracts\Airbnb.Modules.Media.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

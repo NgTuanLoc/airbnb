@@ -4,6 +4,7 @@ using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Identity;
+using Airbnb.Modules.Media.Contracts;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Reviews.Contracts;
 using Airbnb.Modules.Services;
@@ -45,6 +46,7 @@ public sealed class ModuleRulesTests
     private static readonly Dictionary<string, Type> Contracts = new()
     {
         ["Airbnb.Modules.Experiences.Contracts"] = typeof(IExperienceLookup),
+        ["Airbnb.Modules.Media.Contracts"] = typeof(PhotoStorage),
         ["Airbnb.Modules.Reviews.Contracts"] = typeof(ReviewSubmitted),
         ["Airbnb.Modules.Stays.Contracts"] = typeof(IListingLookup),
     };
