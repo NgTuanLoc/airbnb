@@ -13,6 +13,11 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithManagementPlugin()
     .WithLifetime(ContainerLifetime.Persistent);
 
+// Host photo uploads: originals and processed photos in Blob Storage (Azurite locally), processed by an Azure Function.
+var storage = builder.AddAzureStorage("storage")
+    .RunAsEmulator(azurite => azurite.WithDataVolume().WithLifetime(ContainerLifetime.Persistent));
+var blobs = storage.AddBlobs("blobs");
+
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
@@ -37,7 +42,9 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WithReference(db)
     .WithReference(redis)
     .WithReference(rabbitmq)
+    .WithReference(blobs)
     .WaitFor(db)
+    .WaitFor(storage)
     .WaitFor(redis)
     .WaitFor(rabbitmq)
     .WaitForCompletion(migrations)
@@ -68,6 +75,12 @@ builder.AddK6("k6")
     .WithEnvironment("K6_USER_PASSWORD", k6UserPassword)
     .WaitFor(api)
     .WithExplicitStart();
+
+// Blob-triggered on each original the API stores; needs the Azure Functions Core Tools (`func`) on the PATH.
+builder.AddAzureFunctionsProject<Projects.Airbnb_Functions>("photo-processor")
+    .WithHostStorage(storage)
+    .WithReference(blobs)
+    .WaitFor(storage);
 
 // Real Google and GitHub sign-in once their credentials are in this project's user secrets (README).
 AddSocialProvider("Google");

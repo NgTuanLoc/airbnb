@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Airbnb.Api\Airbnb.Api.csproj" />
+    <!-- Aliased: the Functions app has its own Program, which would clash with the API's. -->
+    <ProjectReference Include="..\..\src\Airbnb.Functions\Airbnb.Functions.csproj" Aliases="functions" />
   </ItemGroup>
 
 </Project>

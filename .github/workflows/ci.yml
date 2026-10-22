@@ -58,4 +58,6 @@ jobs:
           dotnet-version: 10.0.x
       - run: npm ci
         working-directory: frontend
+      # Aspire runs the photo-processor Azure Function with the Core Tools' `func` host.
+      - run: npm i -g azure-functions-core-tools@4 --unsafe-perm true
       - run: dotnet test --project tests/Airbnb.AppHost.Tests

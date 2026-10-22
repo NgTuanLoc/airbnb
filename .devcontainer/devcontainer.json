@@ -20,7 +20,7 @@
     "source=airbnb-user-secrets-${devcontainerId},target=/home/vscode/.microsoft,type=volume"
   ],
   // The Aspire CLI version follows Aspire.AppHost.Sdk in backend/src/Airbnb.AppHost.
-  "postCreateCommand": "sudo chown vscode frontend/node_modules frontend/.next ~/.microsoft && npm ci --prefix frontend && dotnet tool install -g Aspire.Cli --version 13.6.3",
+  "postCreateCommand": "sudo chown vscode frontend/node_modules frontend/.next ~/.microsoft && npm ci --prefix frontend && dotnet tool install -g Aspire.Cli --version 13.6.3 && npm i -g azure-functions-core-tools@4 --unsafe-perm true",
   "hostRequirements": { "cpus": 4 },
   "customizations": {
     "vscode": {

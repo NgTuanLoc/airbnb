@@ -14,6 +14,7 @@ Monorepo with a Next.js frontend and an ASP.NET Core backend.
 - .NET 10 SDK (pinned by `backend/global.json`)
 - Docker Desktop (Aspire containers and backend integration tests)
 - Aspire CLI: `dotnet tool install -g aspire.cli`
+- Azure Functions Core Tools v4 (Aspire runs the photo-processor function with `func`): `npm i -g azure-functions-core-tools@4`
 - ReportGenerator (optional, for backend coverage summaries): `dotnet tool install -g dotnet-reportgenerator-globaltool`
 
 ## Frontend
@@ -46,6 +47,7 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 - Write API: `POST /api/reviews` with `{ subjectType: "stay" | "experience", subjectId, authorName, rating (1–5), body }` → 201 with the review. The listing's or experience's rating and review count update a moment later, via RabbitMQ; the trace shows up in the dashboard. Try it in `/scalar`.
 - Under Aspire the frontend runs on the backend (`DATA_SOURCE=api`). Set `Frontend:DataSource` to `mock` in `src/Airbnb.AppHost/appsettings.json` to run it on mock data instead.
 - Parity check: with `aspire run` up, `npm run e2e` in `frontend/` runs the whole e2e suite against the backend (Playwright reuses the server on port 3000). The OAuth specs need mock mode's demo provider and skip themselves.
+- Photo uploads: `storage` is Azure Blob Storage, run as the Azurite emulator with a persistent volume. The API stores each uploaded original there, and the `photo-processor` Azure Function (`src/Airbnb.Functions`, blob-triggered) checks it's a real image, turns it upright, drops its metadata (GPS included) and saves it as WebP, at most 2560 px. The API serves only that processed copy, at `GET /api/photos/{id}/image`.
 - Load test: the `k6` resource runs `backend/perf/k6/load.js` when you press Start on it in the dashboard (or `aspire resource k6 start`). For 1 minute, 20 guests browse listings and 10 members read their account and bookings, all signed in as `k6@perf.test` (registered on the first run; the password is the generated `k6-user-password` parameter). The results are in the resource's console log, and the resource ends as failed if p95 goes over 500 ms or more than 1% of requests fail. Under `aspire run` the API's read limit is raised to 100,000/min so the limiter doesn't throttle k6.
 
 ## Sign in with Google, GitHub or SSO

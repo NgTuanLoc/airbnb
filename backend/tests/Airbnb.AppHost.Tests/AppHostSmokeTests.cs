@@ -1,10 +1,12 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
+using SkiaSharp;
 
 namespace Airbnb.AppHost.Tests;
 
@@ -14,6 +16,9 @@ public sealed class AppHostSmokeTests
 
     // next dev compiles a page on its first request.
     private static readonly TimeSpan FirstPageTimeout = TimeSpan.FromMinutes(3);
+
+    // The blob trigger polls Azurite, so the first photo can take a while.
+    private static readonly TimeSpan PhotoProcessingTimeout = TimeSpan.FromSeconds(90);
 
     [Fact]
     public async Task The_frontend_serves_backend_data_under_aspire()
@@ -76,6 +81,52 @@ public sealed class AppHostSmokeTests
         Assert.Equal("/trips", landed.Headers.Location?.OriginalString);
         var session = await browser.GetFromJsonAsync<JsonElement>("/api/auth/session", ct);
         Assert.Equal("alex@acme.test", session.GetProperty("data").GetProperty("email").GetString());
+
+        await A_photo_upload_is_processed_by_the_function(api, ct);
+    }
+
+    // Host photo uploads end to end: the API stores the original in Azurite, the blob trigger runs the photo-processor
+    // function, and the processed WebP is served.
+    private static async Task A_photo_upload_is_processed_by_the_function(HttpClient api, CancellationToken ct)
+    {
+        using var registered = await api.PostAsJsonAsync("/api/auth/register",
+            new { name = "Photo Host", email = $"photos-{Guid.NewGuid():N}@example.com", password = "correct-horse" }, ct);
+        registered.EnsureSuccessStatusCode();
+        var token = (await registered.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("token").GetString();
+
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(Jpeg(800, 600));
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        form.Add(file, "file", "photo.jpg");
+        using var upload = new HttpRequestMessage(HttpMethod.Post, "/api/photos") { Content = form };
+        upload.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var uploaded = await api.SendAsync(upload, ct);
+        Assert.Equal(HttpStatusCode.Created, uploaded.StatusCode);
+        var id = (await uploaded.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("id").GetString();
+
+        var status = "pending";
+        var deadline = DateTime.UtcNow + PhotoProcessingTimeout;
+        while (status == "pending" && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            using var check = new HttpRequestMessage(HttpMethod.Get, $"/api/photos/{id}");
+            check.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var checkedStatus = await api.SendAsync(check, ct);
+            status = (await checkedStatus.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("status").GetString();
+        }
+        Assert.Equal("ready", status);
+
+        using var image = await api.GetAsync($"/api/photos/{id}/image", ct);
+        Assert.Equal(HttpStatusCode.OK, image.StatusCode);
+        Assert.Equal("image/webp", image.Content.Headers.ContentType?.MediaType);
+    }
+
+    private static byte[] Jpeg(int width, int height)
+    {
+        using var bitmap = new SKBitmap(width, height);
+        bitmap.Erase(SKColors.SteelBlue);
+        using var image = SKImage.FromBitmap(bitmap);
+        return image.Encode(SKEncodedImageFormat.Jpeg, 90).ToArray();
     }
 
     // A browser's cookie jar for this test: Keycloak's cookies are Secure, which browsers send to http://localhost but
