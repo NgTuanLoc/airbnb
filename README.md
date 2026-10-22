@@ -46,6 +46,7 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 - Write API: `POST /api/reviews` with `{ subjectType: "stay" | "experience", subjectId, authorName, rating (1–5), body }` → 201 with the review. The listing's or experience's rating and review count update a moment later, via RabbitMQ; the trace shows up in the dashboard. Try it in `/scalar`.
 - Under Aspire the frontend runs on the backend (`DATA_SOURCE=api`). Set `Frontend:DataSource` to `mock` in `src/Airbnb.AppHost/appsettings.json` to run it on mock data instead.
 - Parity check: with `aspire run` up, `npm run e2e` in `frontend/` runs the whole e2e suite against the backend (Playwright reuses the server on port 3000). The OAuth specs need mock mode's demo provider and skip themselves.
+- Load test: the `k6` resource runs `backend/perf/k6/load.js` when you press Start on it in the dashboard (or `aspire resource k6 start`). For 1 minute, 20 guests browse listings and 10 members read their account and bookings, all signed in as `k6@perf.test` (registered on the first run; the password is the generated `k6-user-password` parameter). The results are in the resource's console log, and the resource ends as failed if p95 goes over 500 ms or more than 1% of requests fail. Under `aspire run` the API's read limit is raised to 100,000/min so the limiter doesn't throttle k6.
 
 ## Sign in with Google, GitHub or SSO
 

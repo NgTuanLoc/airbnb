@@ -50,6 +50,25 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WithEnvironment("Identity__External__Sso__acme__RequireHttpsMetadata", "false")
     .WithHttpHealthCheck("/health");
 
+// The k6 load test (perf/k6/load.js): starts only from the dashboard's Start button, never with `aspire run`.
+// All its traffic comes from one container IP, so locally the read limit (600/min per IP) is raised out of its way.
+if (builder.ExecutionContext.IsRunMode)
+{
+    api.WithEnvironment("RateLimiting__ReadsPerMinute", "100000");
+}
+// Kept in user secrets (a plain generated parameter changes every run): the k6 user registered once must log in again.
+var k6UserPassword = builder.AddResource(
+    ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, "k6-user-password", special: false));
+// No vus/duration here: they would replace the script's two scenarios. Results are in the resource's console log;
+// WithK6OtlpEnvironment is left out because k6 ignores the K6_OTEL_EXPORTER_OTLP_* names it sets.
+builder.AddK6("k6")
+    .WithBindMount("../../perf/k6", "/scripts", isReadOnly: true)
+    .WithScript("/scripts/load.js")
+    .WithEnvironment("API_URL", api.GetEndpoint("http"))
+    .WithEnvironment("K6_USER_PASSWORD", k6UserPassword)
+    .WaitFor(api)
+    .WithExplicitStart();
+
 // Real Google and GitHub sign-in once their credentials are in this project's user secrets (README).
 AddSocialProvider("Google");
 AddSocialProvider("GitHub");
