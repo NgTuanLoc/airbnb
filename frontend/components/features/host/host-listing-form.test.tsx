@@ -8,6 +8,14 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }
 const api = vi.hoisted(() => ({ createHostListing: vi.fn(), updateHostListing: vi.fn() }));
 vi.mock("@/lib/api-client/host", () => api);
 
+const UPLOADED_URL = "/api/photos/0192f3a4b5c6d7e8f9a0b1c2d3e4f5a6";
+// The uploader has its own tests; here it is a button that hands over one finished upload.
+vi.mock("./photo-uploader", () => ({
+  PhotoUploader: ({ remaining, onReady }: { remaining: number; onReady: (url: string) => void }) => (
+    <button type="button" onClick={() => onReady(UPLOADED_URL)}>{`fake upload, ${remaining} left`}</button>
+  ),
+}));
+
 import { HostListingForm } from "./host-listing-form";
 
 beforeEach(() => {
@@ -70,6 +78,40 @@ describe("HostListingForm", () => {
 
     for (let n = 1; n <= 6; n++) await userEvent.click(screen.getByRole("button", { name: `Photo ${n}` }));
     expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(5);
+  });
+
+  test("offers uploads only when enabled, and an uploaded photo joins the selection", async () => {
+    const { unmount } = render(<HostListingForm mode="create" />);
+    await fillStepOne();
+    await next();
+    await userEvent.selectOptions(screen.getByLabelText("City"), "aspen");
+    await next();
+    expect(screen.queryByRole("button", { name: /^fake upload/ })).not.toBeInTheDocument();
+    unmount();
+
+    render(<HostListingForm mode="create" uploadsEnabled />);
+    await fillStepOne();
+    await next();
+    await userEvent.selectOptions(screen.getByLabelText("City"), "aspen");
+    await next();
+    await userEvent.click(screen.getByRole("button", { name: "Photo 1" }));
+    await userEvent.click(screen.getByRole("button", { name: "fake upload, 4 left" }));
+
+    const uploaded = screen.getByRole("button", { name: "Uploaded photo 1" });
+    expect(uploaded).toHaveAttribute("aria-pressed", "true");
+    expect(uploaded).toHaveTextContent("2");
+    expect(screen.getByRole("button", { name: "fake upload, 3 left" })).toBeInTheDocument();
+  });
+
+  test("editing shows the listing's uploaded photos as selected", async () => {
+    const initial = hostListingInputSchema.parse({ ...validInput, photos: [UPLOADED_URL, validInput.photos[0]] });
+    render(<HostListingForm mode="edit" listingId="hl-1" initial={initial} uploadsEnabled />);
+    await next();
+    await next();
+
+    const uploaded = screen.getByRole("button", { name: "Uploaded photo 1" });
+    expect(uploaded).toHaveAttribute("aria-pressed", "true");
+    expect(uploaded).toHaveTextContent("1");
   });
 
   test("editing starts prefilled and saves to the listing", async () => {

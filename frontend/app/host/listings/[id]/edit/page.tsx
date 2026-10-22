@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Footer, TopNav } from "@/components/design-system";
 import { HostListingForm } from "@/components/features/host/host-listing-form";
 import { requireSession } from "@/lib/auth/get-session";
+import { dataSource } from "@/lib/data-source";
 import { toHostListingInput } from "@/lib/host/listing-input";
 import { getRepositories } from "@/lib/repositories";
 
@@ -18,7 +19,7 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopNav active="homes" />
       <main id="main" className="w-full flex-1 px-6 py-8">
-        <HostListingForm mode="edit" listingId={listing.id} initial={toHostListingInput(listing)} />
+        <HostListingForm mode="edit" listingId={listing.id} initial={toHostListingInput(listing)} uploadsEnabled={dataSource().kind === "api"} />
       </main>
       <Footer />
     </div>

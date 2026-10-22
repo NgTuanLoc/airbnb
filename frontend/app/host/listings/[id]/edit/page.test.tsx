@@ -30,6 +30,14 @@ describe("EditListingPage", () => {
     expect(screen.getByLabelText("Title")).toHaveValue("Sunny cabin by the lake");
   });
 
+  test("offers uploads only in api mode (mock here)", async () => {
+    const host = user();
+    session.requireSession.mockResolvedValue(host);
+    const listing = await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+    const page = await EditListingPage(params(listing.id));
+    expect(page.props.children[1].props.children.props.uploadsEnabled).toBe(false);
+  });
+
   test("another host's listing is not found on the edit page", async () => {
     const listing = await getRepositories().hostListings.create(user().id, hostListingInputSchema.parse(validInput));
     session.requireSession.mockResolvedValue(user());

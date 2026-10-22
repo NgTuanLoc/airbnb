@@ -8,7 +8,9 @@ import { Button, TextInput } from "@/components/design-system";
 import { createHostListing, updateHostListing } from "@/lib/api-client/host";
 import { AMENITY_OPTIONS, HOST_CATEGORIES, HOST_CITIES, MAX_PHOTOS, PHOTO_OPTIONS, PROPERTY_TYPES } from "@/lib/host/options";
 import { hostListingInputSchema, type HostListingInput } from "@/lib/host/schemas";
+import { uploadedPhotoId } from "@/lib/host/uploaded-photos";
 import { cn } from "@/lib/utils";
+import { PhotoUploader } from "./photo-uploader";
 
 type Field = keyof HostListingInput;
 type Errors = Partial<Record<Field, string>>;
@@ -27,7 +29,8 @@ const EMPTY: HostListingInput = {
 
 const fieldClass = "h-14 rounded-sm border border-hairline bg-canvas px-3 text-body-md text-ink focus:border-2 focus:border-ink focus:outline-none";
 
-export type HostListingFormProps = { mode: "create" } | { mode: "edit"; listingId: string; initial: HostListingInput };
+/** `uploadsEnabled`: hosts may upload their own photos (api mode only, where the backend processes them). */
+export type HostListingFormProps = ({ mode: "create" } | { mode: "edit"; listingId: string; initial: HostListingInput }) & { uploadsEnabled?: boolean };
 
 export function HostListingForm(props: HostListingFormProps) {
   const router = useRouter();
@@ -93,6 +96,14 @@ export function HostListingForm(props: HostListingFormProps) {
   function togglePhoto(url: string) {
     if (values.photos.includes(url)) set("photos", values.photos.filter((p) => p !== url));
     else if (values.photos.length < MAX_PHOTOS) set("photos", [...values.photos, url]);
+  }
+
+  // Uploaded photos show only while selected: deselecting one drops it from the listing.
+  const uploadedPhotos = values.photos.filter((url) => uploadedPhotoId(url) !== null);
+
+  function addUploadedPhoto(url: string) {
+    setValues((current) =>
+      current.photos.length < MAX_PHOTOS && !current.photos.includes(url) ? { ...current, photos: [...current.photos, url] } : current);
   }
 
   function toggleAmenity(amenity: string) {
@@ -168,7 +179,17 @@ export function HostListingForm(props: HostListingFormProps) {
           </fieldset>
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-title-sm text-ink">Photos (pick up to {MAX_PHOTOS}; the first is the cover)</legend>
+            {props.uploadsEnabled && (
+              <PhotoUploader remaining={MAX_PHOTOS - values.photos.length} onReady={addUploadedPhoto} />
+            )}
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {uploadedPhotos.map((url, index) => (
+                <button key={url} type="button" aria-label={`Uploaded photo ${index + 1}`} aria-pressed onClick={() => togglePhoto(url)}
+                  className="relative aspect-square overflow-hidden rounded-sm border-2 border-ink">
+                  <Image src={url} alt="" fill sizes="160px" className="object-cover" />
+                  <span className="absolute left-1 top-1 flex size-6 items-center justify-center rounded-full bg-ink text-caption text-on-primary">{values.photos.indexOf(url) + 1}</span>
+                </button>
+              ))}
               {PHOTO_OPTIONS.map((url, index) => {
                 const position = values.photos.indexOf(url);
                 return (
