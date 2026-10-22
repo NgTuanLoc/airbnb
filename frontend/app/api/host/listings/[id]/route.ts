@@ -1,7 +1,8 @@
 import { ok } from "@/lib/api/envelope";
 import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
-import { sessionFromRequest } from "@/lib/auth/session";
+import { cookieValue, sessionFromRequest } from "@/lib/auth/session";
 import { hostListingInputSchema } from "@/lib/host/schemas";
+import { checkUploadedPhotos } from "@/lib/host/uploaded-photos";
 import { getRepositories } from "@/lib/repositories";
 
 export const PUT = withErrorEnvelope(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
@@ -9,6 +10,8 @@ export const PUT = withErrorEnvelope(async (request: Request, { params }: { para
   if (!user) return unauthorized();
   const body = await parseBody(request, hostListingInputSchema);
   if ("error" in body) return body.error;
+  const photoProblem = await checkUploadedPhotos(body.data.photos, cookieValue(request) ?? null);
+  if (photoProblem) return jsonError(photoProblem, 400);
 
   const { id } = await params;
   const listing = await getRepositories().hostListings.update(user.id, id, body.data);

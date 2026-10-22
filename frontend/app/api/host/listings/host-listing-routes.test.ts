@@ -40,6 +40,12 @@ describe("host listing API", () => {
     expect(body.error).toBe("Pick 1 to 5 photos");
   });
 
+  test("mock mode has no uploads, so an uploaded photo url is refused", async () => {
+    const { res, body } = await create(sessionCookieHeader(), { ...validInput, photos: ["/api/photos/0192f3a4b5c6d7e8f9a0b1c2d3e4f5a6"] });
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("Remove photos that failed to upload");
+  });
+
   test("the owner can update and unlist; the listing keeps its id", async () => {
     const cookie = sessionCookieHeader();
     const { body } = await create(cookie);

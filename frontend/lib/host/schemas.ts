@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AMENITY_OPTIONS, HOST_CATEGORIES, HOST_CITIES, MAX_PHOTOS, PHOTO_OPTIONS, PROPERTY_TYPES } from "./options";
+import { UPLOADED_PHOTO_PATTERN } from "./uploaded-photos";
 
 const oneOf = (values: readonly string[], message: string) => z.string().refine((value) => values.includes(value), message);
 const unique = (values: string[]) => new Set(values).size === values.length;
@@ -20,7 +21,8 @@ export const hostListingInputSchema = z.object({
   beds: z.number().int().min(1).max(30),
   baths: z.number().min(0.5).max(20).refine((value) => Number.isInteger(value * 2), "Baths go in steps of 0.5"),
   amenities: z.array(oneOf(AMENITY_OPTIONS, "Unknown amenity")).refine(unique, "Amenities must be unique"),
-  photos: z.array(oneOf(PHOTO_OPTIONS, PHOTOS)).min(1, PHOTOS).max(MAX_PHOTOS, PHOTOS).refine(unique, PHOTOS),
+  // A gallery photo or an uploaded one; route handlers also check uploads are processed and the host's own.
+  photos: z.array(z.string().refine((value) => PHOTO_OPTIONS.includes(value) || UPLOADED_PHOTO_PATTERN.test(value), PHOTOS)).min(1, PHOTOS).max(MAX_PHOTOS, PHOTOS).refine(unique, PHOTOS),
   pricePerNight: z.number().int(PRICE).min(10, PRICE).max(10000, PRICE),
 });
 

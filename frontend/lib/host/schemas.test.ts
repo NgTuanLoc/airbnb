@@ -3,6 +3,8 @@ import { hostListingInputSchema, listingStatusSchema } from "./schemas";
 import { AMENITY_OPTIONS, HOST_CITIES, PHOTO_OPTIONS } from "./options";
 import { validInput } from "./test-fixtures";
 
+const UPLOADED = "0192f3a4b5c6d7e8f9a0b1c2d3e4f5a6";
+
 function firstError(override: Record<string, unknown>): string | undefined {
   const parsed = hostListingInputSchema.safeParse({ ...validInput, ...override });
   return parsed.success ? undefined : parsed.error.issues[0]?.message;
@@ -12,6 +14,11 @@ describe("hostListingInputSchema", () => {
   test("accepts a valid listing and trims the text", () => {
     const parsed = hostListingInputSchema.parse(validInput);
     expect(parsed.title).toBe("Sunny cabin by the lake");
+  });
+
+  test("takes uploaded photos next to gallery ones", () => {
+    const photos = [`/api/photos/${UPLOADED}`, PHOTO_OPTIONS[0]];
+    expect(hostListingInputSchema.parse({ ...validInput, photos }).photos).toEqual(photos);
   });
 
   test("offers six cities and twelve gallery photos", () => {
@@ -32,6 +39,8 @@ describe("hostListingInputSchema", () => {
     [{ photos: ["https://evil.example.com/x.jpg"] }, "Pick 1 to 5 photos"],
     [{ photos: PHOTO_OPTIONS.slice(0, 6) }, "Pick 1 to 5 photos"],
     [{ photos: [PHOTO_OPTIONS[0], PHOTO_OPTIONS[0]] }, "Pick 1 to 5 photos"],
+    [{ photos: ["/api/photos/../x"] }, "Pick 1 to 5 photos"],
+    [{ photos: [`/api/photos/${UPLOADED}`, `/api/photos/${UPLOADED}`] }, "Pick 1 to 5 photos"],
     [{ amenities: ["Helipad"] }, "Unknown amenity"],
     [{ pricePerNight: 9 }, "Price must be between $10 and $10,000"],
     [{ pricePerNight: 10001 }, "Price must be between $10 and $10,000"],
