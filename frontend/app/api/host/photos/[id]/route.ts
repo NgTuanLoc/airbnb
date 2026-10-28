@@ -1,7 +1,7 @@
 import { jsonError, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { dataSource } from "@/lib/data-source";
-import { relayToApi } from "@/lib/host/photo-relay";
+import { relayToApi } from "@/lib/api/relay";
 import { uploadedPhotoId, uploadedPhotoUrl } from "@/lib/host/uploaded-photos";
 
 /** An uploaded photo's processing status, for its uploader only (the backend checks ownership). */

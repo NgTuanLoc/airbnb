@@ -11,7 +11,45 @@ vi.mock("@/lib/api-client/availability", () => ({ fetchAvailability: () => Promi
 
 import RoomPage from "./page";
 
-beforeEach(() => session.getSession.mockResolvedValue(null));
+beforeEach(() => {
+  session.getSession.mockResolvedValue(null);
+  vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response(null, { status: 202 }))));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+const viewPings = () =>
+  (vi.mocked(fetch).mock.calls as unknown as [string][]).filter(([url]) => String(url).endsWith("/views"));
+
+describe("RoomPage views", () => {
+  test("guests see how often the listing was viewed this week, and their visit is recorded", async () => {
+    vi.spyOn(getRepositories().listingViews, "weekly").mockResolvedValue({ listingId: "l1", last7Days: 48, previous7Days: 30 });
+
+    render(await RoomPage({ params: Promise.resolve({ id: "l1" }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText("48 views in the past week")).toBeInTheDocument();
+    expect(viewPings()).toEqual([["/api/listings/l1/views", { method: "POST", keepalive: true }]]);
+  });
+
+  test("no stats (mock mode, or an outage) shows no line", async () => {
+    render(await RoomPage({ params: Promise.resolve({ id: "l1" }), searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByText(/in the past week/)).not.toBeInTheDocument();
+  });
+
+  test("the host's own visits aren't recorded", async () => {
+    const host = { id: `u-${crypto.randomUUID()}@example.com`, name: "Ana", email: "ana@example.com" };
+    const listing = await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+    session.getSession.mockResolvedValue(host);
+
+    render(await RoomPage({ params: Promise.resolve({ id: listing.id }), searchParams: Promise.resolve({}) }));
+
+    expect(viewPings()).toEqual([]);
+  });
+});
 
 describe("RoomPage", () => {
   test("renders the listing title, gallery, amenities, and reservation card for a known id", async () => {

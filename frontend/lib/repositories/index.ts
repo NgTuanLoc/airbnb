@@ -5,8 +5,10 @@ import type { BookingRepository } from "./booking-repository";
 import { combineHosts, combineListings } from "./combined";
 import type { HostListingRepository } from "./host-listing-repository";
 import type { HostProfileRepository } from "./host-profile-repository";
+import type { ListingViewsRepository } from "./listing-views-repository";
 import type { WishlistRepository } from "./wishlist-repository";
 import { createHttpBookingRepository } from "./http/http-booking-repository";
+import { createHttpListingViewsRepository } from "./http/http-listing-views-repository";
 import { mockBookingRepository } from "./mock/mock-booking-repository";
 import { mockCityRepository } from "./mock/mock-city-repository";
 import { mockExperienceRepository } from "./mock/mock-experience-repository";
@@ -14,6 +16,7 @@ import { mockHostListingRepository } from "./mock/mock-host-listing-repository";
 import { mockHostProfileRepository } from "./mock/mock-host-profile-repository";
 import { mockHostRepository } from "./mock/mock-host-repository";
 import { mockListingRepository } from "./mock/mock-listing-repository";
+import { mockListingViewsRepository } from "./mock/mock-listing-views-repository";
 import { mockReviewRepository } from "./mock/mock-review-repository";
 import { mockServiceRepository } from "./mock/mock-service-repository";
 import { mockWishlistRepository } from "./mock/mock-wishlist-repository";
@@ -25,6 +28,7 @@ export interface AppRepositories extends Repositories {
   bookings: BookingRepository;
   hostListings: HostListingRepository;
   hostProfiles: HostProfileRepository;
+  listingViews: ListingViewsRepository;
 }
 
 // Wishlists and host data are frontend mocks in both data modes; bookings are the backend's in api mode.
@@ -36,12 +40,13 @@ const accountRepositories = (bookings: BookingRepository) => ({
 });
 
 /** The catalog plus host-created listings and host profiles, so guests see and book host listings anywhere. */
-function withHostData(catalog: Repositories, bookings: BookingRepository): AppRepositories {
+function withHostData(catalog: Repositories, bookings: BookingRepository, listingViews: ListingViewsRepository): AppRepositories {
   return {
     ...catalog,
     listings: combineListings(catalog.listings, mockHostListingRepository),
     hosts: combineHosts(catalog.hosts, mockHostProfileRepository),
     ...accountRepositories(bookings),
+    listingViews,
   };
 }
 
@@ -55,6 +60,7 @@ const mockRepositories: AppRepositories = withHostData(
     cities: mockCityRepository,
   },
   mockBookingRepository,
+  mockListingViewsRepository,
 );
 
 /**
@@ -63,5 +69,11 @@ const mockRepositories: AppRepositories = withHostData(
  */
 export function getRepositories(): AppRepositories {
   const source = dataSource();
-  return source.kind === "mock" ? mockRepositories : withHostData(createHttpRepositories(source.baseUrl), createHttpBookingRepository(source.baseUrl));
+  return source.kind === "mock"
+    ? mockRepositories
+    : withHostData(
+      createHttpRepositories(source.baseUrl),
+      createHttpBookingRepository(source.baseUrl),
+      createHttpListingViewsRepository(source.baseUrl),
+    );
 }

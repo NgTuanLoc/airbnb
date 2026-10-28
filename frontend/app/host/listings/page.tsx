@@ -5,6 +5,7 @@ import { Footer, TopNav, buttonClassName } from "@/components/design-system";
 import { HostNav } from "@/components/features/host/host-nav";
 import { ListingStatusButton } from "@/components/features/host/listing-status-button";
 import { requireSession } from "@/lib/auth/get-session";
+import { hostViewsText } from "@/lib/insights/views";
 import { getRepositories } from "@/lib/repositories";
 
 export const metadata: Metadata = { title: "Your listings · Airbnb" };
@@ -12,7 +13,10 @@ export const metadata: Metadata = { title: "Your listings · Airbnb" };
 export default async function HostListingsPage({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
   const { created } = await searchParams;
   const user = await requireSession("/host/listings");
-  const listings = await getRepositories().hostListings.listForHost(user.id);
+  const repos = getRepositories();
+  const listings = await repos.hostListings.listForHost(user.id);
+  // Null per listing when there are no stats (mock mode, or the backend can't say right now).
+  const views = await Promise.all(listings.map((listing) => repos.listingViews.weekly(listing.id)));
   const createdListing = listings.find((l) => l.id === created);
 
   return (
@@ -36,7 +40,7 @@ export default async function HostListingsPage({ searchParams }: { searchParams:
           <>
             <Link href="/host/listings/new" className={`${buttonClassName("secondary")} self-start`}>Create a listing</Link>
             <ul className="flex flex-col divide-y divide-hairline">
-              {listings.map((listing) => (
+              {listings.map((listing, index) => (
                 <li key={listing.id} className="flex flex-col gap-4 py-4 md:flex-row md:items-center">
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-sm">
                     <Image src={listing.photos[0]} alt="" fill sizes="80px" className="object-cover" />
@@ -44,6 +48,7 @@ export default async function HostListingsPage({ searchParams }: { searchParams:
                   <div className="flex flex-1 flex-col gap-1">
                     <span className="text-title-sm text-ink">{listing.title}</span>
                     <span className="text-body-sm text-muted">{listing.location.city} · ${listing.pricePerNight} night</span>
+                    {views[index] && <span className="text-body-sm text-ink">{hostViewsText(views[index])}</span>}
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="rounded-full border border-hairline px-3 py-1 text-caption text-ink">

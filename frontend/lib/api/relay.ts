@@ -6,18 +6,19 @@ const DEFAULT_TIMEOUT_MS = 5_000;
 const PASSED_BACK = ["content-type", "cache-control", "etag"];
 
 /**
- * Sends a request on to the backend's Media endpoints and streams the answer back unchanged: the session's token as
- * the bearer, the browser's IP for the rate limiter, and (for uploads) the multipart body as it arrived.
+ * Sends a request on to the backend and streams the answer back unchanged: the browser's IP for the rate limiter, the
+ * session's token as the bearer (unless `session: false`, for public endpoints that have no use for it), and the body
+ * as it arrived (for uploads).
  */
 export async function relayToApi(
   baseUrl: string,
   path: string,
   request: Request,
-  options: { method?: "GET" | "POST"; timeoutMs?: number } = {},
+  options: { method?: "GET" | "POST"; timeoutMs?: number; session?: boolean } = {},
 ): Promise<Response> {
   const method = options.method ?? "GET";
   const headers = new Headers();
-  const token = cookieValue(request);
+  const token = options.session === false ? undefined : cookieValue(request);
   if (token) headers.set("authorization", `Bearer ${token}`);
   const ip = clientIp(request);
   if (ip) headers.set("x-forwarded-for", ip);

@@ -37,3 +37,12 @@ test("a listing without reviews says New instead of a rating and review count", 
   expect(screen.getByText(/New/)).toBeInTheDocument();
   expect(screen.queryByText(/0 reviews/)).not.toBeInTheDocument();
 });
+
+test("shows the views note when there is one, in the ink tokens", () => {
+  const { rerender } = render(<ListingOverview listing={listing} />);
+  expect(screen.queryByText(/in the past week/)).not.toBeInTheDocument();
+
+  rerender(<ListingOverview listing={listing} viewsNote="48 views in the past week" />);
+  const note = screen.getByText("48 views in the past week");
+  expect(note.className).toContain("text-ink");
+});

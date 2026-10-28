@@ -52,4 +52,28 @@ describe("HostListingsPage", () => {
     expect(row.className).toContain("flex-col");
     expect(row.className).toContain("md:flex-row");
   });
+
+  test("shows each listing's views for the last 7 days against the week before", async () => {
+    const host = user();
+    session.requireSession.mockResolvedValue(host);
+    const listing = await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+    const weekly = vi.spyOn(getRepositories().listingViews, "weekly")
+      .mockResolvedValue({ listingId: listing.id, last7Days: 132, previous7Days: 112 });
+
+    render(await HostListingsPage(props()));
+
+    expect(weekly).toHaveBeenCalledWith(listing.id);
+    expect(screen.getByText("132 views in the last 7 days · ↑ 18% vs. the week before")).toBeInTheDocument();
+    weekly.mockRestore();
+  });
+
+  test("without stats (mock mode) the rows have no views line", async () => {
+    const host = user();
+    session.requireSession.mockResolvedValue(host);
+    await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+
+    render(await HostListingsPage(props()));
+
+    expect(screen.queryByText(/in the last 7 days/)).not.toBeInTheDocument();
+  });
 });

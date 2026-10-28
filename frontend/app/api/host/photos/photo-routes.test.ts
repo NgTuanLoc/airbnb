@@ -99,6 +99,15 @@ describe("photo relay routes", () => {
     expect(String(fetchMock.mock.calls[0][0])).toBe(`http://api.test/api/photos/${ID}/image`);
   });
 
+  test("the public image never forwards the viewer's session token", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(new Uint8Array([1]), { headers: { "content-type": "image/webp" } }));
+
+    await image(get(`http://localhost/api/photos/${ID}`, "session=tok"), params(ID));
+
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(new Headers(init.headers).get("authorization")).toBeNull();
+  });
+
   test("an unknown or malformed image id is 404", async () => {
     fetchMock.mockResolvedValueOnce(Response.json({ success: false, error: "Photo not found" }, { status: 404 }));
     expect((await image(get(`http://localhost/api/photos/${ID}`), params(ID))).status).toBe(404);

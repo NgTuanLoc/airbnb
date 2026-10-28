@@ -5,9 +5,11 @@ import { getRepositories } from "@/lib/repositories";
 import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-system";
 import { ListingGallery } from "@/components/features/listing-gallery";
 import { ListingOverview } from "@/components/features/listing-overview";
+import { ListingViewBeacon } from "@/components/features/listing-view-beacon";
 import { AmenityList } from "@/components/features/amenity-list";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
 import { ReservationPanel } from "@/components/features/reservation-panel";
+import { guestViewsText } from "@/lib/insights/views";
 import { parseReservationQuery, toReservationInitDto, type ReservationQuery } from "@/lib/reservation/query";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -32,10 +34,11 @@ export default async function RoomPage({
   const listing = await repos.listings.findById(id);
   if (!listing) notFound();
 
-  const [host, reviews, viewer] = await Promise.all([
+  const [host, reviews, viewer, views] = await Promise.all([
     repos.hosts.findById(listing.hostId),
     repos.reviews.findByListingId(listing.id),
     getSession(),
+    repos.listingViews.weekly(listing.id),
   ]);
   const isOwner = viewer?.id === listing.hostId;
   const isUnlisted = listing.status === "unlisted";
@@ -45,7 +48,8 @@ export default async function RoomPage({
     <div className={`min-h-screen bg-canvas ${!isOwner && !isUnlisted ? "pb-24 md:pb-0" : ""}`}>
       <TopNav active="homes" />
       <main id="main" className="mx-auto max-w-270 px-6 md:px-10 pb-16">
-        <ListingOverview listing={listing} />
+        {!isOwner && <ListingViewBeacon listingId={listing.id} />}
+        <ListingOverview listing={listing} viewsNote={guestViewsText(views)} />
         <ListingGallery photos={listing.photos} title={listing.title} />
 
         <div className="mt-8 grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px] lg:grid-cols-[1.7fr_1fr]">

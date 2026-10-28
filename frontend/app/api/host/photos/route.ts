@@ -1,7 +1,7 @@
 import { jsonError, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { dataSource } from "@/lib/data-source";
-import { relayToApi } from "@/lib/host/photo-relay";
+import { relayToApi } from "@/lib/api/relay";
 
 // A 10 MB photo on a slow connection needs longer than the usual backend timeout.
 const UPLOAD_TIMEOUT_MS = 30_000;

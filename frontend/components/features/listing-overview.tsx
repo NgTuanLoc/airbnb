@@ -1,11 +1,13 @@
 import type { Listing } from "@/lib/types";
-import { Users, DoorOpen, Bed, Bath } from "lucide-react";
+import { Users, DoorOpen, Bed, Bath, Eye } from "lucide-react";
 
 export interface ListingOverviewProps {
   listing: Listing;
+  /** How often the listing was viewed lately (api mode only), e.g. "48 views in the past week". */
+  viewsNote?: string | null;
 }
 
-export function ListingOverview({ listing }: ListingOverviewProps) {
+export function ListingOverview({ listing, viewsNote }: ListingOverviewProps) {
   const stats = [
     { icon: Users, label: `${listing.maxGuests} guests` },
     { icon: DoorOpen, label: `${listing.bedrooms} bedroom${listing.bedrooms === 1 ? "" : "s"}` },
@@ -33,6 +35,12 @@ export function ListingOverview({ listing }: ListingOverviewProps) {
         {listing.reviewCount === 0 ? "New" : `${listing.rating.toFixed(2)} · ${listing.reviewCount} reviews`} ·{" "}
         <span className="text-muted">{listing.location.city}, {listing.location.country}</span>
       </p>
+      {viewsNote && (
+        <p className="flex items-center gap-2 text-body-sm text-ink">
+          <Eye aria-hidden className="size-4" />
+          {viewsNote}
+        </p>
+      )}
     </header>
   );
 }
