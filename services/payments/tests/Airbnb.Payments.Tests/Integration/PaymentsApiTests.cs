@@ -148,11 +148,24 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
 
         using var first = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
         using var second = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
-        using var missing = await fixture.Client().PostAsync($"/payments/{NewBookingId()}/void", content: null, Ct);
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal("voided", await StatusAsync(bookingId));
+    }
+
+    [Fact]
+    public async Task A_void_before_any_charge_blocks_a_later_one()
+    {
+        var bookingId = NewBookingId();
+
+        // The guest cancelled while the monolith was between charge attempts: the void comes first.
+        using var voided = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
+        using var late = await PostAsync(Charge(bookingId, "4242424242424242"));
+
+        Assert.Equal(HttpStatusCode.OK, voided.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, late.StatusCode);
+        Assert.Equal("payment_voided", (await PaymentsFixture.JsonAsync(late, Ct)).GetProperty("code").GetString());
         Assert.Equal("voided", await StatusAsync(bookingId));
     }
 

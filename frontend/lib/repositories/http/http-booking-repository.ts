@@ -86,7 +86,8 @@ export function createHttpBookingRepository(baseUrl: string): BookingRepository 
       const path = `/api/bookings/${encodeURIComponent(id)}/cancel`;
       const result = await call(baseUrl, "POST", path, bookingSchema);
       if (result.status === 404) return "not-found";
-      if (result.status === 409) return "started";
+      // Only trip_started (or an older backend without codes) means it began; other conflicts are errors.
+      if (result.status === 409 && (result.code === undefined || result.code === "trip_started")) return "started";
       return expectData(result, "POST", path) as Booking;
     },
     async availability(listingId) {

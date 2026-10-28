@@ -60,7 +60,7 @@ public static class PaymentEndpoints
         if (!await db.TryClaimAsync(claim, ct))
         {
             var existing = await db.Payments.AsNoTracking().SingleAsync(p => p.BookingId == request.BookingId, ct);
-            return existing.Amount != request.Amount
+            return existing.Amount != request.Amount && existing.Status != PaymentStatus.Voided
                 ? Results.Conflict(new ErrorDto("idempotency_conflict", "This booking was already charged a different amount"))
                 : Outcome(existing);
         }
@@ -94,21 +94,15 @@ public static class PaymentEndpoints
         _ => Results.Conflict(new ErrorDto($"payment_{payment.Status}", $"This booking's payment was {payment.Status}")),
     };
 
-    // Compensation: the monolith gave up on the booking. Succeeded or still processing becomes voided; repeats are fine.
+    // Compensation: the monolith gave up on the booking. Repeats are fine; a void before any charge blocks later ones.
     private static async Task<IResult> VoidAsync(string bookingId, PaymentsDbContext db, TimeProvider time, CancellationToken ct)
     {
-        var payment = await db.Payments.SingleOrDefaultAsync(p => p.BookingId == bookingId, ct);
-        if (payment is null)
+        if (string.IsNullOrWhiteSpace(bookingId) || bookingId.Length > 40)
         {
             return Results.NotFound();
         }
-        if (payment.Status is PaymentStatus.Succeeded or PaymentStatus.Processing)
-        {
-            payment.Status = PaymentStatus.Voided;
-            payment.UpdatedAt = time.GetUtcNow();
-            await db.SaveChangesAsync(ct);
-        }
-        return Results.Ok(PaymentDto.From(payment));
+        await db.VoidAsync(bookingId, time.GetUtcNow(), ct);
+        return Results.Ok(PaymentDto.From(await db.Payments.AsNoTracking().SingleAsync(p => p.BookingId == bookingId, ct)));
     }
 
     private static async ValueTask<object?> RequireServiceKey(EndpointFilterInvocationContext context, EndpointFilterDelegate next)

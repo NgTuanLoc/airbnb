@@ -55,6 +55,19 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
             """, cancellationToken) == 1;
 }
 
+public static class PaymentVoids
+{
+    // Voids the booking's payment in one statement: succeeded or still processing becomes voided, and with no payment
+    // yet a voided row is left behind, so a charge that arrives later (a retry still in flight) can't land.
+    public static Task VoidAsync(this PaymentsDbContext db, string bookingId, DateTimeOffset now, CancellationToken cancellationToken) =>
+        db.Database.ExecuteSqlAsync($"""
+            INSERT INTO payments ("BookingId", "Amount", "Currency", "Status", "Brand", "Last4", "CreatedAt", "UpdatedAt")
+            VALUES ({bookingId}, 0, 'USD', {PaymentStatus.Voided}, '', '', {now}, {now})
+            ON CONFLICT ("BookingId") DO UPDATE SET "Status" = excluded."Status", "UpdatedAt" = excluded."UpdatedAt"
+            WHERE payments."Status" IN ({PaymentStatus.Processing}, {PaymentStatus.Succeeded})
+            """, cancellationToken);
+}
+
 public sealed class PaymentsDbContextFactory : IDesignTimeDbContextFactory<PaymentsDbContext>
 {
     public PaymentsDbContext CreateDbContext(string[] args) =>

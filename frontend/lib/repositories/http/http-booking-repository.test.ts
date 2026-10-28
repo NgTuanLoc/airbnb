@@ -105,17 +105,20 @@ describe("createHttpBookingRepository", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test("cancel maps 200, 404 and 409", async () => {
+  test("cancel maps 200, 404 and 409 trip_started", async () => {
     const cancelled = { ...booking, status: "cancelled", cancelledAt: "2026-02-01T00:00:00Z" };
     fetchSpy
       .mockResolvedValueOnce(okReply(cancelled))
       .mockResolvedValueOnce(reply(404, { success: false, error: "x" }))
-      .mockResolvedValueOnce(reply(409, { success: false, error: "y" }));
+      .mockResolvedValueOnce(reply(409, { success: false, error: "This trip has already started", code: "trip_started" }))
+      .mockResolvedValueOnce(reply(409, { success: false, error: "This booking just changed. Try again.", code: "booking_changed" }));
 
     expect(await repo.cancel("g1", "bk_1")).toEqual(cancelled);
     expect(lastCall().url).toBe(`${BASE}/api/bookings/bk_1/cancel`);
     expect(await repo.cancel("g1", "bk_1")).toBe("not-found");
     expect(await repo.cancel("g1", "bk_1")).toBe("started");
+    // Any other conflict is not "already started".
+    await expect(repo.cancel("g1", "bk_1")).rejects.toThrow("failed with 409");
   });
 
   test("availability needs no auth", async () => {

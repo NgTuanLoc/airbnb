@@ -31,6 +31,9 @@ public sealed class FakePaymentService : HttpMessageHandler
 
     public void Settle(string bookingId, string status) => _statuses[bookingId] = status;
 
+    // Runs while a void is in flight, before it answers: lets a test race something against it.
+    public Func<string, Task>? OnVoid { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (!request.Headers.TryGetValues("X-Service-Key", out var keys) || keys.Single() != ServiceKey)
@@ -42,7 +45,7 @@ public sealed class FakePaymentService : HttpMessageHandler
         {
             ("POST", ["payments"]) => await ChargeAsync(request, cancellationToken),
             ("GET", ["payments", var id]) => _statuses.TryGetValue(id, out var status) ? Json(HttpStatusCode.OK, new { bookingId = id, status }) : new(HttpStatusCode.NotFound),
-            ("POST", ["payments", var id, "void"]) => Void(id),
+            ("POST", ["payments", var id, "void"]) => await VoidAsync(id),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound),
         };
     }
@@ -69,9 +72,13 @@ public sealed class FakePaymentService : HttpMessageHandler
             : Json(HttpStatusCode.PaymentRequired, new { bookingId, status, declineReason = reason });
     }
 
-    private HttpResponseMessage Void(string bookingId)
+    private async Task<HttpResponseMessage> VoidAsync(string bookingId)
     {
         _voids.Add(bookingId);
+        if (OnVoid is { } onVoid)
+        {
+            await onVoid(bookingId);
+        }
         if (!_statuses.ContainsKey(bookingId))
         {
             return new HttpResponseMessage(HttpStatusCode.NotFound);

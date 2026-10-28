@@ -195,6 +195,11 @@ internal static class CreateBooking
                     // Nothing was charged and nothing is worth keeping: the guest fixes a typo and books again.
                     await outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
                     return TypedResults.BadRequest(ApiResponse.Fail(InvalidCard, "invalid_card"));
+                case ChargeStatus.Unavailable:
+                    // Refused before any charge: free the nights rather than hold them for a reconciler that can't settle them.
+                    await outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
+                    return TypedResults.Json(ApiResponse.Fail("Payments are unavailable right now. Try again later."),
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
             }
 
             // Answered by the booking as it now is: the reconciler may have settled it first.

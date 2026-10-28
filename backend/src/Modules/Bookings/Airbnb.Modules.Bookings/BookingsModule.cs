@@ -17,6 +17,11 @@ public static class BookingsModule
         // The validation generator only registers request types for AddValidation() calls in this assembly.
         builder.Services.AddValidation();
         builder.Services.AddScoped<CreateBooking.Handler>();
+        // Bad settings fail at startup: without the key every charge would be refused.
+        if (string.IsNullOrEmpty(builder.Configuration["Payments:ServiceKey"]))
+        {
+            throw new InvalidOperationException("Payments:ServiceKey is required to charge bookings");
+        }
         builder.Services.AddHttpClient(PaymentsClient.Name, client => client.BaseAddress = new Uri("http://payments"));
         builder.Services.AddSingleton<PaymentsClient>();
         builder.Services.AddHostedService<PaymentReconciler>();

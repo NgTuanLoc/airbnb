@@ -23,7 +23,9 @@ public sealed class ApiFactory(
             // Off unless a test asks for it: every host running it would join the same consumer group.
             .UseSetting("Insights:Projection:Enabled", "false")
             // Off unless a test asks for it: it settles every pending booking in the shared database.
-            .UseSetting("Bookings:Payments:ReconcilerEnabled", "false");
+            .UseSetting("Bookings:Payments:ReconcilerEnabled", "false")
+            // The API refuses to start without it; booking tests answer with FakePaymentService.
+            .UseSetting("Payments:ServiceKey", FakePaymentService.ServiceKey);
 
         // Wolverine can't start without a reachable Postgres; tests that point the API at a dead database switch it off.
         if (!withMessaging)

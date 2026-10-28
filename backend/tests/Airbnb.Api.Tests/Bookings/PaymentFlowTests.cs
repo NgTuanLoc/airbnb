@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using static Airbnb.Api.Tests.Bookings.BookingRequests;
 
 namespace Airbnb.Api.Tests.Bookings;
@@ -206,6 +207,56 @@ public sealed class PaymentFlowTests(InfrastructureFixture infrastructure)
 
         Assert.Equal("declined", await WaitForStatusAsync(client, guest.Token, id, "declined"));
         Assert.Equal("voided", _payments.StatusOf(id));
+    }
+
+    [Fact]
+    public async Task Cancelling_while_the_payment_confirms_still_cancels()
+    {
+        await using var factory = Factory();
+        using var client = factory.CreateClient();
+        await using var listener = await BookingEventsTests.Listener.StartAsync(infrastructure.MessagingConnectionString);
+        var guest = await AuthHelpers.RegisterAsync(client);
+        var id = await PendingAsync(client, guest.Token);
+        // The reconciler confirms the booking while the cancel is voiding its payment.
+        _payments.OnVoid = async bookingId =>
+        {
+            await using var connection = new NpgsqlConnection(infrastructure.PostgresConnectionString);
+            await connection.OpenAsync(Ct);
+            await using var confirm = new NpgsqlCommand("UPDATE bookings.bookings SET \"Status\" = 'confirmed' WHERE \"Id\" = @id", connection);
+            confirm.Parameters.AddWithValue("id", bookingId);
+            await confirm.ExecuteNonQueryAsync(Ct);
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/bookings/{id}/cancel").Authorized(guest.Token);
+        using var cancelled = await client.SendAsync(request, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, cancelled.StatusCode);
+        Assert.Equal("cancelled", await StatusAsync(client, guest.Token, id));
+        // It was confirmed (and announced), so its cancellation is announced too.
+        Assert.Equal("booking-cancelled", Assert.Single(await listener.EventsForAsync(id, 1)).Type);
+    }
+
+    [Fact]
+    public async Task A_wrong_service_key_is_503_and_holds_nothing()
+    {
+        await using var factory = Factory().WithWebHostBuilder(builder => builder.UseSetting("Payments:ServiceKey", "not-the-key"));
+        using var client = factory.CreateClient();
+        var guest = await AuthHelpers.RegisterAsync(client);
+
+        using var response = await BookAsync(client, guest.Token, Stay("l13", RandomMonth(), 2));
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        using var mine = new HttpRequestMessage(HttpMethod.Get, "/api/bookings/mine").Authorized(guest.Token);
+        using var trips = await client.SendAsync(mine, Ct);
+        Assert.Empty((await BodyAsync(trips)).GetProperty("data").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task A_missing_service_key_fails_at_startup()
+    {
+        await using var factory = Factory().WithWebHostBuilder(builder => builder.UseSetting("Payments:ServiceKey", ""));
+
+        Assert.ThrowsAny<Exception>(() => factory.CreateClient());
     }
 
     [Fact]

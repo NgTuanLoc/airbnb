@@ -11,6 +11,8 @@ internal enum ChargeStatus
     Succeeded,
     Declined,
     InvalidCard,
+    // The payment service refused us (wrong or missing service key): nothing was charged.
+    Unavailable,
     // No answer after every attempt (or one we can't act on): the booking stays pending for the reconciler.
     Unknown,
 }
@@ -52,6 +54,10 @@ internal sealed class PaymentsClient(IHttpClientFactory httpClients, IConfigurat
                         return new ChargeResult(ChargeStatus.Declined, body.TryGetProperty("declineReason", out var reason) ? reason.GetString() : null);
                     case HttpStatusCode.BadRequest:
                         return new ChargeResult(ChargeStatus.InvalidCard);
+                    case HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden:
+                        // Configuration, not a passing outage: the two sides disagree on Payments:ServiceKey.
+                        logger.LogError("Charging booking {BookingId}: the payment service refused our service key", bookingId);
+                        return new ChargeResult(ChargeStatus.Unavailable);
                     case >= HttpStatusCode.InternalServerError:
                         logger.LogWarning("Charging booking {BookingId}: attempt {Attempt} answered {Status}", bookingId, attempt, (int)response.StatusCode);
                         continue;

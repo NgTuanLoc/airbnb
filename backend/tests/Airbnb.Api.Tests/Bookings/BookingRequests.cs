@@ -24,7 +24,6 @@ internal static class BookingRequests
         new ApiFactory(infrastructure).WithWebHostBuilder(builder =>
         {
             builder.UseSetting("RateLimiting:WritesPerMinute", "1000")
-                .UseSetting("Payments:ServiceKey", FakePaymentService.ServiceKey)
                 .UseSetting("Bookings:Payments:AttemptTimeout", "00:00:00.5");
             if (quoteKey is not null)
             {
