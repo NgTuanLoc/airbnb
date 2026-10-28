@@ -65,7 +65,10 @@ public static class PaymentEndpoints
                 : Outcome(existing);
         }
 
-        var result = await processor.ChargeAsync(request.BookingId, card, request.Amount, ct);
+        // From here on the caller's cancellation is ignored: a charge sent to the processor can't be taken back, so its
+        // outcome must be recorded even when the monolith stops waiting (it reads it later, or voids it).
+        var result = await processor.ChargeAsync(request.BookingId, card, request.Amount, CancellationToken.None);
+        ct = CancellationToken.None;
         if (result.Outcome == ChargeOutcome.Error)
         {
             // Nothing was charged: release the claim so a retry can try again.

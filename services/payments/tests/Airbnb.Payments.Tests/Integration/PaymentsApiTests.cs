@@ -69,6 +69,25 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     }
 
     [Fact]
+    public async Task A_charge_the_caller_gave_up_on_still_finishes()
+    {
+        var bookingId = NewBookingId();
+
+        // The monolith times out an attempt and cancels it; the processor has the charge by then, so it must land.
+        using var giveUp = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+        giveUp.CancelAfter(TimeSpan.FromMilliseconds(300));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            fixture.Client().PostAsJsonAsync("/payments", Charge(bookingId, "4000000000000077"), giveUp.Token));
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (await StatusAsync(bookingId) != "succeeded" && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(200, Ct);
+        }
+        Assert.Equal("succeeded", await StatusAsync(bookingId));
+    }
+
+    [Fact]
     public async Task Different_amount_is_a_conflict()
     {
         var bookingId = NewBookingId();
