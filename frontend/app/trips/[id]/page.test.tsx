@@ -14,7 +14,7 @@ async function bookFor(userId: string, checkIn: string, checkOut: string) {
   const booking = await getRepositories().bookings.create({ id: userId, name: "ana", email: "ana@example.com" }, {
     listingId: "l1", hostId: "h1", checkIn, checkOut, guests: { adults: 2, children: 0 }, priceBreakdown: calculatePriceBreakdown(100, 2),
   });
-  if (booking === "unavailable") throw new Error("unexpected");
+  if (booking === "unavailable" || "paymentError" in booking) throw new Error("unexpected");
   return booking;
 }
 
@@ -88,7 +88,7 @@ describe("TripPage", () => {
       listingId: "l1", hostId: host.id, checkIn: daysFromToday(50), checkOut: daysFromToday(52), guests: { adults: 1, children: 0 },
       priceBreakdown: calculatePriceBreakdown(100, 2),
     });
-    if (booking === "unavailable") throw new Error("unexpected");
+    if (booking === "unavailable" || "paymentError" in booking) throw new Error("unexpected");
     session.requireSession.mockResolvedValue(host);
 
     render(await TripPage(props(booking.id)));

@@ -2,10 +2,14 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { bookingSchema, envelopeSchema, staySchema } from "@/lib/api-client/schemas";
 import { SESSION_COOKIE } from "@/lib/auth/session";
+import { PAYMENT_ERRORS, type PaymentError } from "@/lib/bookings/payment";
 import type { Booking, Stay } from "@/lib/types";
 import type { BookingRepository } from "../booking-repository";
 
-const REQUEST_TIMEOUT_MS = 5_000;
+// The backend charges through the payment service (3 attempts of up to 4 s each) before it answers.
+const REQUEST_TIMEOUT_MS = 20_000;
+
+const isPaymentError = (code: string | undefined): code is PaymentError => code !== undefined && Object.hasOwn(PAYMENT_ERRORS, code);
 
 async function sessionToken(): Promise<string> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
@@ -31,7 +35,12 @@ async function call<T extends z.ZodType>(baseUrl: string, method: string, path: 
     throw new Error(`${method} ${path} failed: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
   }
   const parsed = envelopeSchema(schema).safeParse(await response.json().catch(() => undefined));
-  return { status: response.status, data: parsed.success ? (parsed.data.data as z.infer<T> | undefined) : undefined, valid: parsed.success };
+  return {
+    status: response.status,
+    data: parsed.success ? (parsed.data.data as z.infer<T> | undefined) : undefined,
+    code: parsed.success ? parsed.data.code : undefined,
+    valid: parsed.success,
+  };
 }
 
 function expectData<T>(result: { status: number; data: T | undefined; valid: boolean }, method: string, path: string): T {
@@ -53,7 +62,7 @@ export function createHttpBookingRepository(baseUrl: string): BookingRepository 
       const result = await call(baseUrl, "GET", path, bookingSchema);
       return result.status === 404 ? null : (expectData(result, "GET", path) as Booking);
     },
-    async create(_guest, booking, quote) {
+    async create(_guest, booking, quote, card) {
       const body = {
         listingId: booking.listingId,
         checkIn: booking.checkIn,
@@ -61,12 +70,17 @@ export function createHttpBookingRepository(baseUrl: string): BookingRepository 
         adults: booking.guests.adults,
         children: booking.guests.children,
         quote,
+        card,
       };
       // Only this server may vouch for a host-listing quote; the backend refuses quotes without the shared key.
       const quoteKey = process.env.BOOKINGS_QUOTE_KEY;
       if (quote && !quoteKey) throw new Error("BOOKINGS_QUOTE_KEY is required to book host listings");
       const result = await call(baseUrl, "POST", "/api/bookings", bookingSchema, { body, quoteKey: quote ? quoteKey : undefined });
-      return result.status === 409 ? "unavailable" : (expectData(result, "POST", "/api/bookings") as Booking);
+      if (result.status === 409) return "unavailable";
+      // 402 is a decline; a 400 with invalid_card is the card, any other 400 a bug and thrown below.
+      if ((result.status === 402 || result.status === 400) && isPaymentError(result.code)) return { paymentError: result.code };
+      // 201 confirmed, or 202 still pending while the payment settles.
+      return expectData(result, "POST", "/api/bookings") as Booking;
     },
     async cancel(_userId, id) {
       const path = `/api/bookings/${encodeURIComponent(id)}/cancel`;

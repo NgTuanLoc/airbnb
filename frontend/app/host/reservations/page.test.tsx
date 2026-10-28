@@ -53,7 +53,7 @@ describe("HostReservationsPage", () => {
       listingId: listing.id, hostId: host.id, checkIn: "2034-03-01", checkOut: "2034-03-04", guests: { adults: 2, children: 0 },
       priceBreakdown: calculatePriceBreakdown(180, 3),
     });
-    if (booking === "unavailable") throw new Error("unexpected");
+    if (booking === "unavailable" || "paymentError" in booking) throw new Error("unexpected");
     await repos.bookings.cancel(guest.id, booking.id);
 
     render(await HostReservationsPage());

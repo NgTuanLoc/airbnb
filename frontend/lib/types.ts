@@ -140,7 +140,7 @@ export interface Booking {
   checkOut: string;
   guests: { adults: number; children: number };
   priceBreakdown: PriceBreakdown;
-  status: "confirmed" | "cancelled";
+  status: "pending" | "confirmed" | "declined" | "cancelled";
   createdAt: string;
   cancelledAt?: string;
 }

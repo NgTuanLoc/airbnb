@@ -31,3 +31,11 @@ export async function tabTo(page: Page, target: Locator, maxPresses = 120) {
   }
   throw new Error(`Tab never reached ${target}`);
 }
+
+/** Fills the booking page's card form with a test card (4242… succeeds) and submits it. */
+export async function payWithTestCard(page: Page, number = "4242 4242 4242 4242") {
+  await page.getByLabel("Card number").fill(number);
+  await page.getByLabel("Expiry (MM/YY)").fill("12/30");
+  await page.getByLabel("CVC").fill("123");
+  await page.getByRole("button", { name: "Confirm and pay" }).click();
+}

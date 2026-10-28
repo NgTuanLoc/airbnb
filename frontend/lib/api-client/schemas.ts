@@ -147,7 +147,7 @@ export const bookingSchema = z.object({
   checkOut: z.string(),
   guests: z.object({ adults: z.number(), children: z.number() }),
   priceBreakdown: priceBreakdownSchema,
-  status: z.enum(["confirmed", "cancelled"]),
+  status: z.enum(["pending", "confirmed", "declined", "cancelled"]),
   createdAt: z.string(),
   cancelledAt: z.string().optional(),
 });

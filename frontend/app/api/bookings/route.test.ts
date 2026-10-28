@@ -13,10 +13,11 @@ const DAY = 86_400_000;
 const daysFromToday = (days: number) => new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
 // l1 in the mock data; each test books its own far-apart dates, since bookings are shared across users.
 const l1 = listings.find((l) => l.id === "l1")!;
+const card = (number = "4242424242424242") => ({ number, expMonth: 12, expYear: 2030, cvc: "123" });
 
 function book(body: Record<string, unknown>, ...rest: (string | undefined)[]) {
   const cookie = rest.length > 0 ? rest[0] : sessionCookieHeader();
-  return POST(jsonRequest(url, "POST", body, cookie));
+  return POST(jsonRequest(url, "POST", { card: card(), ...body }, cookie));
 }
 
 describe("POST /api/bookings", () => {
@@ -107,5 +108,29 @@ describe("POST /api/bookings", () => {
     });
     expect(create.mock.calls[1][2]).toBeUndefined();
     create.mockRestore();
+  });
+
+  describe("payment", () => {
+    test("a card is required", async () => {
+      const res = await book({ listingId: "l1", checkIn: daysFromToday(300), checkOut: daysFromToday(301), adults: 1, card: undefined });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toBe("Check your card details");
+    });
+
+    test.each([
+      ["4000000000000002", 402, "Your card was declined"],
+      ["4000000000009995", 402, "Your card has insufficient funds"],
+      ["4242424242424241", 400, "Check your card details"],
+    ])("card %s is refused with %i", async (number, status, message) => {
+      const res = await book({ listingId: "l1", checkIn: daysFromToday(310), checkOut: daysFromToday(311), adults: 1, card: card(number) });
+      expect(res.status).toBe(status);
+      expect((await res.json()).error).toBe(message);
+    });
+
+    test("an unanswered payment is 202 with a pending booking", async () => {
+      const res = await book({ listingId: "l1", checkIn: daysFromToday(320), checkOut: daysFromToday(321), adults: 1, card: card("4000000000000077") });
+      expect(res.status).toBe(202);
+      expect((await res.json()).data.status).toBe("pending");
+    });
   });
 });

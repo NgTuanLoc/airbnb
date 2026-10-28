@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { payWithTestCard } from "./helpers";
 
 const uniqueEmail = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
 
@@ -29,7 +30,7 @@ test("a guest books a stay and finds it under Trips", async ({ page }) => {
 
   await page.getByRole("link", { name: /^reserve$/i }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Confirm and pay" })).toBeVisible({ timeout: 30000 });
-  await page.getByRole("button", { name: "Confirm and pay" }).click();
+  await payWithTestCard(page);
 
   await expect(page.getByText("You're going to Aspen!")).toBeVisible({ timeout: 30000 });
   await page.goto("/trips");

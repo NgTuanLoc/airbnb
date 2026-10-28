@@ -5,6 +5,7 @@ import { Footer, TopNav } from "@/components/design-system";
 import { CancelTripButton } from "@/components/features/bookings/cancel-trip-button";
 import { PriceBreakdownList } from "@/components/features/price-breakdown-list";
 import { requireSession } from "@/lib/auth/get-session";
+import { statusLabel } from "@/lib/bookings/trips";
 import { getRepositories } from "@/lib/repositories";
 import { formatDateRange } from "@/lib/reservation/dates";
 
@@ -23,7 +24,7 @@ export default async function TripPage({
   if (!booking) notFound();
   const listing = await repos.listings.findById(booking.listingId);
   const isGuest = booking.guestId === user.id;
-  const canCancel = isGuest && booking.status === "confirmed" && booking.checkIn > new Date().toISOString().slice(0, 10);
+  const canCancel = isGuest && (booking.status === "confirmed" || booking.status === "pending") && booking.checkIn > new Date().toISOString().slice(0, 10);
   const guestCount = booking.guests.adults + booking.guests.children;
 
   return (
@@ -50,7 +51,7 @@ export default async function TripPage({
             <p className="text-body-md text-body">Reservation by {booking.guestName ?? booking.guestEmail ?? booking.guestId}</p>
           )}
           <p className="text-body-sm text-muted">
-            Booking {booking.id.slice(-8)} · {booking.status === "cancelled" ? "Cancelled" : "Confirmed"}
+            Booking {booking.id.slice(-8)} · {statusLabel(booking.status)}
           </p>
           {canCancel && <CancelTripButton bookingId={booking.id} />}
         </section>

@@ -71,6 +71,20 @@ describe("createHttpBookingRepository", () => {
     expect(await repo.create(guest, input)).toBe("unavailable");
   });
 
+  test("create passes the card through and maps 202, 402 and 400 invalid_card", async () => {
+    const card = { number: "4242424242424242", expMonth: 12, expYear: 2030, cvc: "123" };
+    const pending = { ...booking, status: "pending" };
+    fetchSpy
+      .mockResolvedValueOnce(okReply(pending, 202))
+      .mockResolvedValueOnce(reply(402, { success: false, error: "Your card has insufficient funds", code: "insufficient_funds" }))
+      .mockResolvedValueOnce(reply(400, { success: false, error: "Check your card details", code: "invalid_card" }));
+
+    expect(await repo.create(guest, { ...input, listingId: "l1" }, undefined, card)).toEqual(pending);
+    expect(JSON.parse(lastCall().init.body as string).card).toEqual(card);
+    expect(await repo.create(guest, { ...input, listingId: "l1" }, undefined, card)).toEqual({ paymentError: "insufficient_funds" });
+    expect(await repo.create(guest, { ...input, listingId: "l1" }, undefined, card)).toEqual({ paymentError: "invalid_card" });
+  });
+
   test("create sends the quote key header only with a quote", async () => {
     vi.stubEnv("BOOKINGS_QUOTE_KEY", "k-123");
     const quote = { hostId: "h1", pricePerNight: 100, maxGuests: 4 };

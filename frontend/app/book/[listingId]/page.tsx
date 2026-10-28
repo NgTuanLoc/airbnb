@@ -68,10 +68,6 @@ export default async function BookPage({
                 <Link href={`/rooms/${listingId}?${new URLSearchParams(query)}`} className="text-title-sm text-ink underline">Edit</Link>
               </div>
             </section>
-            <section className="flex flex-col gap-2 border-b border-hairline pb-8">
-              <h2 className="text-title-md text-ink">Payment</h2>
-              <p className="text-body-md text-muted">This is a demo — no payment details needed.</p>
-            </section>
             <ConfirmBookingButton request={request} />
           </div>
           <aside className="flex flex-col gap-4 self-start rounded-md border border-hairline p-6 shadow-airbnb">

@@ -17,7 +17,7 @@ async function bookFor(email: string, checkIn: string, checkOut: string) {
     { id: user.id, name: user.name, email: user.email },
     { listingId: `l-test-${crypto.randomUUID()}`, hostId: "h1", checkIn, checkOut, guests: { adults: 1, children: 0 }, priceBreakdown: calculatePriceBreakdown(100, 2) },
   );
-  if (booking === "unavailable") throw new Error("unexpected");
+  if (booking === "unavailable" || "paymentError" in booking) throw new Error("unexpected");
   return booking;
 }
 

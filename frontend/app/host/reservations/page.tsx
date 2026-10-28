@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Footer, TopNav } from "@/components/design-system";
 import { HostNav } from "@/components/features/host/host-nav";
 import { requireSession } from "@/lib/auth/get-session";
-import { splitTrips } from "@/lib/bookings/trips";
+import { splitTrips, statusLabel } from "@/lib/bookings/trips";
 import { getRepositories } from "@/lib/repositories";
 import { formatDateRange } from "@/lib/reservation/dates";
 import type { Booking } from "@/lib/types";
@@ -26,8 +26,8 @@ function ReservationList({ title, reservations, titles }: { title: string; reser
               </span>
               <span className="flex items-center gap-2 text-body-sm text-ink">
                 ${r.priceBreakdown.total}
-                {r.status === "cancelled" && (
-                  <span className="rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">Cancelled</span>
+                {r.status !== "confirmed" && (
+                  <span className="rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">{statusLabel(r.status)}</span>
                 )}
               </span>
             </li>

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Footer, TopNav, buttonClassName } from "@/components/design-system";
 import { requireSession } from "@/lib/auth/get-session";
-import { splitTrips } from "@/lib/bookings/trips";
+import { splitTrips, statusLabel } from "@/lib/bookings/trips";
 import { getRepositories } from "@/lib/repositories";
 import { formatDateRange } from "@/lib/reservation/dates";
 import type { Booking, Listing } from "@/lib/types";
@@ -20,8 +20,8 @@ function TripCard({ booking, listing }: { booking: Booking; listing: Listing | u
         <span className="text-title-sm text-ink">{listing?.location.city ?? "Your stay"}</span>
         <span className="text-body-sm text-body">{formatDateRange(booking.checkIn, booking.checkOut)}</span>
         <span className="text-body-sm text-muted">Total ${booking.priceBreakdown.total}</span>
-        {booking.status === "cancelled" && (
-          <span className="w-fit rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">Cancelled</span>
+        {booking.status !== "confirmed" && (
+          <span className="w-fit rounded-full bg-surface-soft px-3 py-1 text-caption text-muted">{statusLabel(booking.status)}</span>
         )}
       </div>
     </Link>

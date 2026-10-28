@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { splitTrips } from "./trips";
+import { splitTrips, statusLabel } from "./trips";
 import type { Booking } from "@/lib/types";
 
 const trip = (id: string, checkIn: string, checkOut: string, status: Booking["status"] = "confirmed") =>
@@ -34,4 +34,20 @@ test("cancelled trips go only to cancelled, most recent check-in first", () => {
   expect(upcoming).toEqual([]);
   expect(past).toEqual([]);
   expect(cancelled.map((t) => t.id)).toEqual(["c", "a", "b"]);
+});
+
+test("pending trips count as trips; declined ones sit with the cancelled", () => {
+  const { upcoming, cancelled } = splitTrips(
+    [trip("a", "2026-06-10", "2026-06-12", "pending"), trip("b", "2026-07-01", "2026-07-03", "declined")],
+    "2026-05-20",
+  );
+
+  expect(upcoming.map((t) => t.id)).toEqual(["a"]);
+  expect(cancelled.map((t) => t.id)).toEqual(["b"]);
+});
+
+test("each status has a label", () => {
+  expect(["confirmed", "pending", "declined", "cancelled"].map((s) => statusLabel(s as Booking["status"]))).toEqual([
+    "Confirmed", "Payment processing", "Payment declined", "Cancelled",
+  ]);
 });

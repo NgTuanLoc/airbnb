@@ -1,3 +1,4 @@
+import { cardOutcome } from "@/lib/bookings/payment";
 import type { Booking } from "@/lib/types";
 import type { BookingRepository } from "../booking-repository";
 
@@ -8,6 +9,7 @@ const store: Map<string, Booking[]> = ((globalThis as { __mockBookings?: Map<str
 const bookingsOf = (userId: string): Booking[] => store.get(userId) ?? [];
 const allBookings = (): Booking[] => [...store.values()].flat();
 const today = (): string => new Date().toISOString().slice(0, 10);
+const holdsNights = (b: Booking): boolean => b.status === "confirmed" || b.status === "pending";
 const byCheckIn = (a: Booking, b: Booking): number => a.checkIn.localeCompare(b.checkIn);
 
 // Nights are half-open [checkIn, checkOut): one guest's check-out day can be the next guest's check-in day.
@@ -24,17 +26,20 @@ export const mockBookingRepository: BookingRepository = {
     return allBookings().find((b) => b.id === id && (b.guestId === userId || b.hostId === userId)) ?? null;
   },
 
-  // The quote is unused: the route already priced the booking and set its hostId.
-  async create(guest, booking) {
-    const taken = allBookings().some((b) => b.status === "confirmed" && b.listingId === booking.listingId && overlaps(b, booking));
+  // The quote is unused: the route already priced the booking and set its hostId. Without a card it pays (tests only;
+  // the route always sends one). The slow test card stays pending: there's no reconciler here.
+  async create(guest, booking, _quote, card) {
+    const taken = allBookings().some((b) => holdsNights(b) && b.listingId === booking.listingId && overlaps(b, booking));
     if (taken) return "unavailable";
+    const outcome = card ? cardOutcome(card, new Date()) : "succeeded";
+    if (outcome !== "succeeded" && outcome !== "pending") return { paymentError: outcome };
     const created: Booking = {
       ...booking,
       id: crypto.randomUUID(),
       guestId: guest.id,
       guestName: guest.name,
       guestEmail: guest.email,
-      status: "confirmed",
+      status: outcome === "pending" ? "pending" : "confirmed",
       createdAt: new Date().toISOString(),
     };
     store.set(guest.id, [...bookingsOf(guest.id), created]);
@@ -57,7 +62,7 @@ export const mockBookingRepository: BookingRepository = {
 
   async availability(listingId) {
     return allBookings()
-      .filter((b) => b.listingId === listingId && b.status === "confirmed" && b.checkOut > today())
+      .filter((b) => b.listingId === listingId && holdsNights(b) && b.checkOut > today())
       .sort(byCheckIn)
       .map(({ checkIn, checkOut }) => ({ checkIn, checkOut }));
   },

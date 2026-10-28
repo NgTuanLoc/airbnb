@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cardSchema } from "./payment";
 
 export const MAX_NIGHTS = 30;
 const MS_PER_DAY = 86_400_000;
@@ -26,6 +27,8 @@ export const bookingRequestSchema = z
     checkOut: isoDate,
     adults: z.coerce.number().int().min(1, "At least 1 adult is required").max(16),
     children: z.coerce.number().int().min(0).max(15).default(0),
+    // Only the booking POST carries it; the /book page parses the same request from its query string.
+    card: cardSchema.optional(),
   })
   .superRefine((value, ctx) => {
     // One day of slack, so a guest whose "today" is still yesterday in UTC can book it.

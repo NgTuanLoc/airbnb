@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { logIn, unique } from "./helpers";
+import { logIn, unique, payWithTestCard } from "./helpers";
 
 async function openMonth(page: Page, monthsAhead: number) {
   await page.goto("/rooms/l3");
@@ -23,7 +23,7 @@ test("a booked night is blocked for other guests until the trip is cancelled", a
     await days.nth(2).click();
     await days.nth(3).click();
     await reserveA.getByRole("link", { name: "Reserve" }).click();
-    await pageA.getByRole("button", { name: "Confirm and pay" }).click();
+    await payWithTestCard(pageA);
     await expect(pageA).toHaveURL(/\/trips\/[^/?]+\?confirmed=1/, { timeout: 30000 });
 
     const night = (reserve: ReturnType<Page["locator"]>) =>
@@ -46,7 +46,7 @@ test("a booked night is blocked for other guests until the trip is cancelled", a
     await daysB.nth(2).click();
     await daysB.nth(3).click();
     await reserveB2.getByRole("link", { name: "Reserve" }).click();
-    await pageB.getByRole("button", { name: "Confirm and pay" }).click();
+    await payWithTestCard(pageB);
     await expect(pageB).toHaveURL(/\/trips\/[^/?]+\?confirmed=1/, { timeout: 30000 });
   } finally {
     await contextA.close();

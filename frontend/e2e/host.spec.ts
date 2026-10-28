@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
+import { payWithTestCard } from "./helpers";
 
 const unique = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -53,7 +54,7 @@ test("a host lists a place, a guest books it, and the host sees the reservation"
   await days.nth(start + 1).click();
   await guest.getByRole("link", { name: /^reserve$/i }).click();
   await expect(guest.getByRole("heading", { level: 1, name: "Confirm and pay" })).toBeVisible({ timeout: 30000 });
-  await guest.getByRole("button", { name: "Confirm and pay" }).click();
+  await payWithTestCard(guest);
   await expect(guest.getByText("You're going to Aspen!")).toBeVisible({ timeout: 30000 });
 
   await host.goto("/host/reservations");

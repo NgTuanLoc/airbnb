@@ -17,7 +17,7 @@ function stay(listingId: string, checkIn: string, checkOut: string, hostId = "ho
 
 async function book(guest: GuestRef, booking: NewBooking) {
   const created = await repo.create(guest, booking);
-  if (created === "unavailable") throw new Error("unexpected");
+  if (created === "unavailable" || "paymentError" in created) throw new Error("unexpected");
   return created;
 }
 
@@ -115,5 +115,26 @@ describe("mockBookingRepository", () => {
       [early.email, early.name, "2031-04-01"],
       [late.email, late.name, "2031-05-10"],
     ]);
+  });
+
+  describe("test cards", () => {
+    const card = (number: string) => ({ number, expMonth: 12, expYear: 2030, cvc: "123" });
+
+    test("a declined card books nothing and frees the nights", async () => {
+      const listing = newListing();
+      const guest = newGuest();
+
+      expect(await repo.create(guest, stay(listing, "2032-01-10", "2032-01-12"), undefined, card("4000000000000002"))).toEqual({ paymentError: "card_declined" });
+      expect(await repo.create(guest, stay(listing, "2032-01-10", "2032-01-12"), undefined, card("4242424242424241"))).toEqual({ paymentError: "invalid_card" });
+      expect(await repo.listForUser(guest.id)).toEqual([]);
+      expect(await repo.create(newGuest(), stay(listing, "2032-01-10", "2032-01-12"), undefined, card("4242424242424242"))).toMatchObject({ status: "confirmed" });
+    });
+
+    test("the slow card leaves a pending booking that holds its nights", async () => {
+      const listing = newListing();
+
+      expect(await repo.create(newGuest(), stay(listing, "2032-02-10", "2032-02-12"), undefined, card("4000000000000077"))).toMatchObject({ status: "pending" });
+      expect(await repo.create(newGuest(), stay(listing, "2032-02-11", "2032-02-13"))).toBe("unavailable");
+    });
   });
 });
