@@ -50,8 +50,11 @@ public sealed class InfrastructureFixture : IAsyncLifetime
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(AmqpPort))
                 .Build();
 
-    // Blob storage for the Media module's photos; the photo-processor function itself is not hosted here.
-    private readonly AzuriteContainer _azurite = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0").Build();
+    // Blob storage for the Media module's photos; the photo-processor function itself is not hosted here. Readiness by
+    // the blob port, like the broker: the default log check hung the whole run when the clocks disagreed.
+    private readonly AzuriteContainer _azurite = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0")
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(AzuriteBuilder.BlobPort))
+        .Build();
 
     // The listing-views topic; KRaft, so there's no ZooKeeper container. Readiness by port, like RabbitMQ: the default
     // log check misses the broker's startup line when the host's and the Docker VM's clocks disagree.
