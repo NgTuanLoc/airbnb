@@ -6,13 +6,13 @@
 
 **Architecture:** A new Insights module (no Contracts project: nothing else calls it) produces `listing-views` events and runs a batch projection that stores counts and offsets in one Postgres transaction. Next relays view pings from the browser and reads counts through a repository. Aspire runs Kafka + Kafka UI and exposes the rebuild as a dashboard command.
 
-**Tech Stack:** Aspire 13.6.3 (`Aspire.Hosting.Kafka`, `Aspire.Confluent.Kafka`), Confluent.Kafka, EF Core + Npgsql, Testcontainers.Kafka, Next.js 16, Vitest, k6.
+**Tech Stack:** Aspire 13.6.4 (`Aspire.Hosting.Kafka`, `Aspire.Confluent.Kafka`), Confluent.Kafka, EF Core + Npgsql, Testcontainers.Kafka, Next.js 16, Vitest, k6.
 
 **Spec:** `docs/superpowers/specs/2026-10-28-listing-views-kafka-design.md`
 
 ## Global Constraints
 
-- Packages pinned in `backend/Directory.Packages.props`: `Aspire.Hosting.Kafka` 13.6.3, `Aspire.Confluent.Kafka` 13.6.3, `Testcontainers.Kafka` 4.15.0.
+- Packages pinned in `backend/Directory.Packages.props`: `Aspire.Hosting.Kafka` 13.6.4, `Aspire.Confluent.Kafka` 13.6.4, `Testcontainers.Kafka` 4.15.0.
 - Aspire resource/connection name `kafka`; topic `listing-views`, 3 partitions, `retention.ms=-1`; consumer group `insights-listing-views`.
 - Schema `insights`; tables `listing_daily_views (ListingId varchar(50), Day date, Views bigint, PK (ListingId, Day))`, `consumer_offsets (Topic varchar(100), Partition int, NextOffset bigint, PK (Topic, Partition))`.
 - Listing id pattern: `^(l[0-9]{1,6}|hl-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`.

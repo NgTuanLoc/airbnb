@@ -3,6 +3,7 @@ using Airbnb.Modules.Bookings;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Hosts;
 using Airbnb.Modules.Identity;
+using Airbnb.Modules.Insights;
 using Airbnb.Modules.Reviews;
 using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
@@ -20,6 +21,7 @@ builder.AddServicesModuleDatabase();
 builder.AddReviewsModuleDatabase();
 builder.AddIdentityModuleDatabase();
 builder.AddBookingsModuleDatabase();
+builder.AddInsightsModuleDatabase();
 
 builder.Services.AddHostedService<MigrationWorker>();
 

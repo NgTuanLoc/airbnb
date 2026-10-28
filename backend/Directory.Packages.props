@@ -7,6 +7,7 @@
 
   <ItemGroup Label="Aspire hosting">
     <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Kafka" Version="13.6.4" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.k6" Version="13.6.1-beta.935" />
     <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.6.4-preview.1.26523.11" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
@@ -33,6 +34,10 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Resilience" Version="10.10.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Insights">
+    <PackageVersion Include="Aspire.Confluent.Kafka" Version="13.6.4" />
   </ItemGroup>
 
   <ItemGroup Label="Media">
@@ -68,6 +73,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
     <PackageVersion Include="NetArchTest.eNhancedEdition" Version="1.4.5" />
     <PackageVersion Include="Testcontainers.Azurite" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers.Kafka" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.15.0" />
