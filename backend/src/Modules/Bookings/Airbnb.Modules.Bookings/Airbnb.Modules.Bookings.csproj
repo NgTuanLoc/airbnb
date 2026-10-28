@@ -7,11 +7,13 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Airbnb.SharedKernel\Airbnb.SharedKernel.csproj" />
     <ProjectReference Include="..\..\Stays\Airbnb.Modules.Stays.Contracts\Airbnb.Modules.Stays.Contracts.csproj" />
+    <ProjectReference Include="..\Airbnb.Modules.Bookings.Contracts\Airbnb.Modules.Bookings.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

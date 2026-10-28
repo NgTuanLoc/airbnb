@@ -46,6 +46,7 @@ internal static class TestBookings
             HostId = "h1",
             GuestId = "usr_g",
             GuestName = "Ana",
+            ListingTitle = "Cozy cabin",
             GuestEmail = "ana@example.com",
             CheckIn = checkIn,
             CheckOut = checkIn.AddDays(nights),

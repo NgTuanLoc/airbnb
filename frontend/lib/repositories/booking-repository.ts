@@ -1,7 +1,8 @@
 import type { Booking, Stay } from "@/lib/types";
 
 export interface GuestRef { id: string; name: string; email: string }
-export interface BookingQuote { hostId: string; pricePerNight: number; maxGuests: number }
+/** What the backend can't know about a host listing (they live here); the title travels on with the booking events. */
+export interface BookingQuote { hostId: string; pricePerNight: number; maxGuests: number; title?: string }
 export type NewBooking = Pick<Booking, "listingId" | "hostId" | "checkIn" | "checkOut" | "guests" | "priceBreakdown">;
 
 export interface BookingRepository {

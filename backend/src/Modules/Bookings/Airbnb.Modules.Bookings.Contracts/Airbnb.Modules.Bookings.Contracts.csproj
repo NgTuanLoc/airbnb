@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- Only for [MessageIdentity]: the name each event travels under, which other services match on. -->
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+
+</Project>

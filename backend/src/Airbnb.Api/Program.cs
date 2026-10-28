@@ -2,6 +2,7 @@ using Airbnb.Api.Caching;
 using Airbnb.Api.Errors;
 using Airbnb.Api.RateLimiting;
 using Airbnb.Modules.Bookings;
+using Airbnb.Modules.Bookings.Contracts;
 using Airbnb.Modules.Experiences;
 using Airbnb.Modules.Experiences.Contracts;
 using Airbnb.Modules.Hosts;
@@ -16,6 +17,7 @@ using Airbnb.Modules.Stays.Contracts;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Caching.Hybrid;
 using Npgsql;
+using System.Text.Json;
 using Scalar.AspNetCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
@@ -62,6 +64,7 @@ builder.AddInsightsModule();
 builder.UseWolverine(options =>
 {
     const string reviewSubmittedQueue = "reviews.review-submitted";
+    const string BookingsExchange = "bookings";
 
     options.PersistMessagesWithPostgresql(builder.Configuration.GetConnectionString("airbnb")!, "wolverine");
     options.UseEntityFrameworkCoreTransactions();
@@ -69,6 +72,12 @@ builder.UseWolverine(options =>
     options.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
     options.PublishMessage<ReviewSubmitted>().ToRabbitQueue(reviewSubmittedQueue).UseDurableOutbox();
     options.ListenToRabbitQueue(reviewSubmittedQueue).UseDurableInbox();
+
+    // Booking events go to the "bookings" fanout exchange for whoever listens (the notification service today); the
+    // monolith neither knows nor cares who that is. camelCase JSON is the contract other services read.
+    options.UseSystemTextJsonForSerialization(json => json.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+    options.PublishMessage<BookingConfirmed>().ToRabbitExchange(BookingsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
+    options.PublishMessage<BookingCancelled>().ToRabbitExchange(BookingsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
 
     // Each module's handler gets the message on its own, with its own retries: one failing never blocks or re-runs another.
     options.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;

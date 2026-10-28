@@ -9,6 +9,8 @@ internal sealed class Booking
     // Snapshots: the Identity module's tables are not ours to read (spec §1).
     public required string GuestName { get; init; }
     public required string GuestEmail { get; init; }
+    // From Stays, or the Next server's quote for host listings (empty when the quote had none).
+    public required string ListingTitle { get; init; }
     public required DateOnly CheckIn { get; init; }
     public required DateOnly CheckOut { get; init; }
     public required int Adults { get; init; }

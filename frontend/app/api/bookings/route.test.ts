@@ -102,7 +102,9 @@ describe("POST /api/bookings", () => {
     await book({ listingId: listing.id, checkIn: daysFromToday(330), checkOut: daysFromToday(332), adults: 1 });
     await book({ listingId: "l1", checkIn: daysFromToday(340), checkOut: daysFromToday(342), adults: 1 });
 
-    expect(create.mock.calls[0][2]).toEqual({ hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests });
+    expect(create.mock.calls[0][2]).toEqual({
+      hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests, title: listing.title,
+    });
     expect(create.mock.calls[1][2]).toBeUndefined();
     create.mockRestore();
   });

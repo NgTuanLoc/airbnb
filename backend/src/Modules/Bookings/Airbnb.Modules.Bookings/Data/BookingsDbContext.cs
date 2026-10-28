@@ -23,6 +23,7 @@ internal sealed class BookingsDbContext(DbContextOptions<BookingsDbContext> opti
             booking.Property(b => b.GuestId).HasMaxLength(40);
             booking.Property(b => b.GuestName).HasMaxLength(60);
             booking.Property(b => b.GuestEmail).HasMaxLength(254);
+            booking.Property(b => b.ListingTitle).HasMaxLength(200).HasDefaultValue("");
             booking.Property(b => b.Status).HasMaxLength(20);
             booking.Property(b => b.NightlyPrice).HasPrecision(10, 2);
             booking.Property(b => b.CleaningFee).HasPrecision(10, 2);

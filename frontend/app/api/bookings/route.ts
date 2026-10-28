@@ -25,7 +25,7 @@ export const POST = withErrorEnvelope(async (request: Request) => {
   // Priced here from the listing, never from anything the client sent.
   const priceBreakdown = calculatePriceBreakdown(listing.pricePerNight, nightsBetweenDates(checkIn, checkOut));
   const quote = listing.id.startsWith(HOST_LISTING_ID_PREFIX)
-    ? { hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests }
+    ? { hostId: listing.hostId, pricePerNight: listing.pricePerNight, maxGuests: listing.maxGuests, title: listing.title }
     : undefined;
   const booking = await repos.bookings.create(
     { id: user.id, name: user.name, email: user.email },

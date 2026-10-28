@@ -76,6 +76,13 @@ namespace Airbnb.Modules.Bookings.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ListingTitle")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("");
+
                     b.Property<decimal>("NightlyPrice")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");

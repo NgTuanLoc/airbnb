@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Airbnb.Modules.Bookings.Contracts;
 using Airbnb.Modules.Bookings.Data;
 using Airbnb.Modules.Stays.Contracts;
 using Airbnb.SharedKernel;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using Wolverine.EntityFrameworkCore;
 
 namespace Airbnb.Modules.Bookings;
 
@@ -26,7 +28,9 @@ internal static class CreateBooking
     public sealed record QuoteInput(
         [property: Required, StringLength(50, MinimumLength = 1)] string? HostId,
         [property: Range(typeof(decimal), "1", "100000")] decimal PricePerNight,
-        [property: Range(1, 16)] int MaxGuests);
+        [property: Range(1, 16)] int MaxGuests,
+        // Optional so quotes from before titles still book; the events then carry an empty title.
+        [property: StringLength(200)] string? Title = null);
 
     public sealed record Command(
         [property: Required, StringLength(50, MinimumLength = 1)] string? ListingId,
@@ -36,7 +40,8 @@ internal static class CreateBooking
         [property: Range(0, 15)] int Children,
         QuoteInput? Quote);
 
-    internal sealed class Handler(BookingsDbContext db, IListingLookup listings, TimeProvider time, IConfiguration configuration)
+    // The outbox saves the booking and its BookingConfirmed event in one transaction: no event without a booking.
+    internal sealed class Handler(IDbContextOutbox<BookingsDbContext> outbox, IListingLookup listings, TimeProvider time, IConfiguration configuration)
     {
         private const int MaxInsertAttempts = 3;
 
@@ -88,7 +93,7 @@ internal static class CreateBooking
                 {
                     return TypedResults.BadRequest(ApiResponse.Fail("A quote is required for host listings"));
                 }
-                info = new ListingBookingInfo(quote.HostId!, quote.PricePerNight, quote.MaxGuests);
+                info = new ListingBookingInfo(quote.HostId!, quote.PricePerNight, quote.MaxGuests, quote.Title ?? "");
             }
             else
             {
@@ -119,6 +124,7 @@ internal static class CreateBooking
                 GuestId = guestId,
                 GuestName = user.FindFirstValue(ClaimTypes.Name)!,
                 GuestEmail = user.FindFirstValue(ClaimTypes.Email)!,
+                ListingTitle = info.Title,
                 CheckIn = stay.CheckIn,
                 CheckOut = stay.CheckOut,
                 Adults = command.Adults,
@@ -131,13 +137,17 @@ internal static class CreateBooking
                 Status = BookingStatus.Confirmed,
                 CreatedAt = time.GetUtcNow(),
             };
-            db.Bookings.Add(booking);
+            outbox.DbContext.Bookings.Add(booking);
+            await outbox.PublishAsync(new BookingConfirmed(
+                booking.Id, booking.ListingId, booking.ListingTitle, booking.GuestName, booking.GuestEmail,
+                booking.CheckIn, booking.CheckOut, booking.Adults, booking.Children, booking.Total, booking.CreatedAt));
             for (var attempt = 1; ; attempt++)
             {
                 try
                 {
-                    // A failed statement rolls back and leaves the entity Added, so calling again re-inserts it.
-                    await db.SaveChangesAsync(cancellationToken);
+                    // A failed statement rolls back and leaves the entity Added and the event pending, so calling again
+                    // re-inserts both; a refused booking (409) never flushes its event.
+                    await outbox.SaveChangesAndFlushMessagesAsync(cancellationToken);
                     break;
                 }
                 catch (Exception exception) when (IsOverlap(exception) || (IsDeadlock(exception) && attempt >= MaxInsertAttempts))

@@ -12,6 +12,6 @@ internal sealed class ListingLookup(StaysDbContext db) : IListingLookup
     public Task<ListingBookingInfo?> FindForBookingAsync(string listingId, CancellationToken cancellationToken) =>
         db.Listings
             .Where(l => l.Id == listingId)
-            .Select(l => new ListingBookingInfo(l.HostId, l.PricePerNight, l.MaxGuests))
+            .Select(l => new ListingBookingInfo(l.HostId, l.PricePerNight, l.MaxGuests, l.Title))
             .SingleOrDefaultAsync(cancellationToken);
 }
