@@ -25,8 +25,13 @@ public static class InsightsModule
         builder.Services.AddScoped<GetListingViews.Handler>();
         builder.Services.AddSingleton<ProjectionControl>();
 
-        // Idempotent, so the producer's own retries never put a view in the log twice.
-        builder.AddKafkaProducer<string, string>(KafkaConnectionName, settings => settings.Config.EnableIdempotence = true);
+        builder.AddKafkaProducer<string, string>(KafkaConnectionName, settings =>
+        {
+            // Idempotent, so the producer's own retries never put a view in the log twice.
+            settings.Config.EnableIdempotence = true;
+            // No traceparent header: records are kept forever, and a trace id would tie each view to the guest's request.
+            settings.DisableTracing = true;
+        });
         // Registered before the projection, which subscribes to the topic it creates.
         builder.Services.AddHostedService<ListingViewsTopic>();
 

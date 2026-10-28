@@ -5,6 +5,7 @@ using Airbnb.Api.Tests.Infrastructure;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Npgsql;
 
 namespace Airbnb.Api.Tests.Insights;
 
@@ -119,6 +120,9 @@ public sealed class ListingViewsTests(InfrastructureFixture infrastructure)
         consumer.Close();
 
         Assert.NotNull(found);
+        // No headers either: a trace context would tie each view, forever, to the guest's request telemetry.
+        Assert.True(found.Message.Headers is null || found.Message.Headers.Count == 0,
+            $"Unexpected headers: {string.Join(", ", found.Message.Headers?.Select(h => h.Key) ?? [])}");
         var value = JsonDocument.Parse(found.Message.Value).RootElement;
         Assert.Equal(["listingId", "viewedAt"], value.EnumerateObject().Select(p => p.Name).ToArray());
         Assert.Equal(listing, value.GetProperty("listingId").GetString());
@@ -195,14 +199,39 @@ public sealed class ListingViewsTests(InfrastructureFixture infrastructure)
         var listing = NewHostListingId();
         await ViewAsync(client, listing, times: 2);
         await WaitForViewsAsync(client, listing, 2);
+        // Tamper with the projection, so only a real replay of the log can put it right.
+        var bogus = NewHostListingId();
+        await ExecuteSqlAsync($"""
+            UPDATE insights.listing_daily_views SET "Views" = 99 WHERE "ListingId" = '{listing}';
+            INSERT INTO insights.listing_daily_views ("ListingId", "Day", "Views") VALUES ('{bogus}', current_date, 7);
+            """);
 
         using var rebuild = await RebuildAsync(client, AdminKey);
         Assert.Equal(HttpStatusCode.Accepted, rebuild.StatusCode);
         await ViewAsync(client, listing);
 
-        // 2 recounted from the log plus the new one: losing the old views would give 1, counting them twice 5.
+        // 2 recounted from the log plus the new one: no rebuild would leave 100, losing the old views 1, counting them
+        // twice 5; and the bogus row, never in the log, is gone.
         await WaitForViewsAsync(client, listing, 3);
         await Task.Delay(TimeSpan.FromSeconds(3), Ct);
         Assert.Equal(3, (await ViewsAsync(client, listing)).GetProperty("last7Days").GetInt64());
+        Assert.Equal(0L, await ScalarAsync($"""SELECT count(*) FROM insights.listing_daily_views WHERE "ListingId" = '{bogus}'"""));
+    }
+
+    // Ids here are generated GUIDs, never user input.
+    private async Task ExecuteSqlAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(infrastructure.PostgresConnectionString);
+        await connection.OpenAsync(Ct);
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(Ct);
+    }
+
+    private async Task<long> ScalarAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(infrastructure.PostgresConnectionString);
+        await connection.OpenAsync(Ct);
+        await using var command = new NpgsqlCommand(sql, connection);
+        return (long)(await command.ExecuteScalarAsync(Ct))!;
     }
 }

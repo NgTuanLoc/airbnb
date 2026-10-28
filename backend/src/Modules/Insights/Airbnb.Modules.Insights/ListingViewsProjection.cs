@@ -29,8 +29,15 @@ internal sealed class ListingViewsProjection(
     private readonly ViewBatch _batch = new();
     private readonly Stopwatch _batchAge = new();
 
+    // Set whenever views read into memory are thrown away unwritten (a failed write, a rebuild): before reading on,
+    // every owned partition goes back to its stored offset. Nothing is ever written twice from memory, because a
+    // write that reported a failure may still have landed, and only the stored offsets know.
+    private bool _rewindPending;
+    private CancellationToken _stopping;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _stopping = stoppingToken;
         // Consume blocks: get off the host's startup path first.
         await Task.Yield();
         consumer.Subscribe(ListingViewsTopic.Name);
@@ -70,34 +77,32 @@ internal sealed class ListingViewsProjection(
             await RebuildAsync();
             return;
         }
-
-        // A full batch is written before anything more is read (retrying while the database is down).
-        if (_batch.Count < MaxBatchSize)
+        if (_rewindPending)
         {
-            var result = consumer.Consume(PollTimeout);
-            if (result?.Message is { } message)
-            {
-                if (_batch.Count == 0)
-                {
-                    _batchAge.Restart();
-                }
-                _batch.Add(result.Partition.Value, result.Offset.Value, message.Value);
-            }
-            // Written when full, when a second old, or as soon as the topic goes quiet.
-            var isDue = result is null || _batch.Count >= MaxBatchSize || _batchAge.Elapsed >= MaxBatchAge;
-            if (_batch.Count == 0 || !isDue)
-            {
-                return;
-            }
+            // Throws while the database is down; the loop waits and comes back here, reading nothing meanwhile.
+            Rewind();
+            return;
         }
 
-        if (!await FlushAsync())
+        var result = consumer.Consume(PollTimeout);
+        if (result?.Message is { } message)
+        {
+            if (_batch.Count == 0)
+            {
+                _batchAge.Restart();
+            }
+            _batch.Add(result.Partition.Value, result.Offset.Value, message.Value);
+        }
+        // Written when full, when a second old, or as soon as the topic goes quiet.
+        var isDue = result is null || _batch.Count >= MaxBatchSize || _batchAge.Elapsed >= MaxBatchAge;
+        if (_batch.Count > 0 && isDue && !await FlushAsync())
         {
             await Task.Delay(RetryDelay, stoppingToken);
         }
     }
 
-    // Never cancelled: a commit cancelled midway may still have landed, and writing the batch again would double count.
+    // Never cancelled: a commit cancelled midway may still have landed. On failure the batch is dropped and the owned
+    // partitions rewound to their stored offsets (see _rewindPending).
     private async Task<bool> FlushAsync()
     {
         if (_batch.Count == 0)
@@ -106,37 +111,39 @@ internal sealed class ListingViewsProjection(
         }
 
         List<TopicPartitionOffset> nextOffsets;
-        await using var scope = scopes.CreateAsyncScope();
+        HybridCache cache;
         try
         {
+            await using var scope = scopes.CreateAsyncScope();
+            // A singleton: still usable after the scope ends.
+            cache = scope.ServiceProvider.GetRequiredService<HybridCache>();
             var db = scope.ServiceProvider.GetRequiredService<InsightsDbContext>();
-            await using var transaction = await db.Database.BeginTransactionAsync();
+            await using var transaction = await db.Database.BeginTransactionAsync(CancellationToken.None);
             foreach (var ((listingId, day), views) in _batch.Counts)
             {
                 await db.Database.ExecuteSqlAsync($"""
                     INSERT INTO insights.listing_daily_views ("ListingId", "Day", "Views") VALUES ({listingId}, {day}, {views})
                     ON CONFLICT ("ListingId", "Day") DO UPDATE SET "Views" = listing_daily_views."Views" + EXCLUDED."Views"
-                    """);
+                    """, CancellationToken.None);
             }
             foreach (var (partition, nextOffset) in _batch.NextOffsets)
             {
                 await db.Database.ExecuteSqlAsync($"""
                     INSERT INTO insights.consumer_offsets ("Topic", "Partition", "NextOffset") VALUES ({ListingViewsTopic.Name}, {partition}, {nextOffset})
                     ON CONFLICT ("Topic", "Partition") DO UPDATE SET "NextOffset" = EXCLUDED."NextOffset"
-                    """);
+                    """, CancellationToken.None);
             }
-            await transaction.CommitAsync();
+            await transaction.CommitAsync(CancellationToken.None);
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "Writing {Count} listing views failed; retrying", _batch.Count);
+            logger.LogWarning(exception, "Writing {Count} listing views failed; reading them again from the stored offsets", _batch.Count);
+            DropBatch();
             return false;
         }
 
         // Written: nothing below may cause it to be written again.
-        nextOffsets = _batch.NextOffsets
-            .Select(offset => new TopicPartitionOffset(ListingViewsTopic.Name, offset.Key, offset.Value))
-            .ToList();
+        nextOffsets = [.. _batch.NextOffsets.Select(offset => new TopicPartitionOffset(ListingViewsTopic.Name, offset.Key, offset.Value))];
         _batch.Clear();
 
         try
@@ -147,56 +154,93 @@ internal sealed class ListingViewsProjection(
         {
             logger.LogDebug(exception, "Couldn't commit listing-views offsets to Kafka (only Kafka UI's lag uses them)");
         }
-        await scope.ServiceProvider.GetRequiredService<HybridCache>().RemoveByTagAsync(InsightsModule.CacheTag);
+        await cache.RemoveByTagAsync(InsightsModule.CacheTag, CancellationToken.None);
         return true;
     }
 
-    // Wipes every count and stored offset, then starts each partition this consumer owns over from the beginning;
-    // partitions assigned later start there anyway, with no stored offset.
+    // Wipes every count and stored offset, then rewinds: with nothing stored, every owned partition starts over from the
+    // beginning (and partitions assigned later start there anyway). A wipe that fails is asked for again; wiping twice is
+    // harmless, so it doesn't matter whether a failed wipe landed.
     private async Task RebuildAsync()
     {
-        _batch.Clear();
-        await using (var scope = scopes.CreateAsyncScope())
+        try
         {
+            await using var scope = scopes.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<InsightsDbContext>();
-            await using var transaction = await db.Database.BeginTransactionAsync();
-            await db.DailyViews.ExecuteDeleteAsync();
-            await db.ConsumerOffsets.Where(o => o.Topic == ListingViewsTopic.Name).ExecuteDeleteAsync();
-            await transaction.CommitAsync();
-            await scope.ServiceProvider.GetRequiredService<HybridCache>().RemoveByTagAsync(InsightsModule.CacheTag);
+            await using var transaction = await db.Database.BeginTransactionAsync(CancellationToken.None);
+            await db.DailyViews.ExecuteDeleteAsync(CancellationToken.None);
+            await db.ConsumerOffsets.Where(o => o.Topic == ListingViewsTopic.Name).ExecuteDeleteAsync(CancellationToken.None);
+            await transaction.CommitAsync(CancellationToken.None);
+            await scope.ServiceProvider.GetRequiredService<HybridCache>().RemoveByTagAsync(InsightsModule.CacheTag, CancellationToken.None);
+        }
+        catch
+        {
+            control.RequestRebuild();
+            throw;
         }
 
-        foreach (var partition in consumer.Assignment)
-        {
-            consumer.Seek(new TopicPartitionOffset(partition, Offset.Beginning));
-        }
+        // Whatever was read into memory is counted by the replay instead.
+        DropBatch();
         logger.LogInformation("Rebuilding listing view counts from the start of {Topic}", ListingViewsTopic.Name);
     }
 
-    // Each assigned partition resumes at its stored offset, or at the beginning if it has none.
-    internal IEnumerable<TopicPartitionOffset> OnAssigned(List<TopicPartition> partitions)
+    private void DropBatch()
     {
-        using var scope = scopes.CreateScope();
-        var stored = scope.ServiceProvider.GetRequiredService<InsightsDbContext>().ConsumerOffsets.AsNoTracking()
-            .Where(o => o.Topic == ListingViewsTopic.Name)
-            .ToDictionary(o => o.Partition, o => o.NextOffset);
-        return partitions
-            .Select(partition => new TopicPartitionOffset(
-                partition, stored.TryGetValue(partition.Partition.Value, out var next) ? new Offset(next) : Offset.Beginning))
-            .ToList();
+        _batch.Clear();
+        _rewindPending = true;
     }
 
-    // Partitions are moving to another member, which starts from the stored offsets: write what was read from them
-    // first. If that fails, drop it instead, and the next owner reads those views again.
-    internal void OnRevoked()
+    // Every owned partition back to its stored offset (the beginning when none is stored): views dropped unwritten are
+    // read again, and views already written aren't.
+    private void Rewind()
     {
-        if (!FlushAsync().GetAwaiter().GetResult())
+        var stored = LoadStoredOffsets();
+        foreach (var partition in consumer.Assignment)
         {
-            _batch.Clear();
+            consumer.Seek(new TopicPartitionOffset(partition, StartOf(partition, stored)));
+        }
+        _rewindPending = false;
+    }
+
+    // Each assigned partition starts at its stored offset, or at the beginning when none is stored. Nothing can be read
+    // without those, so a failed read is retried until the database answers or the host stops; if that outlasts
+    // max.poll.interval.ms, the client leaves the group and joins again, which brings a fresh assignment.
+    internal IEnumerable<TopicPartitionOffset> OnAssigned(List<TopicPartition> partitions)
+    {
+        while (true)
+        {
+            try
+            {
+                var stored = LoadStoredOffsets();
+                // The assignment itself starts every partition at its stored offset.
+                _rewindPending = false;
+                return [.. partitions.Select(partition => new TopicPartitionOffset(partition, StartOf(partition, stored)))];
+            }
+            catch (Exception exception) when (!_stopping.IsCancellationRequested)
+            {
+                logger.LogWarning(exception, "Couldn't read the stored listing-views offsets for an assignment; retrying");
+                _stopping.WaitHandle.WaitOne(RetryDelay);
+            }
         }
     }
 
+    // Partitions are moving to another member, which starts from the stored offsets: write what was read from them
+    // first. If that write fails the batch is dropped, the next owner reads those views again, and any partition this
+    // member keeps (cooperative rebalancing) is rewound.
+    internal void OnRevoked() => FlushAsync().GetAwaiter().GetResult();
+
     // Lost, not handed over: another member may already be reading them from the stored offsets, so writing the
     // pending views would count them twice.
-    internal void OnLost() => _batch.Clear();
+    internal void OnLost() => DropBatch();
+
+    private Dictionary<int, long> LoadStoredOffsets()
+    {
+        using var scope = scopes.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<InsightsDbContext>().ConsumerOffsets.AsNoTracking()
+            .Where(o => o.Topic == ListingViewsTopic.Name)
+            .ToDictionary(o => o.Partition, o => o.NextOffset);
+    }
+
+    private static Offset StartOf(TopicPartition partition, Dictionary<int, long> stored) =>
+        stored.TryGetValue(partition.Partition.Value, out var next) ? new Offset(next) : Offset.Beginning;
 }

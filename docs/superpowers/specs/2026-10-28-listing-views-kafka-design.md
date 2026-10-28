@@ -57,8 +57,8 @@ RabbitMQ keeps its job (review events: one handler, one job, reliably). Kafka is
 ### Producer
 
 Aspire's client integration `Aspire.Confluent.Kafka` (`AddKafkaProducer<string, string>("kafka")`), idempotent
-producer. The endpoint enqueues with `Produce` (no await on the broker) and returns 202; delivery failures are logged.
-A view lost while Kafka is down is acceptable.
+producer, tracing off (no `traceparent` header on records kept forever). The endpoint enqueues with `Produce` (no await
+on the broker) and returns 202; delivery failures are logged. A view lost while Kafka is down is acceptable.
 
 ### Projection (exactly once into Postgres)
 
@@ -66,7 +66,11 @@ A view lost while Kafka is down is acceptable.
 string>` (group `insights-listing-views`, auto-commit off, `AutoOffsetReset=Earliest`):
 
 - **Offsets live in Postgres.** Table `insights.consumer_offsets (Topic, Partition, NextOffset)`. The
-  partitions-assigned handler starts each partition at its stored offset, or at the beginning when there is none.
+  partitions-assigned handler starts each partition at its stored offset, or at the beginning when there is none; it
+  retries that read until the database answers (nothing can be consumed without it).
+- **Nothing is written twice from memory.** A write that reports a failure may still have landed, so a failed batch
+  is dropped and every owned partition rewound to its stored offset before reading on: the stored offsets say what
+  was written.
 - **Batches.** Consume up to 500 messages or 1 second (flush early when the topic goes quiet), aggregate to
   `(listingId, day) → count`, then one transaction: upsert `insights.listing_daily_views (ListingId, Day, Views)`
   adding the counts, and upsert the next offsets. After the commit: commit the offsets to Kafka too (best effort, so
@@ -81,10 +85,12 @@ string>` (group `insights-listing-views`, auto-commit off, `AutoOffsetReset=Earl
 
 `POST /api/insights/rebuild` with header `X-Admin-Key` = `Insights:AdminKey` (fixed-time compare; 404 when no key is
 configured, 401 on a wrong key, 503 when the projection isn't running, else 202). It asks the projection loop, which
-does the work between batches on its own thread: drop the pending batch, delete all counts and stored offsets in one
-transaction, invalidate the cache, then seek every partition it owns back to the beginning (partitions assigned later
-start there anyway, with no stored offset). The AppHost exposes it as the **Rebuild view stats** command on the `api` resource (generated secret
-parameter `insights-admin-key`). Single API instance assumed (dev); with replicas, each would need the request.
+does the work between batches on its own thread: delete all counts and stored offsets in one transaction (asked for
+again if it fails; wiping twice is harmless), invalidate the cache, drop the pending batch, and rewind every owned
+partition to its stored offset, which is now the beginning (partitions assigned later start there anyway). The AppHost
+exposes it as the **Rebuild view stats** command on the `api` resource (generated secret parameter
+`insights-admin-key`). Single API instance only: with replicas, each instance's wipe would delete what the others had
+already replayed, so a rebuild would need a coordinated stop first.
 
 ### Reads
 
