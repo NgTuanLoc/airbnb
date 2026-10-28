@@ -6,7 +6,7 @@ namespace Airbnb.Modules.Bookings.Data;
 
 internal sealed class BookingsDbContext(DbContextOptions<BookingsDbContext> options) : DbContext(options)
 {
-    // The name of the exclusion constraint that refuses overlapping confirmed stays (spec §1).
+    // The name of the exclusion constraint that refuses overlapping pending or confirmed stays.
     internal const string NoOverlapConstraint = "bookings_no_overlap";
 
     public DbSet<Booking> Bookings => Set<Booking>();
@@ -24,7 +24,8 @@ internal sealed class BookingsDbContext(DbContextOptions<BookingsDbContext> opti
             booking.Property(b => b.GuestName).HasMaxLength(60);
             booking.Property(b => b.GuestEmail).HasMaxLength(254);
             booking.Property(b => b.ListingTitle).HasMaxLength(200).HasDefaultValue("");
-            booking.Property(b => b.Status).HasMaxLength(20);
+            // A concurrency token: the booking request and the reconciler may both try to settle a pending booking.
+            booking.Property(b => b.Status).HasMaxLength(20).IsConcurrencyToken();
             booking.Property(b => b.NightlyPrice).HasPrecision(10, 2);
             booking.Property(b => b.CleaningFee).HasPrecision(10, 2);
             booking.Property(b => b.ServiceFee).HasPrecision(10, 2);

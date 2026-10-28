@@ -15,7 +15,7 @@ public sealed class BookingEventsTests(InfrastructureFixture infrastructure)
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private sealed class Listener : IAsyncDisposable
+    internal sealed class Listener : IAsyncDisposable
     {
         private readonly IConnection _connection;
         private readonly IChannel _channel;

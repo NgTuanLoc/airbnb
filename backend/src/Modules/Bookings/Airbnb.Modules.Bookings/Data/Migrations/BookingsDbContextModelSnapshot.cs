@@ -95,6 +95,7 @@ namespace Airbnb.Modules.Bookings.Data.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");

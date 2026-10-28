@@ -1,4 +1,5 @@
 using Airbnb.Modules.Bookings.Data;
+using Airbnb.Modules.Bookings.Payments;
 using Airbnb.SharedKernel.Persistence;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,9 @@ public static class BookingsModule
         // The validation generator only registers request types for AddValidation() calls in this assembly.
         builder.Services.AddValidation();
         builder.Services.AddScoped<CreateBooking.Handler>();
+        builder.Services.AddHttpClient(PaymentsClient.Name, client => client.BaseAddress = new Uri("http://payments"));
+        builder.Services.AddSingleton<PaymentsClient>();
+        builder.Services.AddHostedService<PaymentReconciler>();
         return builder;
     }
 

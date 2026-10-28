@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Airbnb.Modules.Bookings.Contracts;
 using Airbnb.Modules.Bookings.Data;
+using Airbnb.Modules.Bookings.Payments;
 using Airbnb.Modules.Stays.Contracts;
 using Airbnb.SharedKernel;
 using Microsoft.AspNetCore.Builder;
@@ -32,16 +32,36 @@ internal static class CreateBooking
         // Optional so quotes from before titles still book; the events then carry an empty title.
         [property: StringLength(200)] string? Title = null);
 
+    // Passed through to the payment service once, never stored; it checks the card itself.
+    public sealed record CardInput(
+        [property: StringLength(30)] string? Number,
+        int ExpMonth,
+        int ExpYear,
+        [property: StringLength(4)] string? Cvc);
+
     public sealed record Command(
         [property: Required, StringLength(50, MinimumLength = 1)] string? ListingId,
         [property: Required, StringLength(10)] string? CheckIn,
         [property: Required, StringLength(10)] string? CheckOut,
         [property: Range(1, 16)] int Adults,
         [property: Range(0, 15)] int Children,
-        QuoteInput? Quote);
+        QuoteInput? Quote,
+        CardInput? Card = null);
 
-    // The outbox saves the booking and its BookingConfirmed event in one transaction: no event without a booking.
-    internal sealed class Handler(IDbContextOutbox<BookingsDbContext> outbox, IListingLookup listings, TimeProvider time, IConfiguration configuration)
+    internal const string InvalidCard = "Check your card details";
+
+    // The payment service's decline reasons, as the guest reads them; anything else reads as a plain decline.
+    private static (string Code, string Message) Decline(string? reason) => reason switch
+    {
+        "insufficient_funds" => ("insufficient_funds", "Your card has insufficient funds"),
+        _ => ("card_declined", "Your card was declined"),
+    };
+
+    // A saga without a shared transaction: the booking is saved pending (holding the nights), then charged; the outcome
+    // confirms it (with its BookingConfirmed event, through the outbox), declines it, or leaves it pending for the
+    // PaymentReconciler when the payment service doesn't answer.
+    internal sealed class Handler(
+        IDbContextOutbox<BookingsDbContext> outbox, IListingLookup listings, PaymentsClient payments, TimeProvider time, IConfiguration configuration)
     {
         private const int MaxInsertAttempts = 3;
 
@@ -77,7 +97,7 @@ internal static class CreateBooking
             return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(presentedKey));
         }
 
-        public async Task<Results<Created<ApiResponse<BookingDto>>, BadRequest<ApiResponse<object>>, NotFound<ApiResponse<object>>, Conflict<ApiResponse<object>>>> HandleAsync(
+        public async Task<Results<Created<ApiResponse<BookingDto>>, Accepted<ApiResponse<BookingDto>>, BadRequest<ApiResponse<object>>, NotFound<ApiResponse<object>>, Conflict<ApiResponse<object>>, JsonHttpResult<ApiResponse<object>>>> HandleAsync(
             Command command, ClaimsPrincipal user, string? quoteKey, CancellationToken cancellationToken)
         {
             var dates = BookingDates.Parse(command.CheckIn!, command.CheckOut!, BookingDates.Today(time), out var dateError);
@@ -113,6 +133,10 @@ internal static class CreateBooking
             {
                 return TypedResults.BadRequest(ApiResponse.Fail("You can't book your own listing"));
             }
+            if (command.Card is not { } card)
+            {
+                return TypedResults.BadRequest(ApiResponse.Fail(InvalidCard, "invalid_card"));
+            }
 
             var nights = stay.CheckOut.DayNumber - stay.CheckIn.DayNumber;
             var price = BookingPricing.Calculate(info.PricePerNight, nights);
@@ -134,26 +158,22 @@ internal static class CreateBooking
                 CleaningFee = price.CleaningFee,
                 ServiceFee = price.ServiceFee,
                 Total = price.Total,
-                Status = BookingStatus.Confirmed,
+                Status = BookingStatus.Pending,
                 CreatedAt = time.GetUtcNow(),
             };
             outbox.DbContext.Bookings.Add(booking);
-            await outbox.PublishAsync(new BookingConfirmed(
-                booking.Id, booking.ListingId, booking.ListingTitle, booking.GuestName, booking.GuestEmail,
-                booking.CheckIn, booking.CheckOut, booking.Adults, booking.Children, booking.Total, booking.CreatedAt));
             for (var attempt = 1; ; attempt++)
             {
                 try
                 {
-                    // A failed statement rolls back and leaves the entity Added and the event pending, so calling again
-                    // re-inserts both; a refused booking (409) never flushes its event.
-                    await outbox.SaveChangesAndFlushMessagesAsync(cancellationToken);
+                    // A failed statement rolls back and leaves the entity Added, so calling again re-inserts it.
+                    await outbox.DbContext.SaveChangesAsync(cancellationToken);
                     break;
                 }
                 catch (Exception exception) when (IsOverlap(exception) || (IsDeadlock(exception) && attempt >= MaxInsertAttempts))
                 {
-                    // The database refuses overlapping confirmed stays, however many guests confirm at once (spec §1).
-                    // A deadlock that survives every retry is reported the same way.
+                    // The database refuses overlapping pending or confirmed stays, however many guests book at once
+                    // (spec §1), before anyone is charged. A deadlock that survives every retry is reported the same way.
                     return TypedResults.Conflict(ApiResponse.Fail(Taken));
                 }
                 catch (Exception exception) when (IsDeadlock(exception))
@@ -162,7 +182,31 @@ internal static class CreateBooking
                 }
             }
 
-            return TypedResults.Created($"/api/bookings/{booking.Id}", ApiResponse.Ok(BookingDto.From(booking)));
+            var charge = await payments.ChargeAsync(booking.Id, booking.Total, card, cancellationToken);
+            switch (charge.Status)
+            {
+                case ChargeStatus.Succeeded:
+                    await PaymentOutcomes.ConfirmAsync(outbox, booking, time, cancellationToken);
+                    break;
+                case ChargeStatus.Declined:
+                    await PaymentOutcomes.DeclineAsync(outbox, booking, cancellationToken);
+                    break;
+                case ChargeStatus.InvalidCard:
+                    // Nothing was charged and nothing is worth keeping: the guest fixes a typo and books again.
+                    await outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
+                    return TypedResults.BadRequest(ApiResponse.Fail(InvalidCard, "invalid_card"));
+            }
+
+            // Answered by the booking as it now is: the reconciler may have settled it first.
+            var dto = ApiResponse.Ok(BookingDto.From(booking));
+            if (booking.Status == BookingStatus.Declined)
+            {
+                var (code, message) = Decline(charge.DeclineReason);
+                return TypedResults.Json(ApiResponse.Fail(message, code), statusCode: StatusCodes.Status402PaymentRequired);
+            }
+            return booking.Status == BookingStatus.Confirmed
+                ? TypedResults.Created($"/api/bookings/{booking.Id}", dto)
+                : TypedResults.Accepted($"/api/bookings/{booking.Id}", dto);
         }
     }
 

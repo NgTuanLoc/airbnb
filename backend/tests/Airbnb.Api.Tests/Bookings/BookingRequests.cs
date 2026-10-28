@@ -4,6 +4,8 @@ using System.Text.Json;
 using Airbnb.Api.Tests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Airbnb.Api.Tests.Bookings;
 
@@ -17,14 +19,20 @@ internal static class BookingRequests
 
     internal const string QuoteKey = "test-quote-key";
 
-    internal static WebApplicationFactory<Program> Factory(InfrastructureFixture infrastructure, string? quoteKey = QuoteKey) =>
+    // Every booking factory charges through its own fake payment service; the reconciler stays off (ApiFactory).
+    internal static WebApplicationFactory<Program> Factory(InfrastructureFixture infrastructure, string? quoteKey = QuoteKey, FakePaymentService? payments = null) =>
         new ApiFactory(infrastructure).WithWebHostBuilder(builder =>
         {
-            builder.UseSetting("RateLimiting:WritesPerMinute", "1000");
+            builder.UseSetting("RateLimiting:WritesPerMinute", "1000")
+                .UseSetting("Payments:ServiceKey", FakePaymentService.ServiceKey)
+                .UseSetting("Bookings:Payments:AttemptTimeout", "00:00:00.5");
             if (quoteKey is not null)
             {
                 builder.UseSetting("Bookings:QuoteKey", quoteKey);
             }
+            var service = payments ?? new FakePaymentService();
+            builder.ConfigureTestServices(services =>
+                services.AddHttpClient("payments").ConfigurePrimaryHttpMessageHandler(() => service));
         });
 
     internal static async Task<HttpResponseMessage> BookAsync(HttpClient client, string token, object body, string? quoteKey = QuoteKey)
@@ -40,7 +48,7 @@ internal static class BookingRequests
         return await client.SendAsync(request, Ct);
     }
 
-    internal static object Stay(string listingId, DateOnly checkIn, int nights, int adults = 2, object? quote = null) => new
+    internal static object Stay(string listingId, DateOnly checkIn, int nights, int adults = 2, object? quote = null, string card = FakePaymentService.Good) => new
     {
         listingId,
         checkIn = checkIn.ToString("yyyy-MM-dd"),
@@ -48,6 +56,7 @@ internal static class BookingRequests
         adults,
         children = 0,
         quote,
+        card = new { number = card, expMonth = 12, expYear = 2030, cvc = "123" },
     };
 
     internal static async Task<string> ErrorAsync(HttpResponseMessage response) =>

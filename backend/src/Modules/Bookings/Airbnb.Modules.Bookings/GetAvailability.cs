@@ -16,7 +16,7 @@ internal static class GetAvailability
             var today = BookingDates.Today(time);
             var stays = await db.Bookings
                 .AsNoTracking()
-                .Where(b => b.ListingId == listingId && b.Status == BookingStatus.Confirmed && b.CheckOut > today)
+                .Where(b => b.ListingId == listingId && (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed) && b.CheckOut > today)
                 .OrderBy(b => b.CheckIn)
                 .Select(b => new StayDto(b.CheckIn, b.CheckOut))
                 .ToListAsync(cancellationToken);
