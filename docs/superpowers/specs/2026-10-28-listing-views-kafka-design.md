@@ -82,8 +82,8 @@ string>` (group `insights-listing-views`, auto-commit off, `AutoOffsetReset=Earl
 `POST /api/insights/rebuild` with header `X-Admin-Key` = `Insights:AdminKey` (fixed-time compare; 404 when no key is
 configured, 401 on a wrong key, 503 when the projection isn't running, else 202). It asks the projection loop, which
 does the work between batches on its own thread: drop the pending batch, delete all counts and stored offsets in one
-transaction, invalidate the cache, then unsubscribe and resubscribe so every partition is reassigned from the
-beginning. The AppHost exposes it as the **Rebuild view stats** command on the `api` resource (generated secret
+transaction, invalidate the cache, then seek every partition it owns back to the beginning (partitions assigned later
+start there anyway, with no stored offset). The AppHost exposes it as the **Rebuild view stats** command on the `api` resource (generated secret
 parameter `insights-admin-key`). Single API instance assumed (dev); with replicas, each would need the request.
 
 ### Reads
@@ -132,5 +132,6 @@ the API references and waits for it. The k6 guest scenario posts a view for each
 - Guest-facing counts say "views", not "people", because views aren't deduplicated.
 - The Confluent client (through Aspire's integration) instead of Wolverine's Kafka transport: Wolverine hides offsets
   and partitions, and the exactly-once projection and the rebuild need them.
-- Topic retention forever, 3 partitions, batches of 500 / 1 s, rebuild by resubscribing.
+- Topic retention forever, 3 partitions, batches of 500 / 1 s, rebuild by seeking the owned partitions to the start
+  (an unsubscribe + subscribe in a row may not rebalance at all).
 - Views of an in-memory host listing keep their rows after the Next server restarts; they are never shown again.

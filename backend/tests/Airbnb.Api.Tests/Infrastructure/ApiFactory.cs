@@ -18,7 +18,10 @@ public sealed class ApiFactory(
             .UseSetting("ConnectionStrings:airbnb", postgresConnectionString ?? infrastructure.PostgresConnectionString)
             .UseSetting("ConnectionStrings:redis", redisConnectionString ?? infrastructure.RedisConnectionString)
             .UseSetting("ConnectionStrings:rabbitmq", infrastructure.RabbitMqConnectionString)
-            .UseSetting("ConnectionStrings:blobs", infrastructure.BlobConnectionString);
+            .UseSetting("ConnectionStrings:blobs", infrastructure.BlobConnectionString)
+            .UseSetting("ConnectionStrings:kafka", infrastructure.KafkaBootstrapAddress)
+            // Off unless a test asks for it: every host running it would join the same consumer group.
+            .UseSetting("Insights:Projection:Enabled", "false");
 
         // Wolverine can't start without a reachable Postgres; tests that point the API at a dead database switch it off.
         if (!withMessaging)

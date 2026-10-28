@@ -12,6 +12,7 @@ using DotNet.Testcontainers.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.Azurite;
+using Testcontainers.Kafka;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Testcontainers.Redis;
@@ -37,6 +38,13 @@ public sealed class InfrastructureFixture : IAsyncLifetime
     // Blob storage for the Media module's photos; the photo-processor function itself is not hosted here.
     private readonly AzuriteContainer _azurite = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0").Build();
 
+    // The listing-views topic; KRaft, so there's no ZooKeeper container. Readiness by port, like RabbitMQ: the default
+    // log check misses the broker's startup line when the host's and the Docker VM's clocks disagree.
+    private readonly KafkaContainer _kafka = new KafkaBuilder("confluentinc/cp-kafka:7.9.10")
+        .WithKRaft()
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(9092))
+        .Build();
+
     public string PostgresConnectionString => _postgres.GetConnectionString();
 
     public string RedisConnectionString => _redis.GetConnectionString();
@@ -45,17 +53,21 @@ public sealed class InfrastructureFixture : IAsyncLifetime
 
     public string BlobConnectionString => _azurite.GetConnectionString();
 
+    public string KafkaBootstrapAddress => _kafka.GetBootstrapAddress();
+
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
         await _redis.StartAsync();
         await _rabbitMq.StartAsync();
         await _azurite.StartAsync();
+        await _kafka.StartAsync();
         await MigrateAndSeedAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
+        await _kafka.DisposeAsync();
         await _azurite.DisposeAsync();
         await _rabbitMq.DisposeAsync();
         await _redis.DisposeAsync();

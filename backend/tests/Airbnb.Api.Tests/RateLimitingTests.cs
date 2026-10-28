@@ -40,6 +40,25 @@ public sealed class RateLimitingTests(InfrastructureFixture infrastructure)
     }
 
     [Fact]
+    public async Task Listing_views_have_their_own_budget()
+    {
+        await using var factory = new ApiFactory(infrastructure).WithWebHostBuilder(builder => builder
+            .UseSetting("RateLimiting:WritesPerMinute", "1")
+            .UseSetting("RateLimiting:ViewsPerMinute", "2"));
+        using var client = factory.CreateClient();
+
+        using var firstView = await client.PostAsync("/api/listings/l1/views", content: null, Ct);
+        using var secondView = await client.PostAsync("/api/listings/l1/views", content: null, Ct);
+        using var thirdView = await client.PostAsync("/api/listings/l1/views", content: null, Ct);
+        using var write = await client.PostAsync("/api/anything", content: null, Ct);
+
+        Assert.Equal(HttpStatusCode.Accepted, firstView.StatusCode);
+        Assert.Equal(HttpStatusCode.Accepted, secondView.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, thirdView.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, write.StatusCode);
+    }
+
+    [Fact]
     public async Task Health_probes_are_never_limited()
     {
         await using var factory = CreateFactory(readsPerMinute: 1, writesPerMinute: 1);
