@@ -27,6 +27,8 @@
     <ProjectReference Include="..\Airbnb.MigrationService\Airbnb.MigrationService.csproj" />
     <!-- The notification service lives in its own solution (services/notifications); this AppHost still runs it. -->
     <ProjectReference Include="..\..\..\services\notifications\src\Airbnb.Notifications\Airbnb.Notifications.csproj" />
+    <!-- So does the payment service (services/payments). -->
+    <ProjectReference Include="..\..\..\services\payments\src\Airbnb.Payments\Airbnb.Payments.csproj" />
   </ItemGroup>
 
 </Project>

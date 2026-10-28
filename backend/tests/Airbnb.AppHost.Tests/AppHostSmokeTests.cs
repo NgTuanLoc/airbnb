@@ -90,14 +90,12 @@ public sealed class AppHostSmokeTests
 
         await A_photo_upload_is_processed_by_the_function(api, ct);
         await A_listing_view_reaches_its_count_through_kafka(api, ct);
-        await A_booking_is_emailed_by_the_notification_service(app, api, ct);
+        await A_booking_is_paid_and_emailed(app, api, ct);
+        await A_declined_card_books_nothing(api, ct);
     }
 
-    // The first microservice end to end: the monolith books, publishes booking-confirmed through the outbox and the broker,
-    // and the separate notification service emails the guest through Mailpit.
-    private static async Task A_booking_is_emailed_by_the_notification_service(DistributedApplication app, HttpClient api, CancellationToken ct)
+    private static async Task<HttpResponseMessage> BookL14Async(HttpClient api, string email, string cardNumber, CancellationToken ct)
     {
-        var email = $"mail-{Guid.NewGuid():N}@example.com";
         using var registered = await api.PostAsJsonAsync("/api/auth/register", new { name = "Mail Guest", email, password = "correct-horse" }, ct);
         registered.EnsureSuccessStatusCode();
         var token = (await registered.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("token").GetString();
@@ -113,10 +111,19 @@ public sealed class AppHostSmokeTests
                 checkOut = checkIn.AddDays(2).ToString("yyyy-MM-dd"),
                 adults = 1,
                 children = 0,
+                card = new { number = cardNumber, expMonth = 12, expYear = DateTime.UtcNow.Year + 3, cvc = "123" },
             }),
         };
         book.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        using var booked = await api.SendAsync(book, ct);
+        return await api.SendAsync(book, ct);
+    }
+
+    // Both microservices end to end: the monolith charges the booking through the payment service over HTTP, publishes
+    // booking-confirmed through the outbox and the broker, and the notification service emails the guest through Mailpit.
+    private static async Task A_booking_is_paid_and_emailed(DistributedApplication app, HttpClient api, CancellationToken ct)
+    {
+        var email = $"mail-{Guid.NewGuid():N}@example.com";
+        using var booked = await BookL14Async(api, email, "4242424242424242", ct);
         Assert.Equal(HttpStatusCode.Created, booked.StatusCode);
 
         using var mailpit = new HttpClient { BaseAddress = app.GetEndpoint("mailpit", "http") };
@@ -131,6 +138,15 @@ public sealed class AppHostSmokeTests
         var subject = Assert.Single(subjects);
         Assert.StartsWith("Your stay at ", subject);
         Assert.EndsWith(" is confirmed", subject);
+    }
+
+    // The payment service's decline reaches the guest as a 402 with its reason.
+    private static async Task A_declined_card_books_nothing(HttpClient api, CancellationToken ct)
+    {
+        using var declined = await BookL14Async(api, $"declined-{Guid.NewGuid():N}@example.com", "4000000000000002", ct);
+
+        Assert.Equal(HttpStatusCode.PaymentRequired, declined.StatusCode);
+        Assert.Equal("card_declined", (await declined.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("code").GetString());
     }
 
     // Listing views end to end: the API publishes the view to Kafka, the projection counts it, and the count is served.

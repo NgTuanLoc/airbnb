@@ -45,6 +45,19 @@ var notificationsDb = postgres.AddDatabase("notificationsdb", "notifications");
 var notificationsAdminKey = builder.AddParameter("notifications-admin-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
 
+// The payment service (services/payments): the monolith charges, reads and voids payments over HTTP with a shared
+// service key, and the service refunds cancelled bookings it hears about on the broker. Its own database, same server.
+var paymentsDb = postgres.AddDatabase("paymentsdb", "payments");
+var paymentsServiceKey = builder.AddParameter("payments-service-key",
+    new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
+var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchProfileName: "http")
+    .WithReference(paymentsDb)
+    .WithReference(messaging)
+    .WaitFor(paymentsDb)
+    .WaitFor(messaging)
+    .WithEnvironment("Payments__ServiceKey", paymentsServiceKey)
+    .WithHttpHealthCheck("/health");
+
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
@@ -76,7 +89,10 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WaitFor(redis)
     .WaitFor(messaging)
     .WaitFor(kafka)
+    .WithReference(payments)
+    .WaitFor(payments)
     .WaitForCompletion(migrations)
+    .WithEnvironment("Payments__ServiceKey", paymentsServiceKey)
     .WithEnvironment("Bookings__QuoteKey", quoteKey)
     .WithEnvironment("Insights__AdminKey", insightsAdminKey)
     .WithEnvironment("Identity__External__Sso__acme__Name", "Acme Corp")
