@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Airbnb.Chat/Airbnb.Chat.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Airbnb.Chat.Tests/Airbnb.Chat.Tests.csproj" />
+  </Folder>
+</Solution>
