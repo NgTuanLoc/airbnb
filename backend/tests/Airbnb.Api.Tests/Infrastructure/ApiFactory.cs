@@ -17,7 +17,7 @@ public sealed class ApiFactory(
         builder
             .UseSetting("ConnectionStrings:airbnb", postgresConnectionString ?? infrastructure.PostgresConnectionString)
             .UseSetting("ConnectionStrings:redis", redisConnectionString ?? infrastructure.RedisConnectionString)
-            .UseSetting("ConnectionStrings:rabbitmq", infrastructure.RabbitMqConnectionString)
+            .UseSetting("ConnectionStrings:messaging", infrastructure.MessagingConnectionString)
             .UseSetting("ConnectionStrings:blobs", infrastructure.BlobConnectionString)
             .UseSetting("ConnectionStrings:kafka", infrastructure.KafkaBootstrapAddress)
             // Off unless a test asks for it: every host running it would join the same consumer group.

@@ -55,7 +55,9 @@ builder.AddMediaModule();
 builder.AddInsightsModule();
 
 // The one write flow (spec §3): a review and its ReviewSubmitted event commit in one Postgres transaction (outbox),
-// then Wolverine relays the event to a durable RabbitMQ queue that this API also listens on (durable inbox).
+// then Wolverine relays the event to a durable queue on the AMQP broker (the "messaging" connection: LavinMQ or
+// RabbitMQ, chosen in the AppHost) that this API also listens on (durable inbox). Wolverine's RabbitMQ transport is plain
+// AMQP 0-9-1, which LavinMQ speaks too.
 // Its tables live in their own "wolverine" schema, and its exchange and queues are created at startup.
 builder.UseWolverine(options =>
 {
@@ -64,7 +66,7 @@ builder.UseWolverine(options =>
     options.PersistMessagesWithPostgresql(builder.Configuration.GetConnectionString("airbnb")!, "wolverine");
     options.UseEntityFrameworkCoreTransactions();
 
-    options.UseRabbitMqUsingNamedConnection("rabbitmq").AutoProvision();
+    options.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
     options.PublishMessage<ReviewSubmitted>().ToRabbitQueue(reviewSubmittedQueue).UseDurableOutbox();
     options.ListenToRabbitQueue(reviewSubmittedQueue).UseDurableInbox();
 

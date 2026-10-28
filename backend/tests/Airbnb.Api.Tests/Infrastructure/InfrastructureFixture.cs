@@ -9,6 +9,7 @@ using Airbnb.Modules.Services;
 using Airbnb.Modules.Stays;
 using Airbnb.SharedKernel;
 using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.Azurite;
@@ -21,19 +22,33 @@ using Testcontainers.Redis;
 
 namespace Airbnb.Api.Tests.Infrastructure;
 
-// One Postgres, one Redis and one RabbitMQ container for the whole test run; xUnit injects this into any test class
-// constructor that asks for it. The containers start one after the other: starting them from two fixtures in
-// parallel races Testcontainers' resource reaper and intermittently fails with "No such container".
+// One container per dependency for the whole test run; xUnit injects this into any test class constructor that asks
+// for it. The containers start one after the other: starting them from two fixtures in parallel races Testcontainers'
+// resource reaper and intermittently fails with "No such container".
 public sealed class InfrastructureFixture : IAsyncLifetime
 {
+    private const int AmqpPort = 5672;
+
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.3").Build();
     private readonly RedisContainer _redis = new RedisBuilder("redis:8.6").Build();
 
-    // Readiness by port, not the default log check: log checks miss RabbitMQ's startup line when the Docker VM's clock
-    // lags the host's. RabbitMQ opens 5672 last, once it is ready.
-    private readonly RabbitMqContainer _rabbitMq = new RabbitMqBuilder("rabbitmq:4.3-management")
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672))
-        .Build();
+    // The AMQP broker, as in the AppHost: LavinMQ, or RabbitMQ with MESSAGING_BROKER=RabbitMQ. Readiness by port, not the
+    // default log check: log checks miss the startup line when the host's and the Docker VM's clocks disagree, and
+    // both open 5672 last, once they are ready.
+    private readonly bool _isRabbitMq =
+        string.Equals(Environment.GetEnvironmentVariable("MESSAGING_BROKER"), "RabbitMQ", StringComparison.OrdinalIgnoreCase);
+
+    private readonly IContainer _broker;
+
+    public InfrastructureFixture() =>
+        _broker = _isRabbitMq
+            ? new RabbitMqBuilder("rabbitmq:4.3-management")
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(AmqpPort))
+                .Build()
+            : new ContainerBuilder("cloudamqp/lavinmq:2.10.3")
+                .WithPortBinding(AmqpPort, assignRandomHostPort: true)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(AmqpPort))
+                .Build();
 
     // Blob storage for the Media module's photos; the photo-processor function itself is not hosted here.
     private readonly AzuriteContainer _azurite = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0").Build();
@@ -49,7 +64,10 @@ public sealed class InfrastructureFixture : IAsyncLifetime
 
     public string RedisConnectionString => _redis.GetConnectionString();
 
-    public string RabbitMqConnectionString => _rabbitMq.GetConnectionString();
+    // LavinMQ's image keeps the default guest user.
+    public string MessagingConnectionString => _broker is RabbitMqContainer rabbitMq
+        ? rabbitMq.GetConnectionString()
+        : $"amqp://guest:guest@{_broker.Hostname}:{_broker.GetMappedPublicPort(AmqpPort)}";
 
     public string BlobConnectionString => _azurite.GetConnectionString();
 
@@ -59,7 +77,7 @@ public sealed class InfrastructureFixture : IAsyncLifetime
     {
         await _postgres.StartAsync();
         await _redis.StartAsync();
-        await _rabbitMq.StartAsync();
+        await _broker.StartAsync();
         await _azurite.StartAsync();
         await _kafka.StartAsync();
         await MigrateAndSeedAsync();
@@ -69,7 +87,7 @@ public sealed class InfrastructureFixture : IAsyncLifetime
     {
         await _kafka.DisposeAsync();
         await _azurite.DisposeAsync();
-        await _rabbitMq.DisposeAsync();
+        await _broker.DisposeAsync();
         await _redis.DisposeAsync();
         await _postgres.DisposeAsync();
     }

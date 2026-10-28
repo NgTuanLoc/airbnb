@@ -9,9 +9,19 @@ var db = postgres.AddDatabase("airbnb");
 var redis = builder.AddRedis("redis")
     .WithLifetime(ContainerLifetime.Persistent);
 
-var rabbitmq = builder.AddRabbitMQ("rabbitmq")
-    .WithManagementPlugin()
-    .WithLifetime(ContainerLifetime.Persistent);
+// Wolverine's AMQP broker (review events). Both speak AMQP 0-9-1 and appear as the "messaging" connection, so the API
+// never knows which one it got: LavinMQ by default, RabbitMQ with Messaging:Broker = RabbitMQ (appsettings.json).
+// LavinMQ's integration takes fixed host ports: 5672 (AMQP) and 15672 (its management UI).
+var broker = builder.Configuration["Messaging:Broker"] ?? "LavinMQ";
+IResourceBuilder<IResourceWithConnectionString> messaging = broker.ToLowerInvariant() switch
+{
+    "lavinmq" => builder.AddLavinMQ("messaging")
+        .WithLifetime(ContainerLifetime.Persistent),
+    "rabbitmq" => builder.AddRabbitMQ("messaging")
+        .WithManagementPlugin()
+        .WithLifetime(ContainerLifetime.Persistent),
+    _ => throw new InvalidOperationException($"Messaging:Broker must be LavinMQ or RabbitMQ, not '{broker}'"),
+};
 
 // Host photo uploads: originals and processed photos in Blob Storage (Azurite locally), processed by an Azure Function.
 var storage = builder.AddAzureStorage("storage")
@@ -50,13 +60,13 @@ var migrations = builder.AddProject<Projects.Airbnb_MigrationService>("migration
 var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "http")
     .WithReference(db)
     .WithReference(redis)
-    .WithReference(rabbitmq)
+    .WithReference(messaging)
     .WithReference(blobs)
     .WithReference(kafka)
     .WaitFor(db)
     .WaitFor(storage)
     .WaitFor(redis)
-    .WaitFor(rabbitmq)
+    .WaitFor(messaging)
     .WaitFor(kafka)
     .WaitForCompletion(migrations)
     .WithEnvironment("Bookings__QuoteKey", quoteKey)
