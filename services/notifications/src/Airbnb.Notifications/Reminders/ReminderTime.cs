@@ -1,6 +1,6 @@
 namespace Airbnb.Notifications.Reminders;
 
-internal static class ReminderTime
+public static class ReminderTime
 {
     private static readonly TimeOnly SendAt = new(10, 0);
 

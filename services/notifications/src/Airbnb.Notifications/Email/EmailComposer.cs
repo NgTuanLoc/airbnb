@@ -5,11 +5,11 @@ using Airbnb.Notifications.Data;
 
 namespace Airbnb.Notifications.Email;
 
-internal sealed record EmailMessage(string To, string ToName, string Subject, string TextBody, string HtmlBody);
+public sealed record EmailMessage(string To, string ToName, string Subject, string TextBody, string HtmlBody);
 
 // The three emails, as plain text plus a minimal HTML body. Titles and names come from guests and hosts, so the HTML
 // escapes them; an event without a title (an older host-listing quote) reads "your stay".
-internal static class EmailComposer
+public static class EmailComposer
 {
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 
