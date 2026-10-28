@@ -16,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SmtpEmailSender>();
+builder.Services.AddHostedService<DueReminderSweep>();
 builder.Services.AddSingleton(new NotificationsSettings(
     new Uri(builder.Configuration["Notifications:FrontendUrl"] ?? "http://localhost:3000")));
 
@@ -31,15 +32,15 @@ builder.UseWolverine(options =>
     // Its own queue, bound to the monolith's "bookings" fanout exchange: the monolith doesn't know this service exists.
     options.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
     options.ListenToRabbitQueue("notifications.bookings", queue => queue.BindExchange("bookings")).UseDurableInbox();
-    // Scheduled review reminders survive restarts.
-    options.Policies.UseDurableLocalQueues();
     // Aspire registers the DbContext through a factory (pooling), which Wolverine's generated code may only resolve
     // from the container when told so.
     options.CodeGeneration.AlwaysUseServiceLocationFor<NotificationsDbContext>();
 
-    // SMTP or database hiccups: a few spaced-out retries, then Wolverine's dead-letter storage.
+    // Hiccups get quick retries; a longer SMTP or database outage gets retries scheduled minutes apart, so an email is
+    // delayed rather than dropped. Each failed attempt rolls its claim back, so a retry never sends twice.
     options.Policies.OnAnyException()
         .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(10))
+        .Then.ScheduleRetry(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30))
         .Then.MoveToErrorQueue();
 });
 

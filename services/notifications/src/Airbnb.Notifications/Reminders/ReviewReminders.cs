@@ -46,19 +46,28 @@ public static class ReviewReminders
                 return TypedResults.Unauthorized();
             }
 
-            var waiting = await db.PendingReminders.AsNoTracking()
-                .Where(r => !r.Cancelled
-                    && !db.SentEmails.Any(e => e.BookingId == r.BookingId && e.Kind == EmailKinds.ReviewReminder))
-                .Select(r => r.BookingId)
-                .ToListAsync(cancellationToken);
-            var sent = 0;
-            foreach (var bookingId in waiting)
-            {
-                if (await SendAsync(db, sender, settings, time, bookingId, cancellationToken))
-                {
-                    sent++;
-                }
-            }
-            return TypedResults.Ok(new { sent });
+            return TypedResults.Ok(new { sent = await SendWaitingAsync(db, sender, settings, time, dueBy: null, cancellationToken) });
         });
+
+    // Every reminder not cancelled and not yet sent, due by the given time (or all of them). Returns how many went out.
+    public static async Task<int> SendWaitingAsync(
+        NotificationsDbContext db, SmtpEmailSender sender, NotificationsSettings settings, TimeProvider time,
+        DateTimeOffset? dueBy, CancellationToken cancellationToken)
+    {
+        var waiting = await db.PendingReminders.AsNoTracking()
+            .Where(r => !r.Cancelled
+                && (dueBy == null || r.DueAt <= dueBy)
+                && !db.SentEmails.Any(e => e.BookingId == r.BookingId && e.Kind == EmailKinds.ReviewReminder))
+            .Select(r => r.BookingId)
+            .ToListAsync(cancellationToken);
+        var sent = 0;
+        foreach (var bookingId in waiting)
+        {
+            if (await SendAsync(db, sender, settings, time, bookingId, cancellationToken))
+            {
+                sent++;
+            }
+        }
+        return sent;
+    }
 }

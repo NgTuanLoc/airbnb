@@ -129,6 +129,13 @@ public sealed class BookingEmailTests(ServiceFixture fixture)
         await fixture.PublishAsync("booking-cancelled", Cancelled(bookingId, email), Ct);
         await WaitForEmailsAsync(email, 1);
         await fixture.PublishAsync("booking-confirmed", Confirmed(bookingId, email), Ct);
+        // Only once the late confirmation has been handled does "no reminder" mean anything.
+        var deadline = DateTime.UtcNow + MailTimeout;
+        while (await fixture.ScalarAsync($"""SELECT count(*) FROM sent_emails WHERE "BookingId" = '{bookingId}' AND "Kind" = 'confirmed'""", Ct) == 0
+            && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100, Ct);
+        }
         using var client = fixture.Service.CreateClient();
         using var sent = await SendDueAsync(client, ServiceFixture.AdminKey);
         Assert.Equal(HttpStatusCode.OK, sent.StatusCode);
@@ -168,6 +175,46 @@ public sealed class BookingEmailTests(ServiceFixture fixture)
         using var keylessClient = keyless.CreateClient();
         using var notFound = await SendDueAsync(keylessClient, ServiceFixture.AdminKey);
         Assert.Equal(HttpStatusCode.NotFound, notFound.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_due_reminder_is_sent_even_if_nothing_scheduled_it()
+    {
+        // As if the process died between committing the confirmation and scheduling its reminder: only the row exists.
+        var email = NewEmail();
+        var bookingId = $"bk_{Guid.NewGuid():N}";
+        await fixture.ScalarAsync($"""
+            INSERT INTO pending_reminders ("BookingId", "ListingId", "ListingTitle", "GuestName", "GuestEmail", "CheckOut", "DueAt", "Cancelled")
+            VALUES ('{bookingId}', 'l7', 'Seaside villa', 'Ana', '{email}', DATE '2026-01-01', TIMESTAMPTZ '2026-01-02 10:00:00+00', false)
+            """, Ct);
+
+        var message = Assert.Single(await WaitForEmailsAsync(email, 1));
+        Assert.Equal("How was your stay at Seaside villa?", message.Subject);
+        Assert.Single(await SettledEmailsAsync(email));
+    }
+
+    [Fact]
+    public async Task Smtp_outage_longer_than_the_quick_retries_still_sends_once()
+    {
+        var email = NewEmail();
+        await fixture.StopMailpitAsync(Ct);
+        try
+        {
+            await fixture.PublishAsync("booking-confirmed", Confirmed($"bk_{Guid.NewGuid():N}", email), Ct);
+            // Past the quick retries (1 s, 3 s, 10 s), which used to end in the dead-letter queue.
+            await Task.Delay(TimeSpan.FromSeconds(20), Ct);
+        }
+        finally
+        {
+            await fixture.StartMailpitAsync(Ct);
+        }
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+        while ((await fixture.EmailsToAsync(email, Ct)).Count == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(500, Ct);
+        }
+        Assert.Single(await SettledEmailsAsync(email));
     }
 
     [Fact]

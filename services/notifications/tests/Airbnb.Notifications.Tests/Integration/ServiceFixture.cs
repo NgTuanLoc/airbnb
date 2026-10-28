@@ -64,7 +64,8 @@ public sealed class ServiceFixture : IAsyncLifetime
                 .UseSetting("ConnectionStrings:notificationsdb", _postgres.GetConnectionString())
                 .UseSetting("ConnectionStrings:messaging", MessagingConnectionString)
                 .UseSetting("ConnectionStrings:mailpit", $"Endpoint=smtp://{_mailpit.Hostname}:{_smtpHostPort}")
-                .UseSetting("Notifications:FrontendUrl", "http://localhost:3000");
+                .UseSetting("Notifications:FrontendUrl", "http://localhost:3000")
+                .UseSetting("Notifications:ReminderSweepInterval", "00:00:01");
             if (adminKey is not null)
             {
                 builder.UseSetting("Notifications:AdminKey", adminKey);
@@ -86,6 +87,15 @@ public sealed class ServiceFixture : IAsyncLifetime
         using var http = new HttpClient { BaseAddress = MailpitApi };
         var result = await http.GetFromJsonAsync<MailpitSearch>($"api/v1/search?query={Uri.EscapeDataString($"to:{address}")}", ct);
         return result?.Messages ?? [];
+    }
+
+    // Straight to the service's database, for states a test can't reach through events (ids here are generated, not input).
+    public async Task<long> ScalarAsync(string sql, CancellationToken ct)
+    {
+        await using var connection = new Npgsql.NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync(ct);
+        await using var command = new Npgsql.NpgsqlCommand(sql, connection);
+        return Convert.ToInt64(await command.ExecuteScalarAsync(ct));
     }
 
     public Task StopMailpitAsync(CancellationToken ct) => _mailpit.StopAsync(ct);

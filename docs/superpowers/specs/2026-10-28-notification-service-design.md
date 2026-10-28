@@ -67,10 +67,11 @@ Aspire integration** (`CommunityToolkit.Aspire.Hosting.MailPit`).
   the service itself at startup. Table `sent_emails (BookingId, Kind, SentAt, MessageId)` with a primary key on
   `(BookingId, Kind)`: a handler records the email and sends it; a duplicate delivery finds the row and does nothing.
   The record is written in the same transaction as Wolverine's inbox mark; if SMTP fails, the transaction rolls back
-  and Wolverine retries (3 times with backoff, then the error queue).
-- Review reminders: on `booking-confirmed` the service schedules a `SendReviewReminder(bookingId)` with Wolverine's
-  durable scheduling for check-out + 1 day at 10:00 UTC, storing the reminder's details in `pending_reminders`. On
-  `booking-cancelled` the row is deleted; a reminder whose row is gone is skipped.
+  and Wolverine retries (1 s, 3 s, 10 s, then scheduled retries 1, 5 and 30 minutes later, then the error queue).
+- Review reminders: on `booking-confirmed` the service writes a `pending_reminders` row (due check-out + 1 day 10:00 UTC) in
+  the same transaction as the confirmation email, and a background sweep (every minute) sends the due ones. On
+  `booking-cancelled` the row is marked cancelled (or created cancelled, if the cancellation arrives first). (Changed
+  from Wolverine's one-shot scheduling after review: a crash between commit and scheduling lost the reminder for good.)
 - `POST /reminders/send-due` (header `X-Admin-Key` = `Notifications:AdminKey`; 404 without a configured key) sends every
   pending reminder now. The AppHost exposes it as the **Send due reminders now** command on the service's resource.
 - Email: MailKit over SMTP to the `mailpit` connection; sender `Airbnb <no-reply@airbnb.local>`; plain text plus a

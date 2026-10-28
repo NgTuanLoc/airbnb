@@ -2,7 +2,6 @@ using Airbnb.Notifications.Contracts;
 using Airbnb.Notifications.Data;
 using Airbnb.Notifications.Email;
 using Airbnb.Notifications.Reminders;
-using Wolverine;
 
 namespace Airbnb.Notifications.Handlers;
 
@@ -15,42 +14,36 @@ public static class BookingConfirmedHandler
 {
     public static async Task Handle(
         BookingConfirmed booking, NotificationsDbContext db, SmtpEmailSender sender, NotificationsSettings settings,
-        IMessageBus bus, TimeProvider time, CancellationToken cancellationToken)
+        TimeProvider time, CancellationToken cancellationToken)
     {
-        DateTimeOffset dueAt;
-        await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        if (!await db.TryClaimAsync(booking.BookingId, EmailKinds.Confirmed, time.GetUtcNow(), cancellationToken))
         {
-            if (!await db.TryClaimAsync(booking.BookingId, EmailKinds.Confirmed, time.GetUtcNow(), cancellationToken))
-            {
-                return;
-            }
-
-            var reminder = await db.PendingReminders.FindAsync([booking.BookingId], cancellationToken);
-            if (reminder is { Cancelled: true })
-            {
-                // The cancellation overtook this event: a "confirmed" email now would only confuse.
-                await transaction.CommitAsync(cancellationToken);
-                return;
-            }
-            dueAt = ReminderTime.For(booking.CheckOut);
-            db.PendingReminders.Add(new PendingReminder
-            {
-                BookingId = booking.BookingId,
-                ListingId = booking.ListingId,
-                ListingTitle = booking.ListingTitle,
-                GuestName = booking.GuestName,
-                GuestEmail = booking.GuestEmail,
-                CheckOut = booking.CheckOut,
-                DueAt = dueAt,
-            });
-            await db.SaveChangesAsync(cancellationToken);
-
-            await sender.SendAsync(EmailComposer.Confirmed(booking, settings.Frontend), cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            return;
         }
 
-        // Durable (Wolverine's own tables). Lost if the process dies right here; "Send due reminders now" still finds it.
-        await bus.ScheduleAsync(new SendReviewReminder(booking.BookingId), dueAt);
+        var reminder = await db.PendingReminders.FindAsync([booking.BookingId], cancellationToken);
+        if (reminder is { Cancelled: true })
+        {
+            // The cancellation overtook this event: a "confirmed" email now would only confuse.
+            await transaction.CommitAsync(cancellationToken);
+            return;
+        }
+        // The reminder's schedule: committed with the confirmation, and sent by DueReminderSweep once due.
+        db.PendingReminders.Add(new PendingReminder
+        {
+            BookingId = booking.BookingId,
+            ListingId = booking.ListingId,
+            ListingTitle = booking.ListingTitle,
+            GuestName = booking.GuestName,
+            GuestEmail = booking.GuestEmail,
+            CheckOut = booking.CheckOut,
+            DueAt = ReminderTime.For(booking.CheckOut),
+        });
+        await db.SaveChangesAsync(cancellationToken);
+
+        await sender.SendAsync(EmailComposer.Confirmed(booking, settings.Frontend), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 }
 
@@ -91,14 +84,4 @@ public static class BookingCancelledHandler
         await sender.SendAsync(EmailComposer.Cancelled(booking, settings.Frontend), cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
-}
-
-public sealed record SendReviewReminder(string BookingId);
-
-public static class SendReviewReminderHandler
-{
-    public static Task Handle(
-        SendReviewReminder message, NotificationsDbContext db, SmtpEmailSender sender, NotificationsSettings settings,
-        TimeProvider time, CancellationToken cancellationToken) =>
-        ReviewReminders.SendAsync(db, sender, settings, time, message.BookingId, cancellationToken);
 }
