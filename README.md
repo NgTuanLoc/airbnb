@@ -34,7 +34,7 @@ Run from PowerShell; Docker must be running. On a Mac older than macOS 15 (Aspir
 
 ```powershell
 cd backend
-aspire run    # dashboard + postgres, redis, messaging (LavinMQ), kafka, migrations, api, frontend (http://localhost:3000, on the API)
+aspire run    # dashboard + postgres, redis, messaging (LavinMQ), kafka, mailpit, migrations, api, notifications, frontend (http://localhost:3000, on the API)
 dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker; the smoke test needs port 3000 free)
 ```
 
@@ -46,6 +46,7 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 - Read API (all under `/api`, try them in `/scalar`): `GET /listings`, `/listings/{id}`, `/cities`, `/experiences`, `/experiences/{id}`, `/services`, `/services/{id}`, `/hosts/{id}`, `/reviews?subjectId=…`. Data is seeded from the frontend mock (`npm run seed:export` in `frontend/` regenerates it).
 - Write API: `POST /api/reviews` with `{ subjectType: "stay" | "experience", subjectId, authorName, rating (1–5), body }` → 201 with the review. The listing's or experience's rating and review count update a moment later, via the message broker (LavinMQ by default); the trace shows up in the dashboard. Try it in `/scalar`.
 - Message broker: Wolverine's review events go through the `messaging` resource, LavinMQ by default (its management UI is on http://localhost:15672, guest/guest). Both brokers speak AMQP 0-9-1, so switching changes nothing in the API: set `Messaging:Broker` to `RabbitMQ` in `src/Airbnb.AppHost/appsettings.json` to use RabbitMQ again. Integration tests follow the `MESSAGING_BROKER` environment variable the same way (LavinMQ unless it is `RabbitMQ`).
+- Notification service (a separate microservice in `services/notifications`, run by the same AppHost): guests get an email when a booking is confirmed or cancelled, and a review reminder the morning after check-out. The monolith only publishes `booking-confirmed` / `booking-cancelled` events to the `bookings` exchange on `messaging`; the service consumes them on its own queue, keeps its own `notifications` database and sends through `mailpit` (open its web UI from the dashboard to read every email). Run **Send due reminders now** on the `notifications` resource to get the review reminders without waiting for check-out. Its tests run from `services/notifications` with `dotnet test`.
 - Under Aspire the frontend runs on the backend (`DATA_SOURCE=api`). Set `Frontend:DataSource` to `mock` in `src/Airbnb.AppHost/appsettings.json` to run it on mock data instead.
 - Parity check: with `aspire run` up, `npm run e2e` in `frontend/` runs the whole e2e suite against the backend (Playwright reuses the server on port 3000). The OAuth specs need mock mode's demo provider and skip themselves.
 - Photo uploads: `storage` is Azure Blob Storage, run as the Azurite emulator with a persistent volume. The API stores each uploaded original there, and the `photo-processor` Azure Function (`src/Airbnb.Functions`, blob-triggered) checks it's a real image, turns it upright, drops its metadata (GPS included) and saves it as WebP, at most 2560 px. The API serves only that processed copy, at `GET /api/photos/{id}/image`.

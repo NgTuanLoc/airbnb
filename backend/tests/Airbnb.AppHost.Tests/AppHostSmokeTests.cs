@@ -23,6 +23,9 @@ public sealed class AppHostSmokeTests
     // A fresh consumer group joins and is assigned partitions before it counts anything.
     private static readonly TimeSpan ViewCountTimeout = TimeSpan.FromSeconds(60);
 
+    // Outbox relay, broker, the service's inbox and SMTP: a few hops, each quick.
+    private static readonly TimeSpan EmailTimeout = TimeSpan.FromSeconds(60);
+
     [Fact]
     public async Task The_frontend_serves_backend_data_under_aspire()
     {
@@ -87,6 +90,47 @@ public sealed class AppHostSmokeTests
 
         await A_photo_upload_is_processed_by_the_function(api, ct);
         await A_listing_view_reaches_its_count_through_kafka(api, ct);
+        await A_booking_is_emailed_by_the_notification_service(app, api, ct);
+    }
+
+    // The first microservice end to end: the monolith books, publishes booking-confirmed through the outbox and the broker,
+    // and the separate notification service emails the guest through Mailpit.
+    private static async Task A_booking_is_emailed_by_the_notification_service(DistributedApplication app, HttpClient api, CancellationToken ct)
+    {
+        var email = $"mail-{Guid.NewGuid():N}@example.com";
+        using var registered = await api.PostAsJsonAsync("/api/auth/register", new { name = "Mail Guest", email, password = "correct-horse" }, ct);
+        registered.EnsureSuccessStatusCode();
+        var token = (await registered.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("token").GetString();
+
+        // A random far-future month, so runs against the persistent dev database never collide.
+        var checkIn = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Random.Shared.Next(24, 1200));
+        using var book = new HttpRequestMessage(HttpMethod.Post, "/api/bookings")
+        {
+            Content = JsonContent.Create(new
+            {
+                listingId = "l14",
+                checkIn = checkIn.ToString("yyyy-MM-dd"),
+                checkOut = checkIn.AddDays(2).ToString("yyyy-MM-dd"),
+                adults = 1,
+                children = 0,
+            }),
+        };
+        book.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var booked = await api.SendAsync(book, ct);
+        Assert.Equal(HttpStatusCode.Created, booked.StatusCode);
+
+        using var mailpit = new HttpClient { BaseAddress = app.GetEndpoint("mailpit", "http") };
+        var subjects = new List<string>();
+        var deadline = DateTime.UtcNow + EmailTimeout;
+        while (subjects.Count == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            var search = await mailpit.GetFromJsonAsync<JsonElement>($"api/v1/search?query={Uri.EscapeDataString($"to:{email}")}", ct);
+            subjects = [.. search.GetProperty("messages").EnumerateArray().Select(m => m.GetProperty("Subject").GetString()!)];
+        }
+        var subject = Assert.Single(subjects);
+        Assert.StartsWith("Your stay at ", subject);
+        Assert.EndsWith(" is confirmed", subject);
     }
 
     // Listing views end to end: the API publishes the view to Kafka, the projection counts it, and the count is served.

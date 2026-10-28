@@ -41,6 +41,19 @@ jobs:
           dotnet test --project tests/Airbnb.ArchitectureTests
           dotnet test --project tests/Airbnb.Api.Tests
 
+  # The notification service is its own solution with its own tests (Postgres, LavinMQ and Mailpit containers).
+  notifications:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/notifications
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test --project tests/Airbnb.Notifications.Tests
+
   apphost:
     runs-on: ubuntu-latest
     defaults:

@@ -37,6 +37,14 @@ var kafka = builder.AddKafka("kafka")
 var insightsAdminKey = builder.AddParameter("insights-admin-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
 
+// The notification service (services/notifications): a separate microservice with its own database on the same Postgres
+// server. It hears about bookings only through the broker and emails guests through Mailpit, a fake inbox with a web UI.
+var mailpit = builder.AddMailPit("mailpit")
+    .WithLifetime(ContainerLifetime.Persistent);
+var notificationsDb = postgres.AddDatabase("notificationsdb", "notifications");
+var notificationsAdminKey = builder.AddParameter("notifications-admin-key",
+    new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
+
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
@@ -131,6 +139,26 @@ var frontend = builder.AddJavaScriptApp("frontend", "../../../frontend")
 // only accepts that exact URI, so it gets the frontend's port too (the testing builder randomizes ports) with the host
 // the browser uses: from inside a container the frontend's own URL would be aspire.dev.internal.
 api.WithEnvironment("Identity__External__RedirectBaseUrl", ReferenceExpression.Create($"{frontend.GetEndpoint("http")}/api/auth/callback"));
+
+// Emails link to the frontend; "Send due reminders now" sends every waiting review reminder without waiting for check-out.
+builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfileName: "http")
+    .WithReference(notificationsDb)
+    .WithReference(messaging)
+    .WithReference(mailpit)
+    .WaitFor(notificationsDb)
+    .WaitFor(messaging)
+    .WaitFor(mailpit)
+    .WithEnvironment("Notifications__FrontendUrl", frontend.GetEndpoint("http"))
+    .WithEnvironment("Notifications__AdminKey", notificationsAdminKey)
+    .WithHttpHealthCheck("/health")
+    .WithHttpCommand("/reminders/send-due", "Send due reminders now", endpointName: "http", commandOptions: new HttpCommandOptions
+    {
+        Method = HttpMethod.Post,
+        Description = "Email every guest whose review reminder is still waiting, whatever their check-out date",
+        IconName = "Mail",
+        PrepareRequest = async context =>
+            context.Request.Headers.Add("X-Admin-Key", await notificationsAdminKey.Resource.GetValueAsync(context.CancellationToken)),
+    });
 keycloak.WithEnvironment("ACME_REDIRECT_URI",
     ReferenceExpression.Create($"http://localhost:{frontend.GetEndpoint("http").Property(EndpointProperty.Port)}/api/auth/callback/sso-acme"));
 

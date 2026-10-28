@@ -14,6 +14,7 @@
     <PackageReference Include="Aspire.Hosting.Kafka" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.k6" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.LavinMQ" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
@@ -24,6 +25,8 @@
     <ProjectReference Include="..\Airbnb.Api\Airbnb.Api.csproj" />
     <ProjectReference Include="..\Airbnb.Functions\Airbnb.Functions.csproj" />
     <ProjectReference Include="..\Airbnb.MigrationService\Airbnb.MigrationService.csproj" />
+    <!-- The notification service lives in its own solution (services/notifications); this AppHost still runs it. -->
+    <ProjectReference Include="..\..\..\services\notifications\src\Airbnb.Notifications\Airbnb.Notifications.csproj" />
   </ItemGroup>
 
 </Project>
