@@ -4,6 +4,7 @@ using Airbnb.SharedKernel.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -29,6 +30,8 @@ public static class IdentityModule
             .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthentication.Scheme, configureOptions: null);
         builder.Services.AddAuthorization();
         builder.AddExternalLogins();
+        // Checked here so a bad chat signing key fails the host at startup, not on the first token.
+        _ = ChatToken.SigningKey(builder.Configuration);
         return builder;
     }
 
@@ -46,6 +49,11 @@ public static class IdentityModule
         CompleteExternalLogin.Map(api);
         ListConnections.Map(api);
         RemoveConnection.Map(api);
+        // Only when chat is on: without a signing key the endpoint doesn't exist (404).
+        if (ChatToken.SigningKey(api.ServiceProvider.GetRequiredService<IConfiguration>()) is { } chatKey)
+        {
+            ChatToken.Map(api, chatKey);
+        }
         return api;
     }
 
