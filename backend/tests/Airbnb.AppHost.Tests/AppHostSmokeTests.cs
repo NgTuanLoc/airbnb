@@ -20,6 +20,9 @@ public sealed class AppHostSmokeTests
     // The blob trigger polls Azurite, so the first photo can take a while.
     private static readonly TimeSpan PhotoProcessingTimeout = TimeSpan.FromSeconds(90);
 
+    // A fresh consumer group joins and is assigned partitions before it counts anything.
+    private static readonly TimeSpan ViewCountTimeout = TimeSpan.FromSeconds(60);
+
     [Fact]
     public async Task The_frontend_serves_backend_data_under_aspire()
     {
@@ -83,7 +86,31 @@ public sealed class AppHostSmokeTests
         Assert.Equal("alex@acme.test", session.GetProperty("data").GetProperty("email").GetString());
 
         await A_photo_upload_is_processed_by_the_function(api, ct);
+        await A_listing_view_reaches_its_count_through_kafka(api, ct);
     }
+
+    // Listing views end to end: the API publishes the view to Kafka, the projection counts it, and the count is served.
+    // The Kafka and Postgres volumes outlive runs, so l16 may already have views: wait for one more.
+    private static async Task A_listing_view_reaches_its_count_through_kafka(HttpClient api, CancellationToken ct)
+    {
+        var before = await ViewsLastWeekAsync(api, "l16", ct);
+
+        using var viewed = await api.PostAsync("/api/listings/l16/views", content: null, ct);
+        Assert.Equal(HttpStatusCode.Accepted, viewed.StatusCode);
+
+        var after = before;
+        var deadline = DateTime.UtcNow + ViewCountTimeout;
+        while (after <= before && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            after = await ViewsLastWeekAsync(api, "l16", ct);
+        }
+        Assert.True(after > before, $"l16 still had {after} views after {ViewCountTimeout.TotalSeconds}s");
+    }
+
+    private static async Task<long> ViewsLastWeekAsync(HttpClient api, string listingId, CancellationToken ct) =>
+        (await api.GetFromJsonAsync<JsonElement>($"/api/listings/{listingId}/views", ct))
+            .GetProperty("data").GetProperty("last7Days").GetInt64();
 
     // Host photo uploads end to end: the API stores the original in Azurite, the blob trigger runs the photo-processor
     // function, and the processed WebP is served.

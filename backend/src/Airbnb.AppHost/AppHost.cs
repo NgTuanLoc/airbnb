@@ -18,6 +18,15 @@ var storage = builder.AddAzureStorage("storage")
     .RunAsEmulator(azurite => azurite.WithDataVolume().WithLifetime(ContainerLifetime.Persistent));
 var blobs = storage.AddBlobs("blobs");
 
+// Listing views (Insights module): the listing-views topic, browsable in Kafka UI. Persistent with a data volume, so the
+// log outlives runs and "Rebuild view stats" has history to replay.
+var kafka = builder.AddKafka("kafka")
+    .WithKafkaUI(ui => ui.WithLifetime(ContainerLifetime.Persistent))
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+var insightsAdminKey = builder.AddParameter("insights-admin-key",
+    new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
+
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
@@ -43,25 +52,39 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WithReference(redis)
     .WithReference(rabbitmq)
     .WithReference(blobs)
+    .WithReference(kafka)
     .WaitFor(db)
     .WaitFor(storage)
     .WaitFor(redis)
     .WaitFor(rabbitmq)
+    .WaitFor(kafka)
     .WaitForCompletion(migrations)
     .WithEnvironment("Bookings__QuoteKey", quoteKey)
+    .WithEnvironment("Insights__AdminKey", insightsAdminKey)
     .WithEnvironment("Identity__External__Sso__acme__Name", "Acme Corp")
     .WithEnvironment("Identity__External__Sso__acme__Domains__0", "acme.test")
     .WithEnvironment("Identity__External__Sso__acme__Authority", ReferenceExpression.Create($"{keycloak.GetEndpoint("http")}/realms/acme"))
     .WithEnvironment("Identity__External__Sso__acme__ClientId", "airbnb")
     .WithEnvironment("Identity__External__Sso__acme__ClientSecret", acmeClientSecret)
     .WithEnvironment("Identity__External__Sso__acme__RequireHttpsMetadata", "false")
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck("/health")
+    // Wipes the view counts and recounts them from the start of the listing-views topic.
+    .WithHttpCommand("/api/insights/rebuild", "Rebuild view stats", endpointName: "http", commandOptions: new HttpCommandOptions
+    {
+        Method = HttpMethod.Post,
+        Description = "Wipe the listing view counts and recount them from the start of the Kafka topic",
+        ConfirmationMessage = "Wipe the view counts and replay every view from Kafka?",
+        IconName = "ArrowSync",
+        PrepareRequest = async context =>
+            context.Request.Headers.Add("X-Admin-Key", await insightsAdminKey.Resource.GetValueAsync(context.CancellationToken)),
+    });
 
 // The k6 load test (perf/k6/load.js): starts only from the dashboard's Start button, never with `aspire run`.
-// All its traffic comes from one container IP, so locally the read limit (600/min per IP) is raised out of its way.
+// All its traffic comes from one container IP, so locally the read and view limits (per IP) are raised out of its way.
 if (builder.ExecutionContext.IsRunMode)
 {
-    api.WithEnvironment("RateLimiting__ReadsPerMinute", "100000");
+    api.WithEnvironment("RateLimiting__ReadsPerMinute", "100000")
+        .WithEnvironment("RateLimiting__ViewsPerMinute", "100000");
 }
 // Kept in user secrets (a plain generated parameter changes every run): the k6 user registered once must log in again.
 var k6UserPassword = builder.AddResource(

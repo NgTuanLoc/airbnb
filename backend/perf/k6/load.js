@@ -1,5 +1,6 @@
 // Load test run by the AppHost's k6 resource (start it from the Aspire dashboard). Two scenarios at once:
-// guests browse anonymously; members reuse one session of the k6 user and read their account and bookings.
+// guests browse anonymously and record a view of each listing they open (Kafka traffic); members reuse one session of
+// the k6 user and read their account and bookings.
 import http from "k6/http";
 import { check, fail, sleep } from "k6";
 
@@ -11,6 +12,7 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 const ENDPOINTS = [
   "GET /listings",
   "GET /listings/{id}",
+  "POST /listings/{id}/views",
   "GET /hosts/{id}",
   "GET /reviews",
   "GET /cities",
@@ -69,6 +71,10 @@ export function guest({ listings }) {
   const listing = pick(listings);
   ok(http.get(`${API}/api/listings`, { tags: { name: "GET /listings" } }));
   ok(http.get(`${API}/api/listings/${listing.id}`, { tags: { name: "GET /listings/{id}" } }));
+  // What a listing page does in the browser: one view per page, through Kafka into the counts.
+  check(http.post(`${API}/api/listings/${listing.id}/views`, null, { tags: { name: "POST /listings/{id}/views" } }), {
+    "status 202": (r) => r.status === 202,
+  });
   ok(http.get(`${API}/api/hosts/${listing.hostId}`, { tags: { name: "GET /hosts/{id}" } }));
   ok(http.get(`${API}/api/reviews?subjectId=${listing.id}`, { tags: { name: "GET /reviews" } }));
   ok(http.get(`${API}/api/bookings/availability?listingId=${listing.id}`, { tags: { name: "GET /bookings/availability" } }));
