@@ -50,6 +50,53 @@ public sealed class AskTests
     }
 
     [Fact]
+    public async Task A_category_filter_that_finds_nothing_is_dropped_and_the_model_told()
+    {
+        // Small models fill in filters nobody asked for: one wrong category mustn't hide every match.
+        var model = new ScriptedChatClient(
+            new Calls(Call("search_listings", new() { ["city"] = "Aspen", ["category"] = "Beachfront" })),
+            new Says("No beachfront in Aspen, but two cabins."));
+        await using var factory = new AssistantFactory(model);
+
+        var (events, _) = await AskAsync(factory, Question("Anything in Aspen?"));
+
+        var fedBack = Assert.Single(model.ToolResultsSentOn(1));
+        Assert.Contains("l13", fedBack);
+        Assert.Contains("l14", fedBack);
+        Assert.Contains("Nothing in the category Beachfront", fedBack);
+        Assert.Contains(events, e => TypeOf(e) == "listings");
+    }
+
+    [Theory]
+    [InlineData("cabin")]
+    [InlineData("CABINS")]
+    [InlineData("Cabin")]
+    public async Task A_category_in_other_words_finds_the_real_one(string category)
+    {
+        var model = new ScriptedChatClient(
+            new Calls(Call("search_listings", new() { ["city"] = "Aspen", ["category"] = category })),
+            new Says("Two cabins."));
+        await using var factory = new AssistantFactory(model);
+
+        await AskAsync(factory, Question("A cabin in Aspen?"));
+
+        Assert.Contains("/api/listings?location=Aspen&category=Cabins", factory.Catalog.Requests);
+    }
+
+    [Fact]
+    public async Task A_city_written_out_in_full_finds_the_real_one()
+    {
+        var model = new ScriptedChatClient(
+            new Calls(Call("search_listings", new() { ["city"] = "aspen, colorado" })),
+            new Says("Two cabins."));
+        await using var factory = new AssistantFactory(model);
+
+        await AskAsync(factory, Question("Somewhere in Aspen, Colorado?"));
+
+        Assert.Contains("/api/listings?location=Aspen", factory.Catalog.Requests);
+    }
+
+    [Fact]
     public async Task Listing_cards_come_from_the_last_search()
     {
         var model = new ScriptedChatClient(

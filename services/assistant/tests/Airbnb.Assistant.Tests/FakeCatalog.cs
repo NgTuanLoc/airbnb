@@ -62,8 +62,11 @@ public sealed class FakeCatalog : HttpMessageHandler
         var segments = uri.AbsolutePath.Trim('/').Split('/');
         return Task.FromResult(segments switch
         {
-            ["api", "listings"] => Ok(Listings.Where(l => query["location"] is not { } city
-                || string.Equals(City(l), city, StringComparison.OrdinalIgnoreCase)).ToList()),
+            // As the real search: the city ignoring case, the category exactly.
+            ["api", "listings"] => Ok(Listings
+                .Where(l => query["location"] is not { } city || string.Equals(City(l), city, StringComparison.OrdinalIgnoreCase))
+                .Where(l => query["category"] is not { } category || Category(l) == category)
+                .ToList()),
             ["api", "listings", var id] => Listings.FirstOrDefault(l => Id(l) == id) is { } listing
                 ? Ok(listing)
                 : Json(HttpStatusCode.NotFound, new { success = false, error = $"Listing '{id}' was not found" }),
@@ -73,6 +76,8 @@ public sealed class FakeCatalog : HttpMessageHandler
     }
 
     private static string Id(object listing) => (string)listing.GetType().GetProperty("id")!.GetValue(listing)!;
+
+    private static string Category(object listing) => (string)listing.GetType().GetProperty("category")!.GetValue(listing)!;
 
     private static string City(object listing)
     {

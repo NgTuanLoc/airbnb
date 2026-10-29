@@ -52,16 +52,23 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
     {
         try
         {
-            var matches = (await catalog.SearchAsync(new ListingSearch(city, category, guests, minPrice, maxPrice, bedrooms), cancellationToken))
-                .OrderByDescending(l => l.Rating)
-                .Take(MaxResults)
-                .ToList();
+            var facets = await catalog.FacetsAsync(cancellationToken);
+            var search = new ListingSearch(Known(city, facets.Cities), Known(category, facets.Categories), guests, minPrice, maxPrice, bedrooms);
+            var matches = await TopAsync(search, cancellationToken);
+            string? note = null;
+            // Small models fill in filters nobody asked for: rather than hide every match behind a wrong category,
+            // search without it and say so.
+            if (matches.Count == 0 && search.Category is { } dropped)
+            {
+                matches = await TopAsync(search with { Category = null }, cancellationToken);
+                note = matches.Count > 0 ? $"Nothing in the category {dropped}; these places fit the other filters." : null;
+            }
             found.Record(matches);
             if (matches.Count == 0)
             {
                 return new { message = "No places match. Suggest loosening a filter." };
             }
-            return matches.Select(l => new
+            var places = matches.Select(l => new
             {
                 id = l.Id,
                 title = l.Title,
@@ -73,12 +80,33 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
                 rating = l.Rating,
                 amenities = l.Amenities,
             }).ToList();
+            return note is null ? places : new { note, places };
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             logger.LogWarning("The catalog search failed: {Error}", exception.GetType().Name);
             return new { message = Unavailable };
         }
+    }
+
+    private async Task<List<CatalogListing>> TopAsync(ListingSearch search, CancellationToken cancellationToken) =>
+        [.. (await catalog.SearchAsync(search, cancellationToken)).OrderByDescending(l => l.Rating).Take(MaxResults)];
+
+    // A city or category as the catalog writes it, so "cabin", "CABINS" or "aspen, colorado" match: the same name
+    // ignoring case, then ignoring a plural "s", then a known name inside what was given. Anything else stays as given
+    // (a city the site doesn't have finds nothing, which is the honest answer).
+    private static string? Known(string? given, IReadOnlyList<string> known)
+    {
+        if (string.IsNullOrWhiteSpace(given))
+        {
+            return null;
+        }
+        var wanted = given.Trim();
+        static string Singular(string name) => name.EndsWith('s') || name.EndsWith('S') ? name[..^1] : name;
+        return known.FirstOrDefault(name => string.Equals(name, wanted, StringComparison.OrdinalIgnoreCase))
+            ?? known.FirstOrDefault(name => string.Equals(Singular(name), Singular(wanted), StringComparison.OrdinalIgnoreCase))
+            ?? known.FirstOrDefault(name => wanted.Contains(name, StringComparison.OrdinalIgnoreCase))
+            ?? wanted;
     }
 
     public async Task<object> GetListingAsync(
