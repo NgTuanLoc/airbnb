@@ -26,6 +26,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refresh: () => queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY }),
     async logout() {
       await logoutRequest();
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload, to drop every client cache
       window.location.assign("/");
     },
   };
