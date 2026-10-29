@@ -77,6 +77,18 @@ describe("AssistantChatBox", () => {
     expect(place).toHaveTextContent("$180");
   });
 
+  test("shows the model's Markdown as plain text", async () => {
+    // Small models write Markdown even when told not to, and a mark can be split across the stream's pieces.
+    answersWith({ type: "text", text: "### Two picks\nThe *" }, { type: "text", text: "*Pine cabin** is $180 a night." }, { type: "done" });
+    render(<AssistantChatBox />);
+
+    await openAndAsk("Cheapest cabin?");
+
+    expect(await screen.findByText("Two picks The Pine cabin is $180 a night.")).toBeInTheDocument();
+    expect(turns()[1]).toBe("Assistant: Two picks\nThe Pine cabin is $180 a night.");
+    expect(screen.getByRole("status")).toHaveTextContent("Assistant: Two picks The Pine cabin is $180 a night.");
+  });
+
   test("says it's thinking until the first words arrive", async () => {
     assistant.askAssistant.mockImplementationOnce(() => new Promise(() => {}));
     render(<AssistantChatBox />);

@@ -19,6 +19,10 @@ interface Turn {
 const LISTING_PAGE = /^\/rooms\/([^/]+)$/;
 const FAILED = "The assistant couldn't answer just now. Try again in a moment.";
 
+// Small models write Markdown even when told not to: its bold marks and heading hashes go. Applied to the whole reply
+// so far, since a mark can arrive split across the stream's pieces.
+const plainText = (reply: string) => reply.replace(/\*\*|__/g, "").replace(/^#{1,6} /gm, "");
+
 /**
  * The smart chat box on every page: the guest asks, the assistant answers as it writes, with links to the places it
  * found. On a listing page each question carries that listing. Replies are plain text, never HTML.
@@ -94,7 +98,7 @@ export function AssistantChatBox() {
       changeReply((reply) => (reply.text ? { ...reply, failed: true } : null));
       setError(outcome.failure);
     } else {
-      setAnnouncement(`Assistant: ${outcome.answer}`);
+      setAnnouncement(`Assistant: ${plainText(outcome.answer)}`);
     }
   }
 
@@ -143,7 +147,7 @@ export function AssistantChatBox() {
                   )}
                 >
                   <span className="sr-only">{turn.role === "user" ? "You" : "Assistant"}: </span>
-                  {turn.text ? <span>{turn.text}</span> : busy && index === turns.length - 1 && <span className="text-muted">Thinking…</span>}
+                  {turn.text ? <span>{turn.role === "assistant" ? plainText(turn.text) : turn.text}</span> : busy && index === turns.length - 1 && <span className="text-muted">Thinking…</span>}
                   {turn.listings && turn.listings.length > 0 && (
                     <span className="mt-2 flex flex-col gap-1">
                       {turn.listings.map((listing) => (
