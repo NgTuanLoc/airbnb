@@ -2,7 +2,7 @@ import { ok } from "@/lib/api/envelope";
 import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { PAYMENT_ERRORS, type PaymentError } from "@/lib/bookings/payment";
-import { bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
+import { bookingRefusal, bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
 import { HOST_LISTING_ID_PREFIX } from "@/lib/host/options";
 import { getRepositories } from "@/lib/repositories";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
@@ -18,10 +18,8 @@ export const POST = withErrorEnvelope(async (request: Request) => {
   const listing = await repos.listings.findById(listingId);
   if (!listing) return jsonError(`Listing '${listingId}' was not found`, 404);
   if (listing.hostId === user.id) return jsonError("You can't book your own listing", 400);
-  if (listing.status === "unlisted") return jsonError("This place isn't taking bookings right now", 400);
-  if (adults + children > listing.maxGuests) {
-    return jsonError(`This place allows at most ${listing.maxGuests} guests`, 400);
-  }
+  const refusal = bookingRefusal(listing, adults + children);
+  if (refusal) return jsonError(refusal, 400);
   if (!card) return paymentError("invalid_card");
 
   // Priced here from the listing, never from anything the client sent.

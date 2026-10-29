@@ -129,7 +129,7 @@ public sealed class AskTests
         Assert.Contains("/api/listings/l13", factory.Catalog.Requests);
         Assert.Contains("/api/listings/l13/quote?checkIn=2030-05-03&checkOut=2030-05-06&guests=2", factory.Catalog.Requests);
         var results = model.ToolResultsSentOn(1).ToList();
-        Assert.Contains(results, r => r.Contains("Pine cabin") && r.Contains("Hot tub"));
+        Assert.Contains(results, r => r.Contains("Pine cabin") && r.Contains("Hot tub") && r.Contains("\"hostDescription\""));
         Assert.Contains(results, r => r.Contains("690") && r.Contains("true"));
     }
 
@@ -250,6 +250,11 @@ public sealed class AskTests
         Assert.Contains("Beachfront", system.Text);
         Assert.Contains("l13", system.Text);
         Assert.Contains("service fee", system.Text, StringComparison.OrdinalIgnoreCase);
+        // Hosts write titles and descriptions: what they say is data about a place, never instructions.
+        Assert.Contains("written by hosts", system.Text);
+        // Follow-ups find places by the ids the box sends back (assistant-chat-box.tsx's "Places shown").
+        Assert.Contains("\"Places shown\"", system.Text);
+        Assert.Contains("never guess an id", system.Text);
         Assert.Equal([ChatRole.User, ChatRole.Assistant, ChatRole.User], sent.Skip(1).Select(m => m.Role));
         Assert.Equal("Does it have wifi?", sent[^1].Text);
     }

@@ -122,6 +122,24 @@ describe("AssistantChatBox", () => {
     );
   });
 
+  test("follow-up questions carry the places an answer showed, ids and all", async () => {
+    // So "is the first one free?" can be looked up: the answer's text names places by title only.
+    answersWith(
+      { type: "text", text: "Try the Pine cabin." },
+      { type: "listings", listings: [{ id: "l13", title: "Pine cabin", city: "Aspen", pricePerNight: 180, rating: 4.8 }] },
+      { type: "done" },
+    );
+    answersWith({ type: "text", text: "Yes." }, { type: "done" });
+    render(<AssistantChatBox />);
+
+    await openAndAsk("A cabin in Aspen?");
+    await screen.findByText("Try the Pine cabin.");
+    await userEvent.type(screen.getByRole("textbox", { name: "Your question" }), "Is it free May 3 to 6?{Enter}");
+
+    const second = assistant.askAssistant.mock.calls[1][0] as AskRequest;
+    expect(second.messages[1]).toEqual({ role: "assistant", text: "Try the Pine cabin.\nPlaces shown: Pine cabin (l13)" });
+  });
+
   test("shows a failure and lets the guest ask again", async () => {
     answersWith({ type: "text", text: "Let me" }, { type: "error", message: "The assistant couldn't answer just now. Try again in a moment." });
     assistant.askAssistant.mockImplementationOnce(async () => Promise.reject(new Error("You're asking quickly. Wait a minute and try again.")));

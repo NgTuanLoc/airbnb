@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { hostListingInputSchema } from "@/lib/host/schemas";
+import { validInput } from "@/lib/host/test-fixtures";
 import { getRepositories } from "@/lib/repositories";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 import { GET } from "./route";
@@ -19,6 +21,8 @@ describe("GET /api/listings/[id]/quote", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).data).toEqual({
       listingId: "l3",
+      // Named, so a quote for the wrong place can't pass for the one the guest meant.
+      title: "Stone cottage in the countryside",
       checkIn: daysFromToday(400),
       checkOut: daysFromToday(403),
       nights: 3,
@@ -51,6 +55,17 @@ describe("GET /api/listings/[id]/quote", () => {
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe(message);
+  });
+
+  test("an unlisted place can't be quoted, as it can't be booked", async () => {
+    const host = `u-host-${crypto.randomUUID()}@example.com`;
+    const listing = await getRepositories().hostListings.create(host, hostListingInputSchema.parse(validInput));
+    await getRepositories().hostListings.setStatus(host, listing.id, "unlisted");
+
+    const res = await quote(listing.id, { checkIn: daysFromToday(500), checkOut: daysFromToday(502), guests: 1 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("This place isn't taking bookings right now");
   });
 
   test("an unknown listing is 404", async () => {

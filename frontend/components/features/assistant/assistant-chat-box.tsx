@@ -23,6 +23,13 @@ const FAILED = "The assistant couldn't answer just now. Try again in a moment.";
 // so far, since a mark can arrive split across the stream's pieces.
 const plainText = (reply: string) => reply.replace(/\*\*|__/g, "").replace(/^#{1,6} /gm, "");
 
+// A turn as the service takes it back. An answer keeps the places it showed, ids and all, so a follow-up ("is the
+// first one free?") can look them up: the text names places by title only.
+function forHistory(turn: Turn): AskMessage {
+  const places = turn.listings?.length ? `\nPlaces shown: ${turn.listings.map((l) => `${l.title} (${l.id})`).join(", ")}` : "";
+  return { role: turn.role, text: turn.text.slice(0, ASK_LIMITS.maxTextLength - places.length) + places };
+}
+
 /**
  * The smart chat box on every page: the guest asks, the assistant answers as it writes, with links to the places it
  * found. On a listing page each question carries that listing. Replies are plain text, never HTML.
@@ -61,9 +68,9 @@ export function AssistantChatBox() {
   async function ask() {
     const text = draft.trim();
     if (!text || busy) return;
-    // The conversation so far, without failed answers, as the service takes it.
-    const history: AskMessage[] = [...turns.filter((t) => !t.failed && t.text), { role: "user" as const, text }]
-      .map((t) => ({ role: t.role, text: t.text.slice(0, ASK_LIMITS.maxTextLength) }))
+    // The conversation so far, without failed answers.
+    const history = [...turns.filter((t) => !t.failed && t.text), { role: "user" as const, text }]
+      .map(forHistory)
       .slice(-ASK_LIMITS.maxMessages);
     setTurns((current) => [...current, { role: "user", text }, { role: "assistant", text: "" }]);
     setDraft("");

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Listing } from "@/lib/types";
 import { cardSchema } from "./payment";
 
 export const MAX_NIGHTS = 30;
@@ -18,7 +19,7 @@ export function nightsBetweenDates(checkIn: string, checkOut: string): number {
 
 /**
  * A booking request, from a JSON body or the /book page's query string (so numbers may arrive as strings).
- * The listing-dependent rules (it exists, guest cap) are checked where the listing is loaded.
+ * The listing-dependent rules are checked where the listing is loaded: it exists, then bookingRefusal.
  */
 export const bookingRequestSchema = z
   .object({
@@ -45,3 +46,13 @@ export const bookingRequestSchema = z
   });
 
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
+
+/**
+ * Why a listing can't take this many guests, or null when it can: the one copy of these rules for the booking route,
+ * the /book page and the public quote, so a quote never offers what booking would refuse.
+ */
+export function bookingRefusal(listing: Pick<Listing, "status" | "maxGuests">, guests: number): string | null {
+  if (listing.status === "unlisted") return "This place isn't taking bookings right now";
+  if (guests > listing.maxGuests) return `This place allows at most ${listing.maxGuests} guests`;
+  return null;
+}

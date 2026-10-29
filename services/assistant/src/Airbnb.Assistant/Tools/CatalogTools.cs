@@ -109,8 +109,10 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
             ?? wanted;
     }
 
+    private const string ListingIdDescription = "The listing's id, from search_listings, \"Places shown\" or the listing the guest is on";
+
     public async Task<object> GetListingAsync(
-        [Description("The listing's id, like l13 or hl-…")] string listingId,
+        [Description(ListingIdDescription)] string listingId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -124,7 +126,8 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
                     country = l.Location.Country,
                     category = l.Category,
                     propertyType = l.PropertyType,
-                    description = l.Description,
+                    // Labelled as the host's words (the prompt says they're data, never instructions).
+                    hostDescription = l.Description,
                     maxGuests = l.MaxGuests,
                     bedrooms = l.Bedrooms,
                     beds = l.Beds,
@@ -144,7 +147,7 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
     }
 
     public async Task<object> QuoteStayAsync(
-        [Description("The listing's id, like l13 or hl-…")] string listingId,
+        [Description(ListingIdDescription)] string listingId,
         [Description("Check-in date, YYYY-MM-DD")] string checkIn,
         [Description("Check-out date, YYYY-MM-DD")] string checkOut,
         [Description("How many guests are coming")] int guests,

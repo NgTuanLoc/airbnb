@@ -6,7 +6,7 @@ import { Footer, TopNav } from "@/components/design-system";
 import { ConfirmBookingButton } from "@/components/features/bookings/confirm-booking-button";
 import { PriceBreakdownList } from "@/components/features/price-breakdown-list";
 import { requireSession } from "@/lib/auth/get-session";
-import { bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
+import { bookingRefusal, bookingRequestSchema, nightsBetweenDates } from "@/lib/bookings/schemas";
 import { getRepositories } from "@/lib/repositories";
 import { formatDateRange } from "@/lib/reservation/dates";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
@@ -37,12 +37,10 @@ export default async function BookPage({
   if (!parsed.success) redirect(`/rooms/${listingId}`);
   const listing = await getRepositories().listings.findById(listingId);
   if (!listing) notFound();
-  if (listing.hostId === user.id || listing.status === "unlisted") redirect(`/rooms/${listingId}`);
-
   const request = parsed.data;
-  if (request.adults + request.children > listing.maxGuests) redirect(`/rooms/${listingId}`);
-  const breakdown = calculatePriceBreakdown(listing.pricePerNight, nightsBetweenDates(request.checkIn, request.checkOut));
   const guestCount = request.adults + request.children;
+  if (listing.hostId === user.id || bookingRefusal(listing, guestCount)) redirect(`/rooms/${listingId}`);
+  const breakdown = calculatePriceBreakdown(listing.pricePerNight, nightsBetweenDates(request.checkIn, request.checkOut));
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
