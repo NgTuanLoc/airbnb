@@ -63,8 +63,11 @@ var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchPr
 // The chat service (services/chat): guests message hosts live over SignalR. Its own kind of storage (MongoDB, browsable
 // in Mongo Express), two instances that reach each other's connections through the Redis backplane, and the only
 // service the browser talks to directly: through the gateway, with a token the API signs (chat-token-key). The Next
-// server starts conversations with chat-service-key.
+// server starts conversations with chat-service-key. GLIBC_TUNABLES: MongoDB 8's tcmalloc breaks on Linux 6.19+'s rseq
+// changes (SERVER-121912) and the image hands rseq to tcmalloc (rseq=0); rseq=1 keeps it in glibc, so tcmalloc runs
+// without it.
 var mongo = builder.AddMongoDB("mongo")
+    .WithEnvironment("GLIBC_TUNABLES", "glibc.pthread.rseq=1")
     .WithDataVolume()
     .WithLifetime(ContainerLifetime.Persistent)
     .WithMongoExpress(express => express.WithLifetime(ContainerLifetime.Persistent));
