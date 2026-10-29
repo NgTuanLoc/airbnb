@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { inter } from "./fonts";
 import { SkipLink } from "@/components/design-system";
+import { AssistantSlot } from "@/components/features/assistant/assistant-slot";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -16,7 +17,11 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="bg-canvas text-ink antialiased">
         <SkipLink />
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {/* In the layout, so the conversation survives moving between pages. */}
+          <AssistantSlot />
+        </Providers>
       </body>
     </html>
   );
