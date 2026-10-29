@@ -22,6 +22,7 @@ export const GET = withErrorEnvelope(async (request: Request) => {
   const upstream = await relayToApi(source.baseUrl, "/api/auth/chat-token", request, { method: "POST" });
   if (upstream.status === 401) return unauthorized();
   if (upstream.status === 404) return jsonError("Messaging is off", 404);
+  if (upstream.status === 429) return jsonError("Too many requests. Wait a moment and refresh.", 429);
   const parsed = backendToken.safeParse(await upstream.json().catch(() => undefined));
   if (!upstream.ok || !parsed.success) throw new Error(`POST /api/auth/chat-token failed with ${upstream.status}`);
   return Response.json(ok({ ...parsed.data.data, hubUrl }), { headers: { "cache-control": "no-store" } });

@@ -57,5 +57,5 @@ internal static class ChatToken
                 SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
             });
             return TypedResults.Ok(ApiResponse.Ok(new ChatTokenDto(token, expiresAt)));
-        }).RequireAuthorization();
+        }).RequireAuthorization().WithMetadata(RateLimitBucket.ChatTokens);
 }

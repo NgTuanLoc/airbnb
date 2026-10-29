@@ -6,4 +6,7 @@ public sealed record RateLimitBucket(string Name)
 {
     // Listing view pings: technically writes, but one per page view, so they mustn't spend the write budget.
     public static readonly RateLimitBucket Views = new("views");
+
+    // Chat tokens: one per chat page and per reconnect, so they mustn't spend the write budget either.
+    public static readonly RateLimitBucket ChatTokens = new("chat-tokens");
 }

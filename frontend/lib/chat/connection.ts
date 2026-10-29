@@ -13,6 +13,9 @@ import {
 
 export type { ChatMessage, ConversationSummary } from "./schemas";
 
+/** "disconnected" is final: automatic reconnecting gave up (after about 40 s), or the connection was stopped. */
+export type ChatStatus = "connected" | "reconnecting" | "disconnected";
+
 /** The chat hub, typed. Each `on…` returns its unsubscribe. */
 export interface ChatConnection {
   listConversations(): Promise<ConversationSummary[]>;
@@ -22,6 +25,7 @@ export interface ChatConnection {
   onMessage(handler: (message: ChatMessage) => void): () => void;
   onRead(handler: (receipt: { conversationId: string }) => void): () => void;
   onReconnected(handler: () => void): () => void;
+  onStatusChange(handler: (status: ChatStatus) => void): () => void;
   stop(): Promise<void>;
 }
 
@@ -80,7 +84,14 @@ export async function connectChat(): Promise<ChatConnection> {
     .configureLogging(LogLevel.Warning)
     .build();
   const reconnected = new Set<() => void>();
-  hub.onreconnected(() => reconnected.forEach((handler) => handler()));
+  const statuses: Subscribers<ChatStatus> = new Set();
+  const report = (status: ChatStatus) => statuses.forEach((handler) => handler(status));
+  hub.onreconnecting(() => report("reconnecting"));
+  hub.onreconnected(() => {
+    report("connected");
+    reconnected.forEach((handler) => handler());
+  });
+  hub.onclose(() => report("disconnected"));
   // One handler per hub event from the start, fanning out to whoever subscribes: SignalR warns about events nobody
   // listens for, and not every page cares about every event.
   const messages = listen(hub, "message", chatMessageSchema);
@@ -110,6 +121,7 @@ export async function connectChat(): Promise<ChatConnection> {
       reconnected.add(handler);
       return () => void reconnected.delete(handler);
     },
+    onStatusChange: (handler) => subscribe(statuses, handler),
     stop: () => hub.stop(),
   };
 }

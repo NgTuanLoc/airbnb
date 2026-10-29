@@ -9,7 +9,7 @@ const LOAD_ERROR = "Couldn't load your messages. Refresh the page to try again."
 
 /** The signed-in person's conversations, as guest and as host, newest first; kept current while it's open. */
 export function InboxList() {
-  const { connection, error } = useChatConnection();
+  const { connection, status, error } = useChatConnection();
   const [conversations, setConversations] = useState<ConversationSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -43,6 +43,19 @@ export function InboxList() {
       </p>
     );
   }
+  return (
+    <>
+      {status === "disconnected" && (
+        <p role="alert" className="text-body-md text-error">
+          Messages stopped updating. Refresh the page to reconnect.
+        </p>
+      )}
+      <Conversations conversations={conversations} />
+    </>
+  );
+}
+
+function Conversations({ conversations }: { conversations: ConversationSummary[] | null }) {
   if (!conversations) return <p className="text-body-md text-muted">Loading messages…</p>;
   if (conversations.length === 0) {
     return <p className="text-body-md text-body">No messages yet. Message a host from any listing page.</p>;

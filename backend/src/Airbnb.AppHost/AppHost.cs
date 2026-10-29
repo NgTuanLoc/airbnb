@@ -85,8 +85,12 @@ var chat = builder.AddProject<Projects.Airbnb_Chat>("chat", launchProfileName: "
 
 // The API gateway: one address for the services the browser reaches, routed by path (WebSockets included). Only chat
 // so far; the Next server keeps calling the API directly, since the API trusts only loopback proxies for client IPs.
+// Its Information logs carry full request URLs, and a browser's hub URL carries its chat token (WebSockets take no
+// headers), so YARP and ASP.NET Core log at Warning: nothing of the token reaches the console or the dashboard.
 var gateway = builder.AddYarp("gateway")
-    .WithConfiguration(yarp => yarp.AddRoute("/chat/{**catch-all}", chat).WithTransformPathRemovePrefix("/chat"));
+    .WithConfiguration(yarp => yarp.AddRoute("/chat/{**catch-all}", chat).WithTransformPathRemovePrefix("/chat"))
+    .WithEnvironment("Logging__LogLevel__Yarp", "Warning")
+    .WithEnvironment("Logging__LogLevel__Microsoft.AspNetCore", "Warning");
 
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",

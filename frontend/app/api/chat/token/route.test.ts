@@ -55,6 +55,15 @@ describe("GET /api/chat/token", () => {
     expect((await GET(tokenRequest("session=expired"))).status).toBe(401);
   });
 
+  test("passes the backend's rate limit on as a 429, not a failure", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 429 }));
+
+    const response = await GET(tokenRequest("session=tok"));
+
+    expect(response.status).toBe(429);
+    expect((await response.json()).error).toBe("Too many requests. Wait a moment and refresh.");
+  });
+
   test("is 404 when the backend has chat off", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 404 }));
 

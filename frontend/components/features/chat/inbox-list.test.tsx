@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, within } from "@/lib/test-utils";
+import { act, render, screen, within } from "@/lib/test-utils";
 import { chatMessage, fakeConnection, summary } from "@/lib/chat/test-connection";
 
 const chat = vi.hoisted(() => ({ connectChat: vi.fn() }));
@@ -42,6 +42,18 @@ describe("InboxList", () => {
 
     expect(await screen.findByText("Still free?")).toBeInTheDocument();
     expect(titles()[0]).toContain("Ben");
+  });
+
+  test("says when the list stops updating", async () => {
+    const { connection, emit } = fakeConnection({ listConversations: vi.fn(async () => [summary()]) });
+    chat.connectChat.mockResolvedValue(connection);
+    render(<InboxList />);
+    await screen.findByRole("link", { name: /Mara/ });
+
+    act(() => emit.status("disconnected"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Messages stopped updating. Refresh the page to reconnect.");
+    expect(screen.getByRole("link", { name: /Mara/ })).toBeInTheDocument();
   });
 
   test("an empty inbox says so", async () => {

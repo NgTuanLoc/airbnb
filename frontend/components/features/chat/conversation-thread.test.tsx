@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { render, screen, userEvent, within } from "@/lib/test-utils";
+import { act, render, screen, userEvent, within } from "@/lib/test-utils";
 import { chatMessage, fakeConnection, summary } from "@/lib/chat/test-connection";
 
 const chat = vi.hoisted(() => ({ connectChat: vi.fn() }));
@@ -37,7 +37,7 @@ describe("ConversationThread", () => {
     expect(await screen.findByText("Welcome!")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Mara" })).toBeInTheDocument();
     expect(screen.getByText("Lakeside loft")).toBeInTheDocument();
-    expect(shown()).toEqual(["Welcome!", "Thanks"]);
+    expect(shown()).toEqual(["Mara: Welcome!", "You: Thanks"]);
     expect(connection.markRead).toHaveBeenCalledWith("cv_1");
   });
 
@@ -51,7 +51,7 @@ describe("ConversationThread", () => {
     emit.message(chatMessage({ id: "x1", conversationId: "cv_other", text: "Elsewhere" }));
 
     expect(await screen.findByText("Any questions?")).toBeInTheDocument();
-    expect(shown()).toEqual(["Welcome!", "Thanks", "Any questions?"]);
+    expect(shown()).toEqual(["Mara: Welcome!", "You: Thanks", "Mara: Any questions?"]);
     expect(connection.markRead).toHaveBeenCalledWith("cv_1");
   });
 
@@ -78,10 +78,39 @@ describe("ConversationThread", () => {
     expect(screen.getByText("Connecting…")).toBeInTheDocument();
   });
 
-  test("announces incoming messages to screen readers", async () => {
-    setUp();
+  test("a dropped connection disables the composer until it's back, and says when it's gone", async () => {
+    const { emit } = setUp();
+    await screen.findByText("Welcome!");
+    const box = screen.getByRole("textbox", { name: "Message" });
 
-    expect(await screen.findByRole("list", { name: "Messages" })).toHaveAttribute("aria-live", "polite");
+    act(() => emit.status("reconnecting"));
+    expect(screen.getByText("Reconnecting…")).toBeInTheDocument();
+    expect(box).toBeDisabled();
+
+    act(() => emit.status("connected"));
+    expect(box).toBeEnabled();
+
+    act(() => emit.status("disconnected"));
+    expect(screen.getByRole("alert")).toHaveTextContent("Disconnected. Refresh the page to reconnect.");
+    expect(box).toBeDisabled();
+    expect(screen.getByText("Welcome!")).toBeInTheDocument();
+  });
+
+  test("screen readers hear who wrote each message, and only the other person's new ones aloud", async () => {
+    const { emit } = setUp();
+    await screen.findByText("Welcome!");
+    const announced = screen.getByRole("status");
+
+    // Opening a thread reads nothing out: the history is there to browse, not to be recited.
+    expect(screen.getByRole("list", { name: "Messages" })).not.toHaveAttribute("aria-live");
+    expect(announced).toHaveTextContent("");
+
+    act(() => emit.message(chatMessage({ id: "m3", senderId: "usr_mara", text: "Any questions?" })));
+    expect(announced).toHaveTextContent("Mara: Any questions?");
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Message" }), "Not yet{Enter}");
+    await screen.findByText("Not yet");
+    expect(announced).toHaveTextContent("Mara: Any questions?");
   });
 
   test("a refused message shows the server's reason and keeps the draft", async () => {

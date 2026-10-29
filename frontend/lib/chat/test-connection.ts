@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { ChatConnection, ChatMessage, ConversationSummary } from "./connection";
+import type { ChatConnection, ChatMessage, ChatStatus, ConversationSummary } from "./connection";
 
 type Handler<T> = (payload: T) => void;
 
@@ -9,6 +9,7 @@ export function fakeConnection(overrides: Partial<ChatConnection> = {}) {
     message: new Set<Handler<ChatMessage>>(),
     read: new Set<Handler<{ conversationId: string }>>(),
     reconnected: new Set<() => void>(),
+    status: new Set<Handler<ChatStatus>>(),
   };
   const subscribe = <T>(set: Set<Handler<T>>) => (handler: Handler<T>) => {
     set.add(handler);
@@ -27,12 +28,14 @@ export function fakeConnection(overrides: Partial<ChatConnection> = {}) {
       handlers.reconnected.add(handler);
       return () => void handlers.reconnected.delete(handler);
     }),
+    onStatusChange: vi.fn(subscribe(handlers.status)),
     stop: vi.fn(async () => {}),
     ...overrides,
   } satisfies ChatConnection;
   const emit = {
     message: (message: ChatMessage) => handlers.message.forEach((handler) => handler(message)),
     read: (conversationId: string) => handlers.read.forEach((handler) => handler({ conversationId })),
+    status: (status: ChatStatus) => handlers.status.forEach((handler) => handler(status)),
   };
   return { connection, emit };
 }

@@ -8,6 +8,8 @@ const signalr = vi.hoisted(() => {
     on: vi.fn(),
     off: vi.fn(),
     onreconnected: vi.fn(),
+    onreconnecting: vi.fn(),
+    onclose: vi.fn(),
   };
   const builder = { withUrl: vi.fn(), withAutomaticReconnect: vi.fn(), configureLogging: vi.fn(), build: vi.fn(() => connection) };
   builder.withUrl.mockReturnValue(builder);
@@ -58,6 +60,19 @@ describe("connectChat", () => {
 
     const events = signalr.connection.on.mock.calls.map(([name]) => name);
     expect(events).toEqual(expect.arrayContaining(["message", "read"]));
+  });
+
+  test("reports when the connection drops, comes back, or gives up", async () => {
+    const chat = await connectChat();
+    const statuses: string[] = [];
+    chat.onStatusChange((status) => statuses.push(status));
+    const last = (mock: ReturnType<typeof vi.fn>) => mock.mock.calls.at(-1)![0] as (error?: Error) => void;
+
+    last(signalr.connection.onreconnecting)(new Error("lost"));
+    last(signalr.connection.onreconnected)();
+    last(signalr.connection.onclose)(new Error("gave up"));
+
+    expect(statuses).toEqual(["reconnecting", "connected", "disconnected"]);
   });
 
   test("fetches a fresh token for each connect after the first", async () => {

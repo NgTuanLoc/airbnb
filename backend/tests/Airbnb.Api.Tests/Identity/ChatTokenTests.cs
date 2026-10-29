@@ -87,6 +87,26 @@ public sealed class ChatTokenTests(InfrastructureFixture infrastructure)
     }
 
     [Fact]
+    public async Task Chat_tokens_have_their_own_rate_limit_bucket()
+    {
+        // Every chat page and reconnect fetches a token: they mustn't spend the budget logins and bookings share.
+        await using var factory = Factory().WithWebHostBuilder(builder => builder
+            .UseSetting("RateLimiting:WritesPerMinute", "1")
+            .UseSetting("RateLimiting:ChatTokensPerMinute", "3"));
+        using var client = factory.CreateClient();
+        var (session, _, _) = await AuthHelpers.RegisterAsync(client);
+
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 4; i++)
+        {
+            using var response = await RequestTokenAsync(client, session);
+            statuses.Add(response.StatusCode);
+        }
+
+        Assert.Equal([HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests], statuses);
+    }
+
+    [Fact]
     public async Task A_short_signing_key_fails_at_startup()
     {
         await using var factory = Factory(signingKey: "too-short");

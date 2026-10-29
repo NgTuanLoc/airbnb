@@ -12,6 +12,7 @@ internal static class ApiRateLimiting
     private const int DefaultReadsPerMinute = 600;
     private const int DefaultWritesPerMinute = 10;
     private const int DefaultViewsPerMinute = 120;
+    private const int DefaultChatTokensPerMinute = 120;
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
     public static IServiceCollection AddApiRateLimiting(this IServiceCollection services, IConfiguration configuration)
@@ -19,7 +20,12 @@ internal static class ApiRateLimiting
         var section = configuration.GetSection(SectionName);
         var readsPerMinute = section.GetValue("ReadsPerMinute", DefaultReadsPerMinute);
         var writesPerMinute = section.GetValue("WritesPerMinute", DefaultWritesPerMinute);
-        var viewsPerMinute = section.GetValue("ViewsPerMinute", DefaultViewsPerMinute);
+        // The buckets an endpoint can claim (RateLimitBucket metadata), each with its own per-IP budget.
+        var ownBuckets = new Dictionary<RateLimitBucket, int>
+        {
+            [RateLimitBucket.Views] = section.GetValue("ViewsPerMinute", DefaultViewsPerMinute),
+            [RateLimitBucket.ChatTokens] = section.GetValue("ChatTokensPerMinute", DefaultChatTokensPerMinute),
+        };
 
         return services.AddRateLimiter(options =>
         {
@@ -33,8 +39,9 @@ internal static class ApiRateLimiting
 
                 var isRead = HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method);
                 // An endpoint can claim its own bucket (RateLimitBucket metadata); everything else is a read or a write.
-                var (bucket, limit) = context.GetEndpoint()?.Metadata.GetMetadata<RateLimitBucket>() == RateLimitBucket.Views
-                    ? (RateLimitBucket.Views.Name, viewsPerMinute)
+                var claimed = context.GetEndpoint()?.Metadata.GetMetadata<RateLimitBucket>();
+                var (bucket, limit) = claimed is not null && ownBuckets.TryGetValue(claimed, out var own)
+                    ? (claimed.Name, own)
                     : isRead ? ("read", readsPerMinute) : ("write", writesPerMinute);
                 // The browser's IP: UseForwardedHeaders resolves X-Forwarded-For from the local Next.js server.
                 var client = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
