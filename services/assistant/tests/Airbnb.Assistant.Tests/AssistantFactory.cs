@@ -10,10 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Airbnb.Assistant.Tests;
 
-// The service with a given model (scripted, or the real Ollama client on a fake endpoint) and a fake catalog in place of
-// Ollama and the Next server. The rest is real: the
-// function-invocation pipeline, the tools, the prompt, the stream.
-public sealed class AssistantFactory(IChatClient model, FakeCatalog? catalog = null, int questionsPerMinute = 1000) : WebApplicationFactory<Program>
+// The service with a fake catalog in place of the Next server and, in place of Ollama, either a scripted model or a
+// fake Ollama endpoint behind the client Aspire's integration registers. The rest is real: the function-invocation
+// pipeline, the tools, the prompt, the stream.
+public sealed class AssistantFactory(
+    IChatClient? model = null, FakeCatalog? catalog = null, int questionsPerMinute = 1000, HttpMessageHandler? ollama = null)
+    : WebApplicationFactory<Program>
 {
     public static readonly DateTimeOffset Today = new(2030, 4, 20, 9, 0, 0, TimeSpan.Zero);
 
@@ -22,13 +24,20 @@ public sealed class AssistantFactory(IChatClient model, FakeCatalog? catalog = n
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder
-            // Never contacted: the scripted model replaces the Ollama client the integration registers.
-            .UseSetting("ConnectionStrings:assistant-model", "Endpoint=http://localhost:1;Model=test")
+            .UseSetting("ConnectionStrings:assistant-model", "Endpoint=http://ollama.test;Model=qwen2.5:0.5b")
             .UseSetting("Assistant:CatalogUrl", "http://catalog.test")
             .UseSetting("Assistant:QuestionsPerMinute", questionsPerMinute.ToString());
         builder.ConfigureTestServices(services =>
         {
-            services.AddChatClient(model).UseAssistantPipeline();
+            if (model is not null)
+            {
+                services.AddChatClient(model).UseAssistantPipeline();
+            }
+            if (ollama is not null)
+            {
+                // Every client's endpoint but the catalog's (its own handler, below, wins): that leaves Ollama's.
+                services.ConfigureHttpClientDefaults(http => http.ConfigurePrimaryHttpMessageHandler(() => ollama));
+            }
             services.AddHttpClient<CatalogClient>().ConfigurePrimaryHttpMessageHandler(() => Catalog);
             services.AddSingleton<TimeProvider>(new FixedTime(Today));
         });

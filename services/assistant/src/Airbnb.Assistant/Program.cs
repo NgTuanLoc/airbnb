@@ -9,6 +9,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+// None of ServiceDefaults' resilience handlers on this service's two clients. The model's answer is one POST, never
+// retried, that a cold model on a CPU can take longer than their 10 s per attempt to start: the answer's own timeout
+// bounds it instead. A failed catalog lookup is told to the model at once (it says it can't check) rather than keeping
+// the guest waiting through retries. The API is marked for evaluation (EXTEXP0001).
+#pragma warning disable EXTEXP0001
+builder.Services.ConfigureHttpClientDefaults(http => http.RemoveAllResilienceHandlers());
+#pragma warning restore EXTEXP0001
 builder.Services.AddSingleton(TimeProvider.System);
 
 // Aspire's Ollama client integration (connection "assistant-model"), with tools run between the model's turns.
@@ -17,16 +24,11 @@ builder.AddOllamaApiClient("assistant-model").AddChatClient().UseAssistantPipeli
 var catalogUrl = builder.Configuration["Assistant:CatalogUrl"]
     ?? throw new InvalidOperationException("Assistant:CatalogUrl is required: the Next server's address");
 builder.Services.AddMemoryCache();
-var catalogHttp = builder.Services.AddHttpClient<CatalogClient>(client =>
+builder.Services.AddHttpClient<CatalogClient>(client =>
 {
     client.BaseAddress = new Uri(catalogUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
-// No retries: a failed lookup is told to the model at once (it says it can't check) instead of keeping the guest
-// waiting through a retry schedule. The API is marked for evaluation (EXTEXP0001); the alternative is that wait.
-#pragma warning disable EXTEXP0001
-catalogHttp.RemoveAllResilienceHandlers();
-#pragma warning restore EXTEXP0001
 builder.Services.AddScoped<FoundListings>();
 builder.Services.AddScoped<CatalogTools>();
 builder.Services.AddTransient<Prompt>();
