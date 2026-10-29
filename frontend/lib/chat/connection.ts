@@ -1,4 +1,4 @@
-import { HttpTransportType, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import { HttpTransportType, HubConnectionBuilder, LogLevel, type HubConnection } from "@microsoft/signalr";
 import { z } from "zod";
 import { callApi } from "@/lib/api-client/request";
 import {
@@ -33,6 +33,23 @@ function hubError(error: unknown): Error {
   return new Error(HUB_EXCEPTION.exec(message)?.[1] ?? message);
 }
 
+type Subscribers<T> = Set<(payload: T) => void>;
+
+// Valid payloads of one hub event go to every subscriber; anything else is dropped.
+function listen<T>(hub: HubConnection, event: string, schema: z.ZodType<T>): Subscribers<T> {
+  const subscribers: Subscribers<T> = new Set();
+  hub.on(event, (payload: unknown) => {
+    const parsed = schema.safeParse(payload);
+    if (parsed.success) subscribers.forEach((handler) => handler(parsed.data));
+  });
+  return subscribers;
+}
+
+function subscribe<T>(subscribers: Subscribers<T>, handler: (payload: T) => void): () => void {
+  subscribers.add(handler);
+  return () => void subscribers.delete(handler);
+}
+
 function fetchToken(): Promise<ChatToken> {
   return callApi("/api/chat/token", chatTokenSchema);
 }
@@ -64,6 +81,10 @@ export async function connectChat(): Promise<ChatConnection> {
     .build();
   const reconnected = new Set<() => void>();
   hub.onreconnected(() => reconnected.forEach((handler) => handler()));
+  // One handler per hub event from the start, fanning out to whoever subscribes: SignalR warns about events nobody
+  // listens for, and not every page cares about every event.
+  const messages = listen(hub, "message", chatMessageSchema);
+  const receipts = listen(hub, "read", readReceiptSchema);
   await hub.start();
 
   async function call<T>(schema: z.ZodType<T>, method: string, ...args: unknown[]): Promise<T> {
@@ -76,15 +97,6 @@ export async function connectChat(): Promise<ChatConnection> {
     return schema.parse(result);
   }
 
-  function on<T>(event: string, schema: z.ZodType<T>, handler: (payload: T) => void): () => void {
-    const listener = (payload: unknown) => {
-      const parsed = schema.safeParse(payload);
-      if (parsed.success) handler(parsed.data);
-    };
-    hub.on(event, listener);
-    return () => hub.off(event, listener);
-  }
-
   return {
     listConversations: () => call(z.array(conversationSummarySchema), "ListConversations"),
     getMessages: (conversationId) => call(z.array(chatMessageSchema), "GetMessages", conversationId),
@@ -92,8 +104,8 @@ export async function connectChat(): Promise<ChatConnection> {
     markRead: async (conversationId) => {
       await call(z.unknown(), "MarkRead", conversationId);
     },
-    onMessage: (handler) => on("message", chatMessageSchema, handler),
-    onRead: (handler) => on("read", readReceiptSchema, handler),
+    onMessage: (handler) => subscribe(messages, handler),
+    onRead: (handler) => subscribe(receipts, handler),
     onReconnected: (handler) => {
       reconnected.add(handler);
       return () => void reconnected.delete(handler);

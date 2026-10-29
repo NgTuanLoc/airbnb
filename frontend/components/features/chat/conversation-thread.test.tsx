@@ -9,7 +9,10 @@ import { ConversationThread } from "./conversation-thread";
 
 const ME = "usr_me";
 
-beforeEach(() => chat.connectChat.mockReset());
+// A block body: a function returned from beforeEach is run as its teardown.
+beforeEach(() => {
+  chat.connectChat.mockReset();
+});
 
 const shown = () => within(screen.getByRole("list", { name: "Messages" })).getAllByRole("listitem").map((item) => item.textContent);
 
@@ -64,6 +67,15 @@ describe("ConversationThread", () => {
     expect(connection.send).toHaveBeenCalledWith("cv_1", "Is May free?\nTwo nights");
     expect(await screen.findByText(/Two nights/)).toBeInTheDocument();
     expect(box).toHaveValue("");
+  });
+
+  test("the composer waits for the connection, so Enter can't be lost", async () => {
+    chat.connectChat.mockReturnValue(new Promise(() => {}));
+
+    render(<ConversationThread conversationId="cv_1" me={ME} />);
+
+    expect(screen.getByRole("textbox", { name: "Message" })).toBeDisabled();
+    expect(screen.getByText("Connecting…")).toBeInTheDocument();
   });
 
   test("announces incoming messages to screen readers", async () => {

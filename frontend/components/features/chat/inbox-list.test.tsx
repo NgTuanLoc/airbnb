@@ -7,7 +7,10 @@ vi.mock("@/lib/chat/connection", () => chat);
 
 import { InboxList } from "./inbox-list";
 
-beforeEach(() => chat.connectChat.mockReset());
+// A block body: a function returned from beforeEach is run as its teardown.
+beforeEach(() => {
+  chat.connectChat.mockReset();
+});
 
 const titles = () => within(screen.getByRole("list", { name: "Conversations" })).getAllByRole("link").map((link) => link.textContent);
 

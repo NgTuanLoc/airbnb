@@ -108,6 +108,8 @@ export function ConversationThread({ conversationId, me }: { conversationId: str
           value={draft}
           rows={3}
           maxLength={2000}
+          // Until the hub answers, Enter would have nowhere to send.
+          disabled={!connection}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             // Enter sends; Shift+Enter (or composing text) adds a line.
@@ -118,6 +120,7 @@ export function ConversationThread({ conversationId, me }: { conversationId: str
           }}
           className="rounded-sm border border-hairline bg-canvas p-3 text-body-md text-ink placeholder:text-muted focus:border-2 focus:border-ink focus:outline-none"
         />
+        {!connection && <p className="text-body-sm text-muted">Connecting…</p>}
         {sendError && (
           <p role="alert" className="text-body-sm text-error">
             {sendError}

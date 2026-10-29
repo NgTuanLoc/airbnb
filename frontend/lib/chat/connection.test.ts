@@ -53,6 +53,13 @@ describe("connectChat", () => {
     expect(signalr.connection.start).toHaveBeenCalled();
   });
 
+  test("listens for every hub event from the start, so none arrives unhandled", async () => {
+    await connectChat();
+
+    const events = signalr.connection.on.mock.calls.map(([name]) => name);
+    expect(events).toEqual(expect.arrayContaining(["message", "read"]));
+  });
+
   test("fetches a fresh token for each connect after the first", async () => {
     await connectChat();
     fetchMock.mockResolvedValueOnce(tokenReply("t2"));
