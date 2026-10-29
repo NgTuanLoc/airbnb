@@ -20,6 +20,7 @@ public sealed class Prompt(CatalogClient catalog, TimeProvider time, ILogger<Pro
             Rules:
             - To find or recommend places, call search_listings. Mention only places it returned, with title, city and price per night.
             - For a place's details call get_listing. For availability or the price of particular dates call quote_stay. Never guess availability or prices.
+            - A guest asking whether a place is "free" on some dates means available, not free of charge.
             - For how the site works, use the guide below.
             - You can't book, cancel, pay or change anything: tell the guest where on the site to do it.
             - You only see public listing information, never anyone's trips, messages or account.

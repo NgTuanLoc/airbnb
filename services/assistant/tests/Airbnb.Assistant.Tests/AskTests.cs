@@ -133,6 +133,28 @@ public sealed class AskTests
         Assert.Contains(results, r => r.Contains("690") && r.Contains("true"));
     }
 
+    [Theory]
+    [InlineData(true, "Available: nobody has booked these nights")]
+    [InlineData(false, "Not available: some of these nights are already booked")]
+    public async Task A_quote_says_in_words_whether_the_nights_are_free(bool available, string words)
+    {
+        // From a bare "available": true, a small model told a guest a free place wasn't.
+        var model = new ScriptedChatClient(
+            new Calls(Call("quote_stay", new() { ["listingId"] = "l13", ["checkIn"] = "2030-05-03", ["checkOut"] = "2030-05-06", ["guests"] = 2 })),
+            new Says("Here's the quote."));
+        var catalog = new FakeCatalog
+        {
+            Quote = new { listingId = "l13", checkIn = "2030-05-03", checkOut = "2030-05-06", nights = 3, available, priceBreakdown = new { lineItems = Array.Empty<object>(), total = 690 } },
+        };
+        await using var factory = new AssistantFactory(model, catalog);
+
+        await AskAsync(factory, Question("Is it free May 3 to 6?", listingId: "l13"));
+
+        var fedBack = Assert.Single(model.ToolResultsSentOn(1));
+        Assert.Contains(words, fedBack);
+        Assert.Contains("690", fedBack);
+    }
+
     [Fact]
     public async Task A_catalog_outage_is_told_to_the_model_instead_of_inventing()
     {

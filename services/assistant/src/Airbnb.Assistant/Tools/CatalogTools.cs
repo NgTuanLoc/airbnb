@@ -153,7 +153,15 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
         try
         {
             var result = await catalog.QuoteAsync(listingId, checkIn, checkOut, guests, cancellationToken);
-            return result.Quote is { } quote ? quote : new { message = result.Problem };
+            if (result.Quote is not { } quote)
+            {
+                return new { message = result.Problem };
+            }
+            // In words too: from a bare "available": true, a small model told a guest a free place wasn't.
+            var availability = quote.GetProperty("available").GetBoolean()
+                ? "Available: nobody has booked these nights, so the guest can book them."
+                : "Not available: some of these nights are already booked.";
+            return new { availability, quote };
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
