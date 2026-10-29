@@ -10,9 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Airbnb.Assistant.Tests;
 
-// The service with a scripted model and a fake catalog in place of Ollama and the Next server. The rest is real: the
+// The service with a given model (scripted, or the real Ollama client on a fake endpoint) and a fake catalog in place of
+// Ollama and the Next server. The rest is real: the
 // function-invocation pipeline, the tools, the prompt, the stream.
-public sealed class AssistantFactory(ScriptedChatClient model, FakeCatalog? catalog = null, int questionsPerMinute = 1000) : WebApplicationFactory<Program>
+public sealed class AssistantFactory(IChatClient model, FakeCatalog? catalog = null, int questionsPerMinute = 1000) : WebApplicationFactory<Program>
 {
     public static readonly DateTimeOffset Today = new(2030, 4, 20, 9, 0, 0, TimeSpan.Zero);
 

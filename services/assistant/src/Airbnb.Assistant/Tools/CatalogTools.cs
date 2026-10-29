@@ -20,16 +20,26 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
     private const string Unavailable =
         "The listings are unavailable right now. Tell the guest you can't look this up at the moment; don't guess.";
 
+    // Ollama's tool format (as OllamaSharp sends it) takes one type per parameter, so optional parameters are written
+    // as "nullable": true rather than the type list ["string", "null"] Microsoft.Extensions.AI uses by default.
+    private static readonly AIJsonSchemaCreateOptions OllamaSchemas = new()
+    {
+        TransformOptions = new AIJsonSchemaTransformOptions { UseNullableKeyword = true },
+    };
+
     public IList<AITool> All() =>
     [
-        AIFunctionFactory.Create(SearchListingsAsync, "search_listings",
+        Tool(SearchListingsAsync, "search_listings",
             "Search the site's places to stay. Use it whenever the guest wants to find, compare or be recommended places. " +
             "Only mention places it returns."),
-        AIFunctionFactory.Create(GetListingAsync, "get_listing",
+        Tool(GetListingAsync, "get_listing",
             "One place's details: description, rooms, beds, baths, amenities, price per night, rating."),
-        AIFunctionFactory.Create(QuoteStayAsync, "quote_stay",
+        Tool(QuoteStayAsync, "quote_stay",
             "Whether a place is free for the given dates and what the stay costs, with the same fees as booking."),
     ];
+
+    private static AIFunction Tool(Delegate method, string name, string description) =>
+        AIFunctionFactory.Create(method, new AIFunctionFactoryOptions { Name = name, Description = description, JsonSchemaCreateOptions = OllamaSchemas });
 
     public async Task<object> SearchListingsAsync(
         [Description("A city the site has, e.g. Aspen")] string? city = null,
