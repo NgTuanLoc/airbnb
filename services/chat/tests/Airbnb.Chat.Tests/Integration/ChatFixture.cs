@@ -37,12 +37,14 @@ public sealed class ChatFixture : IAsyncLifetime
         .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(RedisPort))
         .Build();
 
+    // GLIBC_TUNABLES: as in the AppHost, MongoDB 8's tcmalloc crashes on Linux 6.19+ (SERVER-121912) unless glibc keeps rseq.
     private readonly IContainer _mongo = new ContainerBuilder("mongo:8.0")
+        .WithEnvironment("GLIBC_TUNABLES", "glibc.pthread.rseq=1")
         .WithPortBinding(MongoPort, assignRandomHostPort: true)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(MongoPort))
         .Build();
 
-    private WebApplicationFactory<Program> _service = null!;
+    private WebApplicationFactory<Program>? _service;
 
     public Uri BaseAddress { get; private set; } = null!;
 
@@ -150,7 +152,11 @@ public sealed class ChatFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await _service.DisposeAsync();
+        // Null when InitializeAsync failed before starting it: keep that failure, not a NullReferenceException, in the output.
+        if (_service is not null)
+        {
+            await _service.DisposeAsync();
+        }
         await _redis.DisposeAsync();
         await _mongo.DisposeAsync();
     }
