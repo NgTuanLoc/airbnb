@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!-- Aspire's client integration for the AppHost's Ollama, and Microsoft.Extensions.AI for tool calling. -->
+  <ItemGroup Label="Service">
+    <PackageVersion Include="CommunityToolkit.Aspire.OllamaSharp" Version="13.6.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Airbnb.Assistant.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- How the app works, for the "how does this work?" questions: part of the system prompt. -->
+    <EmbeddedResource Include="Ask\guide.md" LogicalName="guide.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Platform plumbing only (telemetry, health, resilience); nothing of the monolith's domain. -->
+    <ProjectReference Include="..\..\..\..\backend\src\Airbnb.ServiceDefaults\Airbnb.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>
