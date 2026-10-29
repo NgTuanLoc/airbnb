@@ -193,8 +193,9 @@ var frontend = builder.AddJavaScriptApp("frontend", "../../../frontend")
 // The smart chat box's assistant (services/assistant): a local model on Ollama, through Aspire's Ollama integration.
 // The model downloads once into the data volume (about 2 GB for the default); Assistant:Model swaps it, and
 // Assistant:Gpu=true uses an NVIDIA GPU (it fails to start without one). Its tools read the catalog through the
-// frontend's public API, where seed and host listings both live.
+// frontend's public API, where seed and host listings both live. Open WebUI chats with the same models in the browser.
 var ollama = builder.AddOllama("ollama")
+    .WithOpenWebUI(ui => ui.WithLifetime(ContainerLifetime.Persistent))
     .WithDataVolume()
     .WithLifetime(ContainerLifetime.Persistent);
 if (bool.TryParse(builder.Configuration["Assistant:Gpu"], out var useGpu) && useGpu)
