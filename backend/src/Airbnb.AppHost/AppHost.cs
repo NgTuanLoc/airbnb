@@ -190,6 +190,25 @@ var frontend = builder.AddJavaScriptApp("frontend", "../../../frontend")
     .WithEnvironment("CHAT_HUB_URL", ReferenceExpression.Create($"{gateway.GetEndpoint("http")}/chat/hub"))
     .WithEnvironment("DATA_SOURCE", builder.Configuration["Frontend:DataSource"] ?? "api");
 
+// The smart chat box's assistant (services/assistant): a local model on Ollama, through Aspire's Ollama integration.
+// The model downloads once into the data volume (about 2 GB for the default); Assistant:Model swaps it, and
+// Assistant:Gpu=true uses an NVIDIA GPU (it fails to start without one). Its tools read the catalog through the
+// frontend's public API, where seed and host listings both live.
+var ollama = builder.AddOllama("ollama")
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+if (bool.TryParse(builder.Configuration["Assistant:Gpu"], out var useGpu) && useGpu)
+{
+    ollama.WithGPUSupport();
+}
+var assistantModel = ollama.AddModel("assistant-model", builder.Configuration["Assistant:Model"] ?? "qwen2.5:3b");
+var assistant = builder.AddProject<Projects.Airbnb_Assistant>("assistant", launchProfileName: "http")
+    .WithReference(assistantModel)
+    .WaitFor(assistantModel)
+    .WithEnvironment("Assistant__CatalogUrl", frontend.GetEndpoint("http"))
+    .WithHttpHealthCheck("/health");
+frontend.WithEnvironment("ASSISTANT_HTTP", assistant.GetEndpoint("http"));
+
 // Identity providers send the browser back to the frontend's callback route, which hands the code to the API. Keycloak
 // only accepts that exact URI, so it gets the frontend's port too (the testing builder randomizes ports) with the host
 // the browser uses: from inside a container the frontend's own URL would be aspire.dev.internal.

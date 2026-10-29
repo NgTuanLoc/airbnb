@@ -32,13 +32,20 @@ public sealed class AppHostSmokeTests
     // The demo host answers after 1.5 s; the rest is the gateway and the first connection.
     private static readonly TimeSpan ChatReplyTimeout = TimeSpan.FromSeconds(30);
 
+    // The first run downloads Ollama's image and the model; after that both are cached (the data volume persists).
+    private static readonly TimeSpan ModelReadyTimeout = TimeSpan.FromMinutes(20);
+
+    // A small model on CPU: loading it, then writing a sentence.
+    private static readonly TimeSpan AnswerTimeout = TimeSpan.FromMinutes(3);
+
     [Fact]
     public async Task The_frontend_serves_backend_data_under_aspire()
     {
         var ct = TestContext.Current.CancellationToken;
-        // Explicit so the test doesn't depend on Frontend:DataSource staying "api" in appsettings.json.
+        // Explicit so the test doesn't depend on Frontend:DataSource staying "api" in appsettings.json. The assistant
+        // runs a small model here (about 400 MB) so a first run's download, CI's every time, stays short.
         var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Airbnb_AppHost>(
-            ["--Frontend:DataSource=api"], ct);
+            ["--Frontend:DataSource=api", "--Assistant:Model=qwen2.5:0.5b"], ct);
         await using var app = await appHost.BuildAsync(ct);
         await app.StartAsync(ct);
 
@@ -99,6 +106,30 @@ public sealed class AppHostSmokeTests
         await A_booking_is_paid_and_emailed(app, api, ct);
         await A_declined_card_books_nothing(api, ct);
         await A_guest_chats_with_a_demo_host_through_the_gateway(app, ct);
+        await A_question_to_the_assistant_streams_an_answer(app, ct);
+    }
+
+    // The smart chat box end to end: the frontend relays the question to the assistant, which asks the AppHost's
+    // Ollama model and streams the answer back. It checks the wiring, not what the model says.
+    private static async Task A_question_to_the_assistant_streams_an_answer(DistributedApplication app, CancellationToken ct)
+    {
+        using var modelReady = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        modelReady.CancelAfter(ModelReadyTimeout);
+        // The assistant waits for its model, which downloads first.
+        await app.ResourceNotifications.WaitForResourceHealthyAsync("assistant", modelReady.Token);
+
+        using var web = new HttpClient { BaseAddress = app.GetEndpoint("frontend", "http"), Timeout = AnswerTimeout };
+        using var asked = await web.PostAsJsonAsync("/api/assistant",
+            new { messages = new[] { new { role = "user", text = "Hi! In one sentence, what can you help me with?" } }, listingId = (string?)null }, ct);
+        Assert.True(asked.IsSuccessStatusCode, await asked.Content.ReadAsStringAsync(ct));
+        Assert.Equal("application/x-ndjson", asked.Content.Headers.ContentType?.MediaType);
+
+        var events = (await asked.Content.ReadAsStringAsync(ct))
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => JsonDocument.Parse(line).RootElement)
+            .ToList();
+        Assert.Contains(events, e => e.GetProperty("type").GetString() == "text" && !string.IsNullOrWhiteSpace(e.GetProperty("text").GetString()));
+        Assert.Equal("done", events[^1].GetProperty("type").GetString());
     }
 
     // The third microservice end to end: the frontend vouches for the listing's host to the chat service, the API signs

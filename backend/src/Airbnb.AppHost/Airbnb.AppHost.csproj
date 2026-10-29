@@ -16,6 +16,7 @@
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.k6" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.LavinMQ" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" />
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
@@ -33,6 +34,8 @@
     <ProjectReference Include="..\..\..\services\payments\src\Airbnb.Payments\Airbnb.Payments.csproj" />
     <!-- And the chat service (services/chat). -->
     <ProjectReference Include="..\..\..\services\chat\src\Airbnb.Chat\Airbnb.Chat.csproj" />
+    <!-- And the assistant (services/assistant). -->
+    <ProjectReference Include="..\..\..\services\assistant\src\Airbnb.Assistant\Airbnb.Assistant.csproj" />
   </ItemGroup>
 
 </Project>
