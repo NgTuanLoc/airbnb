@@ -9,6 +9,14 @@ vi.mock("@/lib/auth/get-session", () => session);
 
 vi.mock("@/lib/api-client/availability", () => ({ fetchAvailability: () => Promise.resolve([]) }));
 
+const chatConfig = vi.hoisted(() => ({ chatEnabled: vi.fn(() => false) }));
+vi.mock("@/lib/chat/config", () => chatConfig);
+// Message host navigates with the App Router, which isn't mounted in these tests.
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 import RoomPage from "./page";
 
 beforeEach(() => {
@@ -155,5 +163,49 @@ describe("RoomPage", () => {
       expect(within(bar).getByRole("button", { name: "Check availability" })).toBeInTheDocument();
       expect(screen.queryByRole("link", { name: "Reserve" })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("RoomPage messaging", () => {
+  const guest = { id: "u-guest@example.com", name: "Gus", email: "guest@example.com" };
+  const open = (id = "l1") => RoomPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) });
+
+  afterEach(() => chatConfig.chatEnabled.mockReturnValue(false));
+
+  test("signed-in guests can message the host when chat is on", async () => {
+    chatConfig.chatEnabled.mockReturnValue(true);
+    session.getSession.mockResolvedValue(guest);
+
+    render(await open());
+
+    expect(screen.getByRole("button", { name: "Message host" })).toBeInTheDocument();
+  });
+
+  test("signed-out visitors log in first", async () => {
+    chatConfig.chatEnabled.mockReturnValue(true);
+
+    render(await open());
+
+    expect(screen.getByRole("link", { name: "Message host" })).toHaveAttribute("href", "/login?next=%2Frooms%2Fl1");
+  });
+
+  test("no Message host when chat is off", async () => {
+    session.getSession.mockResolvedValue(guest);
+
+    render(await open());
+
+    expect(screen.queryByRole("button", { name: "Message host" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Message host" })).not.toBeInTheDocument();
+  });
+
+  test("hosts don't message themselves", async () => {
+    chatConfig.chatEnabled.mockReturnValue(true);
+    const host = { id: `u-${crypto.randomUUID()}@example.com`, name: "Ana", email: "ana@example.com" };
+    const listing = await getRepositories().hostListings.create(host.id, hostListingInputSchema.parse(validInput));
+    session.getSession.mockResolvedValue(host);
+
+    render(await open(listing.id));
+
+    expect(screen.queryByRole("button", { name: "Message host" })).not.toBeInTheDocument();
   });
 });

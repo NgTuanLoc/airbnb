@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth/get-session";
 import { getRepositories } from "@/lib/repositories";
-import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-system";
+import { TopNav, Footer, RatingDisplay, HostCard, buttonClassName } from "@/components/design-system";
+import { MessageHostButton } from "@/components/features/chat/message-host-button";
+import { loginPath } from "@/lib/auth/next-path";
+import { chatEnabled } from "@/lib/chat/config";
 import { ListingGallery } from "@/components/features/listing-gallery";
 import { ListingOverview } from "@/components/features/listing-overview";
 import { ListingViewBeacon } from "@/components/features/listing-view-beacon";
@@ -64,6 +67,13 @@ export default async function RoomPage({
             {host && (
               <div className="border-b border-hairline py-8">
                 <HostCard host={host} />
+                {chatEnabled() && !isOwner && (viewer ? (
+                  <MessageHostButton listingId={listing.id} />
+                ) : (
+                  <Link href={loginPath(`/rooms/${listing.id}`)} className={`${buttonClassName("secondary")} mt-6`}>
+                    Message host
+                  </Link>
+                ))}
               </div>
             )}
 

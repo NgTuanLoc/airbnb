@@ -25,6 +25,13 @@ describe("AccountMenu", () => {
     expect(panel.className).toContain("z-50");
   });
 
+  test("logged in: Messages opens the inbox", async () => {
+    renderWith(loggedIn());
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    expect(screen.getByRole("link", { name: "Messages" })).toHaveAttribute("href", "/inbox");
+  });
+
   test("logged out (or outside the provider): offers log in and sign up", async () => {
     renderWith(null);
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
