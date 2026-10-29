@@ -4,6 +4,7 @@ using Airbnb.Chat.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR;
+using StackExchange.Redis;
 
 // The chat service (docs/superpowers/specs/2026-10-29-chat-service-design.md): guests and hosts message each other live.
 // The browser connects straight to the hub (through the gateway) with a JWT from the monolith; the Next server starts
@@ -20,7 +21,13 @@ var tokenKey = ChatAuth.TokenKey(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => ChatAuth.Configure(options, tokenKey));
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IUserIdProvider, SubjectUserIdProvider>();
-builder.Services.AddSignalR();
+// The Redis backplane: Clients.Users reaches connections on every instance, not just this one.
+builder.Services.AddSignalR().AddStackExchangeRedis(
+    builder.Configuration.GetConnectionString("redis") ?? throw new InvalidOperationException("ConnectionStrings:redis is required"),
+    options => options.Configuration.ChannelPrefix = RedisChannel.Literal("chat"));
+builder.Services.AddSingleton<SendLimiter>();
+builder.Services.AddSingleton<AutoReplies>();
+builder.Services.AddHostedService(services => services.GetRequiredService<AutoReplies>());
 
 var app = builder.Build();
 

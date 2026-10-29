@@ -26,6 +26,16 @@ public sealed class ChatFixture : IAsyncLifetime
     public const string ServiceKey = "test-chat-service-key";
     public const string TokenKey = "test-chat-token-key-0123456789abcdef";
     private const int MongoPort = 27017;
+    private const int RedisPort = 6379;
+
+    // Short, so the demo-host tests don't wait the real 1.5 s.
+    public static readonly TimeSpan AutoReplyDelay = TimeSpan.FromMilliseconds(300);
+
+    // The SignalR backplane every instance shares.
+    private readonly IContainer _redis = new ContainerBuilder("redis:8.6")
+        .WithPortBinding(RedisPort, assignRandomHostPort: true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(RedisPort))
+        .Build();
 
     private readonly IContainer _mongo = new ContainerBuilder("mongo:8.0")
         .WithPortBinding(MongoPort, assignRandomHostPort: true)
@@ -43,6 +53,7 @@ public sealed class ChatFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         await _mongo.StartAsync();
+        await _redis.StartAsync();
         _service = StartInstance();
         BaseAddress = AddressOf(_service);
     }
@@ -52,12 +63,16 @@ public sealed class ChatFixture : IAsyncLifetime
     {
         var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
-            builder.UseSetting("ConnectionStrings:chatdb", MongoConnectionString)
+            // Port 0: each instance gets a free port (Kestrel's default would be 5000 for all of them).
+            builder.UseSetting("urls", "http://127.0.0.1:0")
+                .UseSetting("ConnectionStrings:chatdb", MongoConnectionString)
                 .UseSetting("Chat:ServiceKey", ServiceKey)
-                .UseSetting("Chat:TokenKey", TokenKey);
+                .UseSetting("Chat:TokenKey", TokenKey)
+                .UseSetting("ConnectionStrings:redis", $"{_redis.Hostname}:{_redis.GetMappedPublicPort(RedisPort)}")
+                .UseSetting("Chat:AutoReplyDelay", AutoReplyDelay.ToString());
             configure?.Invoke(builder);
         });
-        factory.UseKestrel(0);
+        factory.UseKestrel();
         factory.StartServer();
         return factory;
     }
@@ -136,6 +151,7 @@ public sealed class ChatFixture : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         await _service.DisposeAsync();
+        await _redis.DisposeAsync();
         await _mongo.DisposeAsync();
     }
 }

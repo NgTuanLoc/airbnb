@@ -143,6 +143,16 @@ public sealed class ChatStore(IMongoDatabase database, TimeProvider time)
         return message;
     }
 
+    // True for exactly one caller per conversation, whichever instance it runs on: the demo host answers once.
+    public async Task<bool> TryClaimAutoReplyAsync(string conversationId, CancellationToken cancellationToken)
+    {
+        var claimed = await _conversations.UpdateOneAsync(
+            c => c.Id == conversationId && c.AutoRepliedAt == null,
+            Builders<Conversation>.Update.Set(c => c.AutoRepliedAt, time.GetUtcNow().UtcDateTime),
+            cancellationToken: cancellationToken);
+        return claimed.ModifiedCount == 1;
+    }
+
     public Task MarkReadAsync(Conversation conversation, string userId, CancellationToken cancellationToken) =>
         _conversations.UpdateOneAsync(
             c => c.Id == conversation.Id,

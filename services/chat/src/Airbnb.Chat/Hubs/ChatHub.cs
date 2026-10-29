@@ -7,7 +7,7 @@ namespace Airbnb.Chat.Hubs;
 // Everything a browser does in chat, over one WebSocket. Every call is checked against the caller's token: a
 // conversation they're not part of reads as one that doesn't exist.
 [Authorize]
-public sealed class ChatHub(ChatStore store) : Hub
+public sealed class ChatHub(ChatStore store, SendLimiter limiter, AutoReplies autoReplies) : Hub
 {
     public const string MessageEvent = "message";
     public const string ReadEvent = "read";
@@ -36,9 +36,18 @@ public sealed class ChatHub(ChatStore store) : Hub
         {
             throw new HubException($"Messages are 1 to {MaxTextLength} characters");
         }
+        if (!limiter.TryAcquire(Me))
+        {
+            throw new HubException("You're sending messages too fast. Wait a moment.");
+        }
         var conversation = await MemberOfAsync(conversationId);
         var message = ChatMessage.From(await store.AddMessageAsync(conversation, Me, body, Aborted));
         await Clients.Users(conversation.GuestId, conversation.HostId).SendAsync(MessageEvent, message, Aborted);
+        if (conversation.HostIsDemo && Me == conversation.GuestId && conversation.AutoRepliedAt is null
+            && await store.TryClaimAutoReplyAsync(conversation.Id, Aborted))
+        {
+            autoReplies.Enqueue(conversation);
+        }
         return message;
     }
 
