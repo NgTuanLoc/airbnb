@@ -1,3 +1,5 @@
+using Aspire.Hosting.Yarp.Transforms;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
@@ -58,6 +60,34 @@ var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchPr
     .WithEnvironment("Payments__ServiceKey", paymentsServiceKey)
     .WithHttpHealthCheck("/health");
 
+// The chat service (services/chat): guests message hosts live over SignalR. Its own kind of storage (MongoDB, browsable
+// in Mongo Express), two instances that reach each other's connections through the Redis backplane, and the only
+// service the browser talks to directly: through the gateway, with a token the API signs (chat-token-key). The Next
+// server starts conversations with chat-service-key.
+var mongo = builder.AddMongoDB("mongo")
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithMongoExpress(express => express.WithLifetime(ContainerLifetime.Persistent));
+var chatDb = mongo.AddDatabase("chatdb", "chat");
+var chatServiceKey = builder.AddParameter("chat-service-key",
+    new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
+var chatTokenKey = builder.AddParameter("chat-token-key",
+    new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
+var chat = builder.AddProject<Projects.Airbnb_Chat>("chat", launchProfileName: "http")
+    .WithReference(chatDb)
+    .WithReference(redis)
+    .WaitFor(chatDb)
+    .WaitFor(redis)
+    .WithEnvironment("Chat__ServiceKey", chatServiceKey)
+    .WithEnvironment("Chat__TokenKey", chatTokenKey)
+    .WithReplicas(2)
+    .WithHttpHealthCheck("/health");
+
+// The API gateway: one address for the services the browser reaches, routed by path (WebSockets included). Only chat
+// so far; the Next server keeps calling the API directly, since the API trusts only loopback proxies for client IPs.
+var gateway = builder.AddYarp("gateway")
+    .WithConfiguration(yarp => yarp.AddRoute("/chat/{**catch-all}", chat).WithTransformPathRemovePrefix("/chat"));
+
 // Shared secret: only the Next server may send the API a host-listing quote.
 var quoteKey = builder.AddParameter("bookings-quote-key",
     new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true);
@@ -93,6 +123,7 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WaitFor(payments)
     .WaitForCompletion(migrations)
     .WithEnvironment("Payments__ServiceKey", paymentsServiceKey)
+    .WithEnvironment("Identity__ChatToken__SigningKey", chatTokenKey)
     .WithEnvironment("Bookings__QuoteKey", quoteKey)
     .WithEnvironment("Insights__AdminKey", insightsAdminKey)
     .WithEnvironment("Identity__External__Sso__acme__Name", "Acme Corp")
@@ -149,6 +180,10 @@ var frontend = builder.AddJavaScriptApp("frontend", "../../../frontend")
     .WithReference(api)
     .WaitFor(api)
     .WithEnvironment("BOOKINGS_QUOTE_KEY", quoteKey)
+    // Chat: Next starts conversations straight on the service, and tells the browser to reach the hub via the gateway.
+    .WithEnvironment("CHAT_HTTP", chat.GetEndpoint("http"))
+    .WithEnvironment("CHAT_SERVICE_KEY", chatServiceKey)
+    .WithEnvironment("CHAT_HUB_URL", ReferenceExpression.Create($"{gateway.GetEndpoint("http")}/chat/hub"))
     .WithEnvironment("DATA_SOURCE", builder.Configuration["Frontend:DataSource"] ?? "api");
 
 // Identity providers send the browser back to the frontend's callback route, which hands the code to the API. Keycloak

@@ -66,6 +66,18 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet test --project tests/Airbnb.Payments.Tests
 
+  chat:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/chat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test --project tests/Airbnb.Chat.Tests
+
   apphost:
     runs-on: ubuntu-latest
     defaults:

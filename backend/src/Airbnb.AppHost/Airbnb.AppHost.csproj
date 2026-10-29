@@ -12,6 +12,7 @@
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
     <PackageReference Include="Aspire.Hosting.JavaScript" />
     <PackageReference Include="Aspire.Hosting.Kafka" />
+    <PackageReference Include="Aspire.Hosting.MongoDB" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.k6" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.LavinMQ" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
@@ -19,6 +20,7 @@
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Aspire.Hosting.Yarp" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +31,8 @@
     <ProjectReference Include="..\..\..\services\notifications\src\Airbnb.Notifications\Airbnb.Notifications.csproj" />
     <!-- So does the payment service (services/payments). -->
     <ProjectReference Include="..\..\..\services\payments\src\Airbnb.Payments\Airbnb.Payments.csproj" />
+    <!-- And the chat service (services/chat). -->
+    <ProjectReference Include="..\..\..\services\chat\src\Airbnb.Chat\Airbnb.Chat.csproj" />
   </ItemGroup>
 
 </Project>

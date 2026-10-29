@@ -3,9 +3,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using System.Web;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using SkiaSharp;
 
 namespace Airbnb.AppHost.Tests;
@@ -25,6 +28,9 @@ public sealed class AppHostSmokeTests
 
     // Outbox relay, broker, the service's inbox and SMTP: a few hops, each quick.
     private static readonly TimeSpan EmailTimeout = TimeSpan.FromSeconds(60);
+
+    // The demo host answers after 1.5 s; the rest is the gateway and the first connection.
+    private static readonly TimeSpan ChatReplyTimeout = TimeSpan.FromSeconds(30);
 
     [Fact]
     public async Task The_frontend_serves_backend_data_under_aspire()
@@ -92,6 +98,55 @@ public sealed class AppHostSmokeTests
         await A_listing_view_reaches_its_count_through_kafka(api, ct);
         await A_booking_is_paid_and_emailed(app, api, ct);
         await A_declined_card_books_nothing(api, ct);
+        await A_guest_chats_with_a_demo_host_through_the_gateway(app, ct);
+    }
+
+    // The third microservice end to end: the frontend vouches for the listing's host to the chat service, the API signs
+    // a chat token, and the browser's WebSocket goes through the YARP gateway to a chat instance, where l13's demo host
+    // answers live. A fresh guest each run: MongoDB keeps conversations, and a demo host answers each one only once.
+    private static async Task A_guest_chats_with_a_demo_host_through_the_gateway(DistributedApplication app, CancellationToken ct)
+    {
+        using var browser = new HttpClient(new BrowserCookies { InnerHandler = new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false } })
+        {
+            BaseAddress = app.GetEndpoint("frontend", "http"),
+            Timeout = FirstPageTimeout,
+        };
+        using var registered = await browser.PostAsJsonAsync("/api/auth/register",
+            new { name = "Chat Guest", email = $"chat-{Guid.NewGuid():N}@example.com", password = "correct-horse", confirmPassword = "correct-horse" }, ct);
+        Assert.True(registered.IsSuccessStatusCode, await registered.Content.ReadAsStringAsync(ct));
+
+        using var started = await browser.PostAsJsonAsync("/api/chat/conversations", new { listingId = "l13" }, ct);
+        Assert.True(started.IsSuccessStatusCode, await started.Content.ReadAsStringAsync(ct));
+        var conversationId = (await started.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("id").GetString()!;
+        var token = (await browser.GetFromJsonAsync<JsonElement>("/api/chat/token", ct)).GetProperty("data");
+        var hubUrl = token.GetProperty("hubUrl").GetString()!;
+        Assert.EndsWith("/chat/hub", hubUrl);
+
+        await using var hub = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult(token.GetProperty("token").GetString());
+                options.SkipNegotiation = true;
+                options.Transports = HttpTransportType.WebSockets;
+            })
+            .Build();
+        var received = Channel.CreateUnbounded<JsonElement>();
+        hub.On<JsonElement>("message", message => received.Writer.TryWrite(message));
+        await hub.StartAsync(ct);
+
+        var sent = await hub.InvokeAsync<JsonElement>("Send", conversationId, "Is the loft free next month?", ct);
+        var guestId = sent.GetProperty("senderId").GetString();
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(ChatReplyTimeout);
+        JsonElement reply;
+        do
+        {
+            reply = await received.Reader.ReadAsync(timeout.Token);
+        }
+        while (reply.GetProperty("senderId").GetString() == guestId);
+        Assert.Equal(conversationId, reply.GetProperty("conversationId").GetString());
+        Assert.Contains("demo host", reply.GetProperty("text").GetString());
     }
 
     private static async Task<HttpResponseMessage> BookL14Async(HttpClient api, string email, string cardNumber, CancellationToken ct)
