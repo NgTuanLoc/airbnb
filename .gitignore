@@ -29,3 +29,6 @@ obj/
 .vs/
 *.user
 TestResults/
+
+# tools/sonar/scan.ps1: the local server's credentials, the scanner, build output and issue exports
+tools/sonar/.local/

@@ -7,6 +7,7 @@ Monorepo with a Next.js frontend and an ASP.NET Core backend.
 | `frontend/` | Web app | Next.js 16, React 19, TypeScript, Tailwind v4 |
 | `backend/` | API | ASP.NET Core (.NET 10) modular monolith, orchestrated by Aspire 13.6 |
 | `docs/` | Specs and plans | Markdown |
+| `tools/sonar/` | Local SonarQube scan | PowerShell, Docker |
 
 ## Prerequisites
 
@@ -83,3 +84,7 @@ dotnet user-secrets set "Identity:GitHub:ClientSecret" "<client secret>" --proje
 
 - Signing in with a provider whose email already belongs to a password account is refused, so nobody inherits an account by registering its email first. Log in with the password, then connect the provider under **Login & security** in the account menu.
 - To add a company's SSO, give the API an `Identity:External:Sso:<id>` connection (name, email domains, OIDC authority, client id and secret), and register `<frontend>/api/auth/callback/sso-<id>` as the redirect URI with their identity provider.
+
+## Code quality (SonarQube)
+
+`pwsh tools/sonar/scan.ps1` scans the backend, the services and the frontend with a local SonarQube (Docker), prints the quality gate and the open issues, and writes them to `tools/sonar/.local/`. Add `-Coverage` to import the tests' coverage. See [tools/sonar/README.md](tools/sonar/README.md).
