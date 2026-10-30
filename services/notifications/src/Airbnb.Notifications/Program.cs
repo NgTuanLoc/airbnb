@@ -17,8 +17,8 @@ builder.AddServiceDefaults();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SmtpEmailSender>();
 builder.Services.AddHostedService<DueReminderSweep>();
-builder.Services.AddSingleton(new NotificationsSettings(
-    new Uri(builder.Configuration["Notifications:FrontendUrl"] ?? "http://localhost:3000")));
+builder.Services.AddSingleton(new NotificationsSettings(new Uri(builder.Configuration["Notifications:FrontendUrl"]
+    ?? throw new InvalidOperationException("Notifications:FrontendUrl is required: the emails link to the site"))));
 
 // Its own database. No retrying execution strategy: handlers open their own transactions.
 builder.AddNpgsqlDbContext<NotificationsDbContext>("notificationsdb", settings => settings.DisableRetry = true);

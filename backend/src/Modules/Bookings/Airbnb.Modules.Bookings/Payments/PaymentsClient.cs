@@ -68,7 +68,7 @@ internal sealed class PaymentsClient(IHttpClientFactory httpClients, IConfigurat
             }
             catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException && !cancellationToken.IsCancellationRequested)
             {
-                logger.LogWarning("Charging booking {BookingId}: attempt {Attempt} got no answer ({Error})", bookingId, attempt, exception.GetType().Name);
+                logger.LogWarning(exception, "Charging booking {BookingId}: attempt {Attempt} got no answer", bookingId, attempt);
             }
         }
         return new ChargeResult(ChargeStatus.Unknown);
@@ -98,7 +98,7 @@ internal sealed class PaymentsClient(IHttpClientFactory httpClients, IConfigurat
         }
         catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("Voiding booking {BookingId}'s payment got no answer ({Error})", bookingId, exception.GetType().Name);
+            logger.LogWarning(exception, "Voiding booking {BookingId}'s payment got no answer", bookingId);
             return false;
         }
     }

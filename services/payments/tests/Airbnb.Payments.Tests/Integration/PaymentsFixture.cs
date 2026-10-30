@@ -56,7 +56,7 @@ public sealed class PaymentsFixture : IAsyncLifetime
     {
         await using var connection = await new ConnectionFactory { Uri = new Uri(MessagingConnectionString) }.CreateConnectionAsync(ct);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
-        var body = JsonSerializer.SerializeToUtf8Bytes(message, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var body = JsonSerializer.SerializeToUtf8Bytes(message, JsonSerializerOptions.Web);
         var properties = new BasicProperties { Type = type, MessageId = Guid.NewGuid().ToString(), ContentType = "application/json", Persistent = true };
         await channel.BasicPublishAsync("bookings", routingKey: "", mandatory: false, properties, body, ct);
     }

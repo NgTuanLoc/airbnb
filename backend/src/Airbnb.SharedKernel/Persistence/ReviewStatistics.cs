@@ -32,7 +32,7 @@ public static class ReviewStatistics
     {
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
-#pragma warning disable EF1002 // schema and table are module constants, never user input; the values are parameters.
+#pragma warning disable EF1002, S2077 // schema and table are module constants, never user input; the values are parameters.
         var isFirstDelivery = await db.Database.ExecuteSqlRawAsync(
             $$"""INSERT INTO {{schema}}.{{AppliedReviewsTable}} ("ReviewId") VALUES ({0}) ON CONFLICT DO NOTHING""",
             [reviewId],
@@ -51,7 +51,7 @@ public static class ReviewStatistics
             """,
             [rating, subjectId],
             cancellationToken);
-#pragma warning restore EF1002
+#pragma warning restore EF1002, S2077
 
         await transaction.CommitAsync(cancellationToken);
     }

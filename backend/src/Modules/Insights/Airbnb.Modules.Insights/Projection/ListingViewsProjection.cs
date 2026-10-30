@@ -13,7 +13,7 @@ namespace Airbnb.Modules.Insights;
 // partition resumes from in one Postgres transaction, and partitions start from those stored offsets. So a crash, a
 // restart or a rebalance never counts a view twice or skips one. Kafka's own committed offsets are kept only so Kafka UI
 // can show the group's lag.
-internal sealed class ListingViewsProjection(
+internal sealed partial class ListingViewsProjection(
     IConsumer<string, string> consumer,
     IServiceScopeFactory scopes,
     ProjectionControl control,
@@ -181,7 +181,7 @@ internal sealed class ListingViewsProjection(
 
         // Whatever was read into memory is counted by the replay instead.
         DropBatch();
-        logger.LogInformation("Rebuilding listing view counts from the start of {Topic}", ListingViewsTopic.Name);
+        LogRebuilding(logger, ListingViewsTopic.Name);
     }
 
     private void DropBatch()
@@ -243,4 +243,7 @@ internal sealed class ListingViewsProjection(
 
     private static Offset StartOf(TopicPartition partition, Dictionary<int, long> stored) =>
         stored.TryGetValue(partition.Partition.Value, out var next) ? new Offset(next) : Offset.Beginning;
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Rebuilding listing view counts from the start of {Topic}")]
+    private static partial void LogRebuilding(ILogger logger, string topic);
 }

@@ -5,6 +5,9 @@ namespace Airbnb.Api.Tests.Stays;
 
 public sealed class StaysEndpointTests(InfrastructureFixture infrastructure)
 {
+    private static readonly string[] SecondPageOfFive = ["l6", "l7", "l8", "l9", "l10"];
+    private static readonly string[] CitiesInMockOrder = ["wilmington", "athens", "aspen", "malibu", "kyoto", "lisbon"];
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -55,7 +58,7 @@ public sealed class StaysEndpointTests(InfrastructureFixture infrastructure)
         var (status, body) = await infrastructure.GetJsonAsync("/api/listings?page=2&limit=5");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(new[] { "l6", "l7", "l8", "l9", "l10" }, body.Ids());
+        Assert.Equal(SecondPageOfFive, body.Ids());
         Assert.Equal(16, body.GetProperty("meta").GetProperty("total").GetInt32());
     }
 
@@ -89,7 +92,7 @@ public sealed class StaysEndpointTests(InfrastructureFixture infrastructure)
         var (status, body) = await infrastructure.GetJsonAsync("/api/cities");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(new[] { "wilmington", "athens", "aspen", "malibu", "kyoto", "lisbon" }, body.Ids());
+        Assert.Equal(CitiesInMockOrder, body.Ids());
         Assert.False(body.TryGetProperty("meta", out _));
     }
 

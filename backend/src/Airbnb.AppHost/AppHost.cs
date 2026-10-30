@@ -2,6 +2,9 @@ using Aspire.Hosting.Yarp.Transforms;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// The services' health endpoint (ServiceDefaults maps it).
+const string HealthPath = "/health";
+
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume()
     .WithLifetime(ContainerLifetime.Persistent)
@@ -58,7 +61,7 @@ var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchPr
     .WaitFor(paymentsDb)
     .WaitFor(messaging)
     .WithEnvironment("Payments__ServiceKey", paymentsServiceKey)
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck(HealthPath);
 
 // The chat service (services/chat): guests message hosts live over SignalR. Its own kind of storage (MongoDB, browsable
 // in Mongo Express), two instances that reach each other's connections through the Redis backplane, and the only
@@ -84,7 +87,7 @@ var chat = builder.AddProject<Projects.Airbnb_Chat>("chat", launchProfileName: "
     .WithEnvironment("Chat__ServiceKey", chatServiceKey)
     .WithEnvironment("Chat__TokenKey", chatTokenKey)
     .WithReplicas(2)
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck(HealthPath);
 
 // The API gateway: one address for the services the browser reaches, routed by path (WebSockets included). Only chat
 // so far; the Next server keeps calling the API directly, since the API trusts only loopback proxies for client IPs.
@@ -139,7 +142,7 @@ var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "htt
     .WithEnvironment("Identity__External__Sso__acme__ClientId", "airbnb")
     .WithEnvironment("Identity__External__Sso__acme__ClientSecret", acmeClientSecret)
     .WithEnvironment("Identity__External__Sso__acme__RequireHttpsMetadata", "false")
-    .WithHttpHealthCheck("/health")
+    .WithHttpHealthCheck(HealthPath)
     // Wipes the view counts and recounts them from the start of the listing-views topic.
     .WithHttpCommand("/api/insights/rebuild", "Rebuild view stats", endpointName: "http", commandOptions: new HttpCommandOptions
     {
@@ -213,7 +216,7 @@ var assistant = builder.AddProject<Projects.Airbnb_Assistant>("assistant", launc
     .WithReference(assistantModel)
     .WaitFor(assistantModel)
     .WithEnvironment("Assistant__CatalogUrl", frontend.GetEndpoint("http"))
-    .WithHttpHealthCheck("/health");
+    .WithHttpHealthCheck(HealthPath);
 frontend.WithEnvironment("ASSISTANT_HTTP", assistant.GetEndpoint("http"));
 
 // Identity providers send the browser back to the frontend's callback route, which hands the code to the API. Keycloak
@@ -231,7 +234,7 @@ builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfile
     .WaitFor(mailpit)
     .WithEnvironment("Notifications__FrontendUrl", frontend.GetEndpoint("http"))
     .WithEnvironment("Notifications__AdminKey", notificationsAdminKey)
-    .WithHttpHealthCheck("/health")
+    .WithHttpHealthCheck(HealthPath)
     .WithHttpCommand("/reminders/send-due", "Send due reminders now", endpointName: "http", commandOptions: new HttpCommandOptions
     {
         Method = HttpMethod.Post,

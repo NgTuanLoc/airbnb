@@ -5,6 +5,8 @@ namespace Airbnb.Api.Tests.Experiences;
 
 public sealed class ExperiencesEndpointTests(InfrastructureFixture infrastructure)
 {
+    private static readonly string[] FoodAndDrinkIds = ["e1", "e4", "e8", "e12"];
+
     [Fact]
     public async Task Experiences_return_all_twelve_in_mock_order_with_paging_meta()
     {
@@ -21,7 +23,7 @@ public sealed class ExperiencesEndpointTests(InfrastructureFixture infrastructur
         var (status, body) = await infrastructure.GetJsonAsync($"/api/experiences?category={Uri.EscapeDataString("Food & drink")}");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(new[] { "e1", "e4", "e8", "e12" }, body.Ids());
+        Assert.Equal(FoodAndDrinkIds, body.Ids());
     }
 
     [Fact]

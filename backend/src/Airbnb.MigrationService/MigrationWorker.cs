@@ -4,7 +4,7 @@ namespace Airbnb.MigrationService;
 
 // Runs every module's migrations once, in registration order, then stops the process.
 // A non-zero exit code keeps Aspire from starting the API (WaitForCompletion) on a half-migrated database.
-internal sealed class MigrationWorker(
+internal sealed partial class MigrationWorker(
     IEnumerable<IModuleMigrator> migrators,
     IHostApplicationLifetime lifetime,
     ILogger<MigrationWorker> logger) : BackgroundService
@@ -15,7 +15,7 @@ internal sealed class MigrationWorker(
         {
             foreach (var migrator in migrators)
             {
-                logger.LogInformation("Migrating module {Module}", migrator.Module);
+                LogMigrating(logger, migrator.Module);
                 await migrator.MigrateAsync(stoppingToken);
             }
 
@@ -31,4 +31,7 @@ internal sealed class MigrationWorker(
             lifetime.StopApplication();
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Migrating module {Module}")]
+    private static partial void LogMigrating(ILogger logger, string module);
 }

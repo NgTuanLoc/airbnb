@@ -27,7 +27,9 @@ internal static partial class SearchListings
         if (!string.IsNullOrWhiteSpace(query.Location))
         {
             var city = query.Location.ToLowerInvariant();
+#pragma warning disable CA1862 // EF translates ToLower() to SQL lower(); string.Equals with a StringComparison has no SQL translation.
             listings = listings.Where(l => l.Location.City.ToLower() == city);
+#pragma warning restore CA1862
         }
 
         if (!string.IsNullOrWhiteSpace(query.Category))

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
@@ -12,6 +13,7 @@ internal sealed class GitHubProvider(ClientCredentials credentials, IHttpClientF
 {
     internal const string AuthorizationEndpoint = "https://github.com/login/oauth/authorize";
     internal const string TokenEndpoint = "https://github.com/login/oauth/access_token";
+    [SuppressMessage("Sonar", "S1075", Justification = "GitHub's public API, like the OAuth endpoints above; GitHub Enterprise isn't supported")]
     internal const string ApiBaseUrl = "https://api.github.com";
 
     public string Key => "github";

@@ -40,9 +40,11 @@ internal static class ApiRateLimiting
                 var isRead = HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method);
                 // An endpoint can claim its own bucket (RateLimitBucket metadata); everything else is a read or a write.
                 var claimed = context.GetEndpoint()?.Metadata.GetMetadata<RateLimitBucket>();
-                var (bucket, limit) = claimed is not null && ownBuckets.TryGetValue(claimed, out var own)
-                    ? (claimed.Name, own)
-                    : isRead ? ("read", readsPerMinute) : ("write", writesPerMinute);
+                var (bucket, limit) = isRead ? ("read", readsPerMinute) : ("write", writesPerMinute);
+                if (claimed is not null && ownBuckets.TryGetValue(claimed, out var own))
+                {
+                    (bucket, limit) = (claimed.Name, own);
+                }
                 // The browser's IP: UseForwardedHeaders resolves X-Forwarded-For from the local Next.js server.
                 var client = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 

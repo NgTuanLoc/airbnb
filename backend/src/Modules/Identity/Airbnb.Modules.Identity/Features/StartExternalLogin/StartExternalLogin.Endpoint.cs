@@ -24,8 +24,11 @@ internal static partial class StartExternalLogin
             }
             catch (ExternalLoginException exception)
             {
-                logger.LogInformation(exception, "Starting an external sign-in failed: {Code}", exception.Error.Code);
+                LogFailed(logger, exception, exception.Error.Code);
                 return exception.Error.ToResult();
             }
         });
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Starting an external sign-in failed: {Code}")]
+    private static partial void LogFailed(ILogger logger, Exception exception, string code);
 }

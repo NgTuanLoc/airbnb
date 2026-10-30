@@ -64,48 +64,54 @@ internal sealed partial class ExternalLoginOptionsValidator : IValidateOptions<E
             failures.Add($"{Section}:GitHub needs both ClientId and ClientSecret.");
         }
 
+        // Email domain -> the connection that claimed it first.
         var owners = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (id, connection) in options.Sso)
         {
-            var path = $"{Section}:Sso:{id}";
-            if (!ConnectionId().IsMatch(id))
-            {
-                failures.Add($"{path}: a connection id is 1-40 lowercase letters, digits or dashes.");
-            }
-            if (string.IsNullOrWhiteSpace(connection.Name))
-            {
-                failures.Add($"{path}:Name is required.");
-            }
-            if (!connection.IsSet)
-            {
-                failures.Add($"{path} needs both ClientId and ClientSecret.");
-            }
-            if (connection.Authority is null || !IsHttpUrl(connection.Authority))
-            {
-                failures.Add($"{path}:Authority must be an absolute http(s) URL.");
-            }
-            else if (connection.RequireHttpsMetadata && !connection.Authority.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                failures.Add($"{path}:Authority must use https unless RequireHttpsMetadata is false.");
-            }
-            if (connection.Domains.Count == 0)
-            {
-                failures.Add($"{path}:Domains needs at least one email domain.");
-            }
-            foreach (var domain in connection.Domains)
-            {
-                if (!EmailDomain().IsMatch(domain))
-                {
-                    failures.Add($"{path}:Domains has an invalid email domain \"{domain}\".");
-                }
-                else if (!owners.TryAdd(domain, id))
-                {
-                    failures.Add($"{path}:Domains: \"{domain}\" already belongs to connection \"{owners[domain]}\".");
-                }
-            }
+            ValidateConnection(id, connection, owners, failures);
         }
 
         return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+    }
+
+    private static void ValidateConnection(string id, SsoConnectionOptions connection, Dictionary<string, string> owners, List<string> failures)
+    {
+        var path = $"{Section}:Sso:{id}";
+        if (!ConnectionId().IsMatch(id))
+        {
+            failures.Add($"{path}: a connection id is 1-40 lowercase letters, digits or dashes.");
+        }
+        if (string.IsNullOrWhiteSpace(connection.Name))
+        {
+            failures.Add($"{path}:Name is required.");
+        }
+        if (!connection.IsSet)
+        {
+            failures.Add($"{path} needs both ClientId and ClientSecret.");
+        }
+        if (connection.Authority is null || !IsHttpUrl(connection.Authority))
+        {
+            failures.Add($"{path}:Authority must be an absolute http(s) URL.");
+        }
+        else if (connection.RequireHttpsMetadata && !connection.Authority.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            failures.Add($"{path}:Authority must use https unless RequireHttpsMetadata is false.");
+        }
+        if (connection.Domains.Count == 0)
+        {
+            failures.Add($"{path}:Domains needs at least one email domain.");
+        }
+        foreach (var domain in connection.Domains)
+        {
+            if (!EmailDomain().IsMatch(domain))
+            {
+                failures.Add($"{path}:Domains has an invalid email domain \"{domain}\".");
+            }
+            else if (!owners.TryAdd(domain, id))
+            {
+                failures.Add($"{path}:Domains: \"{domain}\" already belongs to connection \"{owners[domain]}\".");
+            }
+        }
     }
 
     private static bool IsHttpUrl(string value) =>

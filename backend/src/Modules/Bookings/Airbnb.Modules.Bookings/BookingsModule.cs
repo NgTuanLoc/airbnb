@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Airbnb.Modules.Bookings.Data;
 using Airbnb.Modules.Bookings.Payments;
 using Airbnb.SharedKernel.Persistence;
@@ -11,6 +12,9 @@ public static class BookingsModule
 {
     internal const string Schema = "bookings";
 
+    [SuppressMessage("Sonar", "S1075", Justification = "A service-discovery name, resolved from configuration, not a location")]
+    private const string PaymentsServiceUrl = "https+http://payments";
+
     public static IHostApplicationBuilder AddBookingsModule(this IHostApplicationBuilder builder)
     {
         builder.AddBookingsModuleDatabase();
@@ -22,7 +26,8 @@ public static class BookingsModule
         {
             throw new InvalidOperationException("Payments:ServiceKey is required to charge bookings");
         }
-        builder.Services.AddHttpClient(PaymentsClient.Name, client => client.BaseAddress = new Uri("http://payments"));
+        // An Aspire service-discovery name: https when the payment service offers it, else http.
+        builder.Services.AddHttpClient(PaymentsClient.Name, client => client.BaseAddress = new Uri(PaymentsServiceUrl));
         builder.Services.AddSingleton<PaymentsClient>();
         builder.Services.AddHostedService<PaymentReconciler>();
         return builder;

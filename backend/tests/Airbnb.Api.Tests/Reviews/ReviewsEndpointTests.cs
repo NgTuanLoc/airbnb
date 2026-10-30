@@ -5,13 +5,15 @@ namespace Airbnb.Api.Tests.Reviews;
 
 public sealed class ReviewsEndpointTests(InfrastructureFixture infrastructure)
 {
+    private static readonly string[] L1ReviewIdsNewestFirst = ["l1-r1", "l1-r2", "l1-r3", "l1-r4"];
+
     [Fact]
     public async Task Listing_reviews_come_newest_first_with_paging_meta()
     {
         var (status, body) = await infrastructure.GetJsonAsync("/api/reviews?subjectId=l1");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(new[] { "l1-r1", "l1-r2", "l1-r3", "l1-r4" }, body.Ids());
+        Assert.Equal(L1ReviewIdsNewestFirst, body.Ids());
         Assert.Equal(4, body.GetProperty("meta").GetProperty("total").GetInt32());
     }
 

@@ -47,7 +47,7 @@ public sealed class Prompt(CatalogClient catalog, TimeProvider time, ILogger<Pro
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
             // The prompt goes without them; the tools then tell the model the catalog is down.
-            logger.LogWarning("Reading the catalog's cities failed: {Error}", exception.GetType().Name);
+            logger.LogWarning(exception, "Reading the catalog's cities failed");
             return ("unknown right now", "unknown right now");
         }
     }

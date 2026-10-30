@@ -5,10 +5,13 @@ namespace Airbnb.UnitTests.SharedKernel;
 
 public sealed class ApiResponseTests
 {
+    private static readonly string[] TwoListingIds = ["l1", "l2"];
+    private static readonly string[] OneListingId = ["l1"];
+
     [Fact]
     public void Ok_without_meta_serializes_only_success_and_data()
     {
-        var json = JsonSerializer.Serialize(ApiResponse.Ok(new[] { "l1", "l2" }), JsonSerializerOptions.Web);
+        var json = JsonSerializer.Serialize(ApiResponse.Ok(TwoListingIds), JsonSerializerOptions.Web);
 
         Assert.Equal("""{"success":true,"data":["l1","l2"]}""", json);
     }
@@ -16,7 +19,7 @@ public sealed class ApiResponseTests
     [Fact]
     public void Ok_with_meta_serializes_paging_metadata()
     {
-        var json = JsonSerializer.Serialize(ApiResponse.Ok(new[] { "l1" }, new PageMeta(16, 1, 50)), JsonSerializerOptions.Web);
+        var json = JsonSerializer.Serialize(ApiResponse.Ok(OneListingId, new PageMeta(16, 1, 50)), JsonSerializerOptions.Web);
 
         Assert.Equal("""{"success":true,"data":["l1"],"meta":{"total":16,"page":1,"limit":50}}""", json);
     }

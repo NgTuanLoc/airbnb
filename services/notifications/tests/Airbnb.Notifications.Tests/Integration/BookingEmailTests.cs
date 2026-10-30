@@ -65,7 +65,7 @@ public sealed class BookingEmailTests(ServiceFixture fixture)
         return await fixture.EmailsToAsync(email, Ct);
     }
 
-    private async Task<HttpResponseMessage> SendDueAsync(HttpClient client, string? key)
+    private static async Task<HttpResponseMessage> SendDueAsync(HttpClient client, string? key)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/reminders/send-due");
         if (key is not null)

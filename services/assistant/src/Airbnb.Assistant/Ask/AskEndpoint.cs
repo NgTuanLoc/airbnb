@@ -17,10 +17,13 @@ public static class AskEndpoint
     public static void MapAsk(this IEndpointRouteBuilder app) =>
         app.MapPost("/ask", AskAsync).RequireRateLimiting(RateLimitPolicy);
 
+    // The services one answer uses, from the container.
+    internal sealed record AnswerServices(IChatClient Chat, Prompt Prompt, CatalogTools Tools, FoundListings Found, ILogger<AnswerServices> Logger);
+
     private static async Task AskAsync(
-        HttpContext http, AskRequest request, IChatClient chat, Prompt prompt, CatalogTools tools, FoundListings found,
-        ILogger<AskRequest> logger, CancellationToken cancellationToken)
+        HttpContext http, AskRequest request, [AsParameters] AnswerServices services, CancellationToken cancellationToken)
     {
+        var (chat, prompt, tools, found, logger) = services;
         if (request.Problem() is { } problem)
         {
             http.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -38,12 +41,10 @@ public static class AskEndpoint
             messages.AddRange(request.Messages!.Select(m => new ChatMessage(m.Role == "user" ? ChatRole.User : ChatRole.Assistant, m.Text!.Trim())));
             var options = new ChatOptions { Tools = tools.All(), MaxOutputTokens = MaxOutputTokens, Temperature = 0.2f };
 
-            await foreach (var update in chat.GetStreamingResponseAsync(messages, options, timeout.Token))
+            var updates = chat.GetStreamingResponseAsync(messages, options, timeout.Token).Where(update => !string.IsNullOrEmpty(update.Text));
+            await foreach (var update in updates)
             {
-                if (!string.IsNullOrEmpty(update.Text))
-                {
-                    await WriteAsync(http, new { type = "text", text = update.Text }, timeout.Token);
-                }
+                await WriteAsync(http, new { type = "text", text = update.Text }, timeout.Token);
             }
             if (found.Last.Count > 0)
             {

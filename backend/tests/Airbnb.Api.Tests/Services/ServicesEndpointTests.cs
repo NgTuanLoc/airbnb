@@ -5,6 +5,8 @@ namespace Airbnb.Api.Tests.Services;
 
 public sealed class ServicesEndpointTests(InfrastructureFixture infrastructure)
 {
+    private static readonly string[] PhotographyIds = ["s1", "s6", "s11"];
+
     [Fact]
     public async Task Services_return_all_twelve_in_mock_order_with_paging_meta()
     {
@@ -21,7 +23,7 @@ public sealed class ServicesEndpointTests(InfrastructureFixture infrastructure)
         var (status, body) = await infrastructure.GetJsonAsync("/api/services?category=Photography");
 
         Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Equal(new[] { "s1", "s6", "s11" }, body.Ids());
+        Assert.Equal(PhotographyIds, body.Ids());
     }
 
     [Fact]

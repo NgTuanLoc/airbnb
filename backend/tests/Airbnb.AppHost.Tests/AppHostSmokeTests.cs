@@ -13,7 +13,7 @@ using SkiaSharp;
 
 namespace Airbnb.AppHost.Tests;
 
-public sealed class AppHostSmokeTests
+public sealed partial class AppHostSmokeTests
 {
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromMinutes(5);
 
@@ -83,7 +83,7 @@ public sealed class AppHostSmokeTests
         Assert.Contains("/realms/acme/protocol/openid-connect/auth?", keycloakLogin);
 
         var loginPage = await browser.GetStringAsync(keycloakLogin, ct);
-        var formAction = WebUtility.HtmlDecode(Regex.Match(loginPage, "<form[^>]*id=\"kc-form-login\"[^>]*action=\"([^\"]+)\"").Groups[1].Value);
+        var formAction = WebUtility.HtmlDecode(KeycloakLoginForm().Match(loginPage).Groups[1].Value);
         using var signedIn = await browser.PostAsync(formAction, new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["username"] = "alex@acme.test",
@@ -334,4 +334,8 @@ public sealed class AppHostSmokeTests
             return response;
         }
     }
+
+    // The action URL of Keycloak's login form, which carries the session the sign-in must post back to.
+    [GeneratedRegex("<form[^>]*id=\"kc-form-login\"[^>]*action=\"([^\"]+)\"")]
+    private static partial Regex KeycloakLoginForm();
 }

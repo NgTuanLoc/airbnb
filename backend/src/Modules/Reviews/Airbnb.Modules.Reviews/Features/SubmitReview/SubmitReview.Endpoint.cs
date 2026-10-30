@@ -13,6 +13,8 @@ internal static partial class SubmitReview
             Command command, Handler handler, CancellationToken cancellationToken) =>
             await handler.HandleAsync(command, cancellationToken) is { } review
                 ? TypedResults.Created((string?)null, ApiResponse.Ok(review))
-                : TypedResults.NotFound(ApiResponse.Fail(
-                    $"{(command.SubjectType == "stay" ? "Listing" : "Experience")} '{command.SubjectId}' was not found")));
+                : TypedResults.NotFound(ApiResponse.Fail(SubjectNotFound(command))));
+
+    private static string SubjectNotFound(Command command) =>
+        $"{(command.SubjectType == "stay" ? "Listing" : "Experience")} '{command.SubjectId}' was not found";
 }

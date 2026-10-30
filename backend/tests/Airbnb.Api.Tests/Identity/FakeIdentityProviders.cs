@@ -110,7 +110,7 @@ public sealed class FakeIdentityProviders : HttpMessageHandler
         };
     }
 
-    private static object Discovery(string issuer, string authorize, string token, string jwks) => new Dictionary<string, object>
+    private static Dictionary<string, object> Discovery(string issuer, string authorize, string token, string jwks) => new Dictionary<string, object>
     {
         ["issuer"] = issuer,
         ["authorization_endpoint"] = authorize,
@@ -208,7 +208,7 @@ public sealed class FakeIdentityProviders : HttpMessageHandler
     }
 
     // A code works once, for the provider that issued it, with its redirect_uri and the verifier behind its challenge.
-    private Grant? Redeem(IDictionary<string, Microsoft.Extensions.Primitives.StringValues> form, string provider)
+    private Grant? Redeem(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> form, string provider)
     {
         if (!_codes.TryRemove(form["code"].ToString(), out var grant) || grant.Provider != provider || form["redirect_uri"] != grant.RedirectUri)
         {

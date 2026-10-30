@@ -47,9 +47,11 @@ internal static partial class GetPhotoStatus
                 return TypedResults.Ok(ApiResponse.Ok(new PhotoStatusDto(id, PhotoStatusDto.Ready, null)));
             }
 
-            var isRejected = metadata.TryGetValue(PhotoStorage.StatusMetadata, out var status) && status == PhotoStorage.RejectedStatus;
-            return TypedResults.Ok(ApiResponse.Ok(isRejected
-                ? new PhotoStatusDto(id, PhotoStatusDto.Rejected, metadata.TryGetValue(PhotoStorage.ReasonMetadata, out var reason) ? reason : null)
-                : new PhotoStatusDto(id, PhotoStatusDto.Pending, null)));
+            if (!metadata.TryGetValue(PhotoStorage.StatusMetadata, out var status) || status != PhotoStorage.RejectedStatus)
+            {
+                return TypedResults.Ok(ApiResponse.Ok(new PhotoStatusDto(id, PhotoStatusDto.Pending, null)));
+            }
+            metadata.TryGetValue(PhotoStorage.ReasonMetadata, out var reason);
+            return TypedResults.Ok(ApiResponse.Ok(new PhotoStatusDto(id, PhotoStatusDto.Rejected, reason)));
         }).RequireAuthorization();
 }

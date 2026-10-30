@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Airbnb.SharedKernel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -51,6 +52,7 @@ internal sealed record ExternalLoginError(string Code, string Message, int Statu
 }
 
 // Thrown by providers and handlers; each endpoint turns it into the error envelope. Detail is for logs only.
+[SuppressMessage("Sonar", "S3871", Justification = "Never leaves the module: its endpoints catch it, and only the module class is public")]
 internal sealed class ExternalLoginException(ExternalLoginError error, string? detail = null, Exception? innerException = null)
     : Exception(detail ?? error.Message, innerException)
 {

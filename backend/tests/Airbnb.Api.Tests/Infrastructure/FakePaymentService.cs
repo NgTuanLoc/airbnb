@@ -83,8 +83,8 @@ public sealed class FakePaymentService : HttpMessageHandler
         {
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
-        _statuses.AddOrUpdate(bookingId, "voided", (_, status) => status is "succeeded" or "processing" ? "voided" : status);
-        return Json(HttpStatusCode.OK, new { bookingId, status = _statuses[bookingId] });
+        var status = _statuses.AddOrUpdate(bookingId, "voided", (_, current) => current is "succeeded" or "processing" ? "voided" : current);
+        return Json(HttpStatusCode.OK, new { bookingId, status });
     }
 
     private static HttpResponseMessage Json(HttpStatusCode code, object body) => new(code) { Content = JsonContent.Create(body) };

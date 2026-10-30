@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.AI;
 
 namespace Airbnb.Assistant.Tools;
@@ -27,6 +28,7 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
         TransformOptions = new AIJsonSchemaTransformOptions { UseNullableKeyword = true },
     };
 
+    [SuppressMessage("Sonar", "S2325", Justification = "The tools are delegates to this instance's methods")]
     public IList<AITool> All() =>
     [
         Tool(SearchListingsAsync, "search_listings",
@@ -84,7 +86,7 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("The catalog search failed: {Error}", exception.GetType().Name);
+            logger.LogWarning(exception, "The catalog search failed");
             return new { message = Unavailable };
         }
     }
@@ -141,7 +143,7 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("The listing lookup failed: {Error}", exception.GetType().Name);
+            logger.LogWarning(exception, "The listing lookup failed");
             return new { message = Unavailable };
         }
     }
@@ -168,7 +170,7 @@ public sealed class CatalogTools(CatalogClient catalog, FoundListings found, ILo
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("The quote failed: {Error}", exception.GetType().Name);
+            logger.LogWarning(exception, "The quote failed");
             return new { message = Unavailable };
         }
     }

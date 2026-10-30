@@ -135,24 +135,9 @@ internal static partial class CreateBooking
                 CreatedAt = time.GetUtcNow(),
             };
             outbox.DbContext.Bookings.Add(booking);
-            for (var attempt = 1; ; attempt++)
+            if (!await TrySaveAsync(cancellationToken))
             {
-                try
-                {
-                    // A failed statement rolls back and leaves the entity Added, so calling again re-inserts it.
-                    await outbox.DbContext.SaveChangesAsync(cancellationToken);
-                    break;
-                }
-                catch (Exception exception) when (IsOverlap(exception) || (IsDeadlock(exception) && attempt >= MaxInsertAttempts))
-                {
-                    // The database refuses overlapping pending or confirmed stays, however many guests book at once
-                    // (spec §1), before anyone is charged. A deadlock that survives every retry is reported the same way.
-                    return TypedResults.Conflict(ApiResponse.Fail(Taken));
-                }
-                catch (Exception exception) when (IsDeadlock(exception))
-                {
-                    // Retry: the other insert has finished or been rolled back by now.
-                }
+                return TypedResults.Conflict(ApiResponse.Fail(Taken));
             }
 
             var charge = await payments.ChargeAsync(booking.Id, booking.Total, card, cancellationToken);
@@ -166,11 +151,11 @@ internal static partial class CreateBooking
                     break;
                 case ChargeStatus.InvalidCard:
                     // Nothing was charged and nothing is worth keeping: the guest fixes a typo and books again.
-                    await outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
+                    await ReleaseAsync(booking, cancellationToken);
                     return TypedResults.BadRequest(ApiResponse.Fail(InvalidCard, "invalid_card"));
                 case ChargeStatus.Unavailable:
                     // Refused before any charge: free the nights rather than hold them for a reconciler that can't settle them.
-                    await outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
+                    await ReleaseAsync(booking, cancellationToken);
                     return TypedResults.Json(ApiResponse.Fail("Payments are unavailable right now. Try again later."),
                         statusCode: StatusCodes.Status503ServiceUnavailable);
             }
@@ -186,5 +171,33 @@ internal static partial class CreateBooking
                 ? TypedResults.Created($"/api/bookings/{booking.Id}", dto)
                 : TypedResults.Accepted($"/api/bookings/{booking.Id}", dto);
         }
+
+        // Saves the pending booking, holding its nights. False when they're taken: the database refuses overlapping
+        // pending or confirmed stays, however many guests book at once (spec §1), before anyone is charged. A deadlock
+        // that survives every retry is reported the same way.
+        private async Task<bool> TrySaveAsync(CancellationToken cancellationToken)
+        {
+            for (var attempt = 1; attempt <= MaxInsertAttempts; attempt++)
+            {
+                try
+                {
+                    // A failed statement rolls back and leaves the entity Added, so saving again re-inserts it.
+                    await outbox.DbContext.SaveChangesAsync(cancellationToken);
+                    return true;
+                }
+                catch (Exception exception) when (IsDeadlock(exception) && attempt < MaxInsertAttempts)
+                {
+                    // Retry: the other insert has finished or been rolled back by now.
+                }
+                catch (Exception exception) when (IsOverlap(exception) || IsDeadlock(exception))
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        private Task<int> ReleaseAsync(Booking booking, CancellationToken cancellationToken) =>
+            outbox.DbContext.Bookings.Where(b => b.Id == booking.Id && b.Status == BookingStatus.Pending).ExecuteDeleteAsync(cancellationToken);
     }
 }
