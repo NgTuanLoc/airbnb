@@ -6,6 +6,8 @@ vi.mock("react-map-gl/maplibre", () => ({
   default: ({ children }: { children?: ReactNode }) => <div data-testid="map">{children}</div>,
   Marker: ({ children }: { children?: ReactNode }) => <div data-testid="marker">{children}</div>,
 }));
+const { setWorkerUrl } = vi.hoisted(() => ({ setWorkerUrl: vi.fn() }));
+vi.mock("maplibre-gl", () => ({ setWorkerUrl }));
 
 import { ListingMap, MAP_STYLE } from "./listing-map";
 import type { Listing } from "@/lib/types";
@@ -42,5 +44,9 @@ describe("ListingMap", () => {
 
   test("uses the CARTO no-key basemap style", () => {
     expect(MAP_STYLE).toBe("https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json");
+  });
+
+  test("points maplibre at its worker before any map is made", () => {
+    expect(setWorkerUrl).toHaveBeenCalledWith(expect.stringMatching(/maplibre-gl-worker\.mjs/));
   });
 });

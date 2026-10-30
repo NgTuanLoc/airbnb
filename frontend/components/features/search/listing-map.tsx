@@ -1,10 +1,16 @@
 "use client";
 
+import { setWorkerUrl } from "maplibre-gl";
 import Map, { Marker } from "react-map-gl/maplibre";
 import type { Listing } from "@/lib/types";
 import { PriceMarker } from "./price-marker";
 
 export const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+
+// maplibre-gl 6 looks for its worker beside its own module, which a bundled chunk isn't, and without one the map
+// can't load tiles. Next emits the worker as an asset: point maplibre at it (MapLibre's documented Next.js setup).
+// This module only runs in the browser (it's loaded with ssr: false), before the first map is made.
+setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).toString());
 
 export interface ListingMapProps {
   listings: Listing[];
