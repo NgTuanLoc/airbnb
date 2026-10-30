@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using Airbnb.Assistant.Ask;
 using Airbnb.Assistant.Tools;
 using Microsoft.AspNetCore.HttpOverrides;
+using Scalar.AspNetCore;
 
 // The assistant (docs/superpowers/specs/2026-10-29-assistant-design.md): answers guests' questions with the AppHost's
 // Ollama model, grounded by read-only tools over the Next server's public catalog. Stateless: the page sends the
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 // None of ServiceDefaults' resilience handlers on this service's two clients. The model's answer is one POST, never
 // retried, that a cold model on a CPU can take longer than their 10 s per attempt to start: the answer's own timeout
 // bounds it instead. A failed catalog lookup is told to the model at once (it says it can't check) rather than keeping
@@ -49,6 +51,14 @@ var app = builder.Build();
 app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedFor });
 app.UseRateLimiter();
 app.MapDefaultEndpoints();
+
+// The API reference: /scalar (the dashboard links there), over /openapi/v1.json.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 app.MapAsk();
 
 await app.RunAsync();

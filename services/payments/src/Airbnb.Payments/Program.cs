@@ -3,6 +3,7 @@ using Airbnb.Payments.Api;
 using Airbnb.Payments.Cards;
 using Airbnb.Payments.Data;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using Wolverine;
 using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
@@ -13,6 +14,7 @@ using Wolverine.RabbitMQ;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new FakeProcessor(builder.Configuration.GetValue("Payments:SlowCardDelay", TimeSpan.FromSeconds(10))));
 
@@ -43,6 +45,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.MapDefaultEndpoints();
+
+// The API reference: /scalar (the dashboard links there), over /openapi/v1.json.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 app.MapPayments();
 
 await app.RunAsync();

@@ -4,6 +4,7 @@ using Airbnb.Chat.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR;
+using Scalar.AspNetCore;
 using StackExchange.Redis;
 
 // The chat service (docs/superpowers/specs/2026-10-29-chat-service-design.md): guests and hosts message each other live.
@@ -12,6 +13,7 @@ using StackExchange.Redis;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.AddMongoDBClient("chatdb");
@@ -36,6 +38,14 @@ await app.Services.GetRequiredService<ChatStore>().EnsureIndexesAsync(Cancellati
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();
+
+// The API reference: /scalar (the dashboard links there), over /openapi/v1.json.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 app.MapConversations();
 // WebSockets only: the long-polling and server-sent-events fallbacks need the negotiate request and sticky sessions,
 // which two instances behind the gateway don't have. A connection closes when its token expires; clients reconnect

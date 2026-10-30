@@ -4,6 +4,7 @@ using Airbnb.Notifications.Email;
 using Airbnb.Notifications.Handlers;
 using Airbnb.Notifications.Reminders;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using Wolverine;
 using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
@@ -14,6 +15,7 @@ using Wolverine.RabbitMQ;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SmtpEmailSender>();
 builder.Services.AddHostedService<DueReminderSweep>();
@@ -52,6 +54,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 app.MapDefaultEndpoints();
+
+// The API reference: /scalar (the dashboard links there), over /openapi/v1.json.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 app.MapSendDue();
 
 await app.RunAsync();

@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Microsoft.Extensions.AI" />
   </ItemGroup>
 
