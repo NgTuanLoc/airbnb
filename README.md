@@ -87,4 +87,4 @@ dotnet user-secrets set "Identity:GitHub:ClientSecret" "<client secret>" --proje
 
 ## Code quality (SonarQube)
 
-`pwsh tools/sonar/scan.ps1` scans the backend, the services and the frontend with a local SonarQube (Docker), prints the quality gate and the open issues, and writes them to `tools/sonar/.local/`. Add `-Coverage` to import the tests' coverage. See [tools/sonar/README.md](tools/sonar/README.md).
+`pwsh tools/sonar/scan.ps1` scans the backend, the services and the frontend with a local SonarQube (Docker), prints the quality gate and the open issues, and writes them to `tools/sonar/.local/`. It runs the tests first, for coverage (`-SkipTests` reuses the last run's). See [tools/sonar/README.md](tools/sonar/README.md).

@@ -4,14 +4,14 @@
     Scans the repo with a local SonarQube: the .NET solutions (backend and services) and the frontend.
 
 .DESCRIPTION
-    Runs SonarQube Community Build in Docker, scans, waits for the server to process each analysis, then prints the
-    quality gate and a summary and writes every open issue to tools/sonar/.local/issues-<project>.json.
-    See tools/sonar/README.md.
+    Runs SonarQube Community Build in Docker, runs the tests for coverage, scans, waits for the server to process each
+    analysis, then prints the quality gate and a summary and writes every open issue to
+    tools/sonar/.local/issues-<project>.json. See tools/sonar/README.md.
 
 .EXAMPLE
-    ./tools/sonar/scan.ps1                  # scan both projects
+    ./tools/sonar/scan.ps1                  # scan both projects, with the tests' coverage
     ./tools/sonar/scan.ps1 -Only frontend   # or dotnet
-    ./tools/sonar/scan.ps1 -Coverage        # also run the tests and import their coverage
+    ./tools/sonar/scan.ps1 -SkipTests       # faster: reuse the coverage of the last run that ran the tests
     ./tools/sonar/scan.ps1 -Rules core      # a smaller rule set (default: comprehensive)
     ./tools/sonar/scan.ps1 -IssuesOnly      # print and export the issues of the last scans again
     ./tools/sonar/scan.ps1 -Stop            # stop the server (-Reset also deletes its data and the local credentials)
@@ -21,7 +21,8 @@ param(
     [ValidateSet('all', 'dotnet', 'frontend')] [string] $Only = 'all',
     # The built-in "Sonar way" tiers. Comprehensive replaces the former "Sonar way"; the server's own default is core.
     [ValidateSet('core', 'extended', 'comprehensive')] [string] $Rules = 'comprehensive',
-    [switch] $Coverage,
+    # Coverage is part of the quality gate, so the tests run by default; this reuses the last run's reports instead.
+    [switch] $SkipTests,
     [switch] $IssuesOnly,
     [switch] $Stop,
     [switch] $Reset
@@ -46,6 +47,7 @@ $reportTasks = @{
 }
 $passwordFile = Join-Path $local 'admin-password'
 $tokenFile = Join-Path $local 'token'
+$coverageNotes = @{}
 
 function Assert-ExitCode([string] $Step) {
     if ($LASTEXITCODE) { throw "$Step failed (exit code $LASTEXITCODE)" }
@@ -146,6 +148,13 @@ function Install-DotnetScanner {
     Join-Path $tools ($IsWindows ? 'dotnet-sonarscanner.exe' : 'dotnet-sonarscanner')
 }
 
+# Where a project's coverage comes from, judged by the report files there are once the tests (if any) have run.
+function Get-CoverageNote([IO.FileInfo[]] $Reports) {
+    if (-not $Reports) { return $SkipTests ? 'none (run once without -SkipTests)' : 'none (the tests wrote no report)' }
+    if (-not $SkipTests) { return "from this run's tests" }
+    "reused from the tests run $(($Reports | Measure-Object LastWriteTime -Maximum).Maximum.ToString('yyyy-MM-dd HH:mm'))"
+}
+
 function Invoke-DotnetScan([string] $Token) {
     $scanner = Install-DotnetScanner
     $work = Join-Path $local 'dotnet'
@@ -163,14 +172,20 @@ function Invoke-DotnetScan([string] $Token) {
         # except the frontend, which is its own project (its test files too: exclusions only apply to sources).
         "/d:sonar.projectBaseDir=$root", '/d:sonar.exclusions=frontend/**,**/Migrations/**', '/d:sonar.test.exclusions=frontend/**'
     )
-    if ($Coverage) {
+    # Without a report the C# analysis counts every executable line as uncovered (0%), failing the gate's coverage
+    # condition: this run's tests write the reports, or -SkipTests reuses the last ones.
+    $coverageReports = Join-Path $coverageDir '*.xml'
+    if ($SkipTests) {
+        $reports = @(Get-ChildItem $coverageReports -ErrorAction SilentlyContinue).FullName
+    } else {
+        Remove-Item $coverageDir -Recurse -Force -ErrorAction SilentlyContinue
         $reports = $testProjects | ForEach-Object { Join-Path $coverageDir "$($_.BaseName).xml" }
-        $begin += "/d:sonar.cs.vscoveragexml.reportsPaths=$($reports -join ',')"
     }
+    if ($reports) { $begin += "/d:sonar.cs.vscoveragexml.reportsPaths=$($reports -join ',')" }
 
     # begin, the builds and end run in .local/dotnet: .sonarqube/ stays out of the repo, and the copy of backend's
     # global.json picks the SDK and test runner every solution pins (the repo root may resolve a newer, preview SDK).
-    Remove-Item $work, $coverageDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force $work | Out-Null
     Copy-Item (Join-Path $root 'backend/global.json') $work
     Push-Location $work
@@ -182,7 +197,7 @@ function Invoke-DotnetScan([string] $Token) {
             dotnet build $solution.FullName --no-incremental --artifacts-path $artifacts -nologo -v q
             Assert-ExitCode "Building $($solution.Name)"
         }
-        if ($Coverage) {
+        if (-not $SkipTests) {
             foreach ($project in $testProjects) {
                 Write-Host "Testing $($project.BaseName)..."
                 dotnet test --project $project.FullName --no-build --artifacts-path $artifacts --results-directory $coverageDir `
@@ -191,6 +206,7 @@ function Invoke-DotnetScan([string] $Token) {
                 if ($LASTEXITCODE) { Write-Warning "$($project.BaseName): tests failed (exit code $LASTEXITCODE)" }
             }
         }
+        $coverageNotes.dotnet = Get-CoverageNote @(Get-ChildItem $coverageReports -ErrorAction SilentlyContinue)
         & $scanner end "/d:sonar.token=$Token"
         Assert-ExitCode 'dotnet-sonarscanner end'
     } finally {
@@ -207,14 +223,18 @@ function Invoke-FrontendScan([string] $Token) {
         '-Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/test-*.ts,**/test-*.tsx,vitest.setup.ts,e2e/**',
         "-Dsonar.working.directory=$(Split-Path $reportTasks.frontend)"
     )
-    if ($Coverage) { $properties += '-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info' }
 
     Push-Location (Join-Path $root 'frontend')
     try {
-        if ($Coverage) {
+        if (-not $SkipTests) {
+            # Vitest clears coverage/ first, so a report left over from an earlier run never stands in for this one.
             npx vitest run --coverage --coverage.reporter=lcovonly
             if ($LASTEXITCODE) { Write-Warning "Frontend tests failed (exit code $LASTEXITCODE)" }
         }
+        # The npm scanner picks up coverage/lcov.info by itself; named here so both projects read the same way.
+        $lcov = @(Get-Item 'coverage/lcov.info' -ErrorAction SilentlyContinue)
+        $coverageNotes.frontend = Get-CoverageNote $lcov
+        if ($lcov) { $properties += '-Dsonar.javascript.lcov.reportPaths=coverage/lcov.info' }
         npx --yes "@sonar/scan@$NpmScannerVersion" @properties
         Assert-ExitCode 'Scanning the frontend'
     } finally {
@@ -231,7 +251,7 @@ function Wait-Processing([string] $ReportTask, [string] $Auth) {
     if ($task.status -ne 'SUCCESS') { throw "The server couldn't process the analysis ($($task.status)): $($task.errorMessage)" }
 }
 
-function Write-Report([string] $Key, [string] $Auth) {
+function Write-Report([string] $Key, [string] $Auth, [string] $CoverageNote) {
     $issues = [Collections.Generic.List[object]]::new()
     $ruleNames = @{}
     for ($page = 1; ; $page++) {
@@ -257,10 +277,13 @@ function Write-Report([string] $Key, [string] $Auth) {
     ConvertTo-Json -InputObject $rows -Depth 3 | Set-Content -LiteralPath $exportFile
 
     $gate = (Invoke-Api GET '/api/qualitygates/project_status' $Auth @{ projectKey = $Key }).projectStatus
-    Write-Host "`n== ${Key}: quality gate $($gate.status), $($rows.Count) open issues"
+    $coverage = ((Invoke-Api GET '/api/measures/component' $Auth @{ component = $Key; metricKeys = 'coverage' }).component.measures |
+        Where-Object metric -eq 'coverage').value
+    Write-Host "`n== ${Key}: quality gate $($gate.status), $($rows.Count) open issues, coverage $($coverage ? "$coverage%" : 'none')"
     $gate.conditions | Where-Object status -eq 'ERROR' | ForEach-Object {
         Write-Host "   failed condition: $($_.metricKey) is $($_.actualValue) (threshold $($_.errorThreshold))"
     }
+    if ($CoverageNote) { Write-Host "   coverage:  $CoverageNote" }
     if ($rows.Count) {
         $issues.impacts | Group-Object softwareQuality, severity | Sort-Object Name |
             Format-Table Count, @{ Label = 'Quality, severity'; Expression = 'Name' } -AutoSize | Out-Host
@@ -292,6 +315,6 @@ foreach ($target in $targets) {
         if ($target -eq 'dotnet') { Invoke-DotnetScan $token } else { Invoke-FrontendScan $token }
         Wait-Processing $reportTasks[$target] "Bearer $token"
     }
-    Write-Report $projects[$target] "Bearer $token"
+    Write-Report $projects[$target] "Bearer $token" $coverageNotes[$target]
 }
 Write-Host "`nDashboard sign-in: admin, with the password in $passwordFile"

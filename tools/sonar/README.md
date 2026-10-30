@@ -18,9 +18,9 @@ Nothing to install globally and no Java: the script installs the pinned SonarSca
 From the repo root:
 
 ```powershell
-./tools/sonar/scan.ps1                  # scan both projects
+./tools/sonar/scan.ps1                  # run the tests, then scan both projects with their coverage
 ./tools/sonar/scan.ps1 -Only dotnet     # or -Only frontend
-./tools/sonar/scan.ps1 -Coverage        # also run the tests and import their coverage (see Coverage)
+./tools/sonar/scan.ps1 -SkipTests       # faster: reuse the coverage of the last run that ran the tests
 ./tools/sonar/scan.ps1 -Rules core      # a smaller rule set (see Rules)
 ./tools/sonar/scan.ps1 -IssuesOnly      # print and export the last results again, without scanning
 ./tools/sonar/scan.ps1 -Stop            # stop the server (its data stays)
@@ -33,6 +33,7 @@ default admin password with a random one and creates a token. Later runs reuse a
 After each scan the script waits for the server to process the analysis, then prints:
 
 - the quality gate status, with any failed conditions
+- the coverage, and where it came from (this run's tests, or the run `-SkipTests` reused)
 - the open issues by software quality and severity
 - the 20 most frequent rules
 
@@ -73,20 +74,24 @@ Build 26.10.
 
 ## Coverage
 
-`-Coverage` runs the tests and sends their coverage with the analysis:
+Coverage is part of the quality gate (80% on new code), so every scan runs the tests first and sends their coverage:
 
 - **backend:** `Airbnb.UnitTests` and `Airbnb.Api.Tests`
 - **services:** each service's tests
 - **frontend:** the Vitest suite, as lcov
 
-The integration tests start containers with Testcontainers, so Docker must be running, and the run takes several
-minutes longer. Two suites are left out:
+The integration tests start containers with Testcontainers (Docker is running anyway for the server), so a full scan
+takes about 10 minutes. Two suites are left out:
 
 - the architecture tests, which run no product code
 - the AppHost smoke test, which needs the whole stack and port 3000
 
-Failing tests show up as warnings; the scan goes on with the coverage they produced. Without `-Coverage`, the dashboard
-has no coverage figures.
+Failing tests show up as warnings; the scan goes on with the coverage they produced.
+
+`-SkipTests` scans in a few minutes and reuses the reports the last full run left in `tools/sonar/.local/coverage` and
+`frontend/coverage/lcov.info`; the summary says when they were made. Use it while fixing issues, then end with a full
+run: reused coverage doesn't match code changed since, and with no report at all the C# analysis counts every line as
+uncovered (0.0%) and the gate fails.
 
 ## Fixing issues
 
