@@ -9,7 +9,7 @@ import type { Booking } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Reservations · Airbnb" };
 
-function ReservationList({ title, reservations, titles }: { title: string; reservations: Booking[]; titles: Map<string, string> }) {
+function ReservationList({ title, reservations, titles }: Readonly<{ title: string; reservations: Booking[]; titles: Map<string, string> }>) {
   if (reservations.length === 0) return null;
   return (
     <section className="flex flex-col gap-4">

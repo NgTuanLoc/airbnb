@@ -140,7 +140,7 @@ describe("PhotoUploader", () => {
 
   test("shows keyboard focus on the drop zone", () => {
     render(<PhotoUploader remaining={5} onReady={vi.fn()} />);
-    expect(screen.getByText("Upload photos").className).toContain("has-[:focus-visible]:border-ink");
+    expect(screen.getByText("Upload photos").closest("label")?.className).toContain("has-[:focus-visible]:border-ink");
   });
 
   test("is disabled when the listing has no photo slots left, and uploads no more than remain", () => {

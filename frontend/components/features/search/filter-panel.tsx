@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/design-system";
 
 export interface FilterValues {
@@ -34,24 +34,45 @@ function toNumberOrUndefined(value: string): number | undefined {
 const stepButton =
   "flex h-8 w-8 items-center justify-center rounded-full border border-border-strong text-ink disabled:cursor-not-allowed disabled:opacity-40";
 
-export function FilterPanel({ initial, onApply, onClose }: FilterPanelProps) {
+export function FilterPanel({ initial, onApply, onClose }: Readonly<FilterPanelProps>) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [draft, setDraft] = useState<FilterValues>(initial);
+
+  // A native modal: focus trap, Esc and a backdrop. It unmounts on close, so focus goes back by hand to its opener.
+  useEffect(() => {
+    const opener = document.activeElement;
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, []);
+
+  // A tap on the backdrop (the dialog element itself, around its content) closes it.
+  function handleDialogClick(event: React.MouseEvent) {
+    if (event.target === dialogRef.current) onClose();
+  }
 
   function setField(key: keyof FilterValues, value: number | undefined) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div data-testid="filter-backdrop" className="absolute inset-0 bg-scrim/50" aria-hidden onClick={onClose} />
-      <div role="dialog" aria-label="Filters" className="relative z-10 w-full max-w-[480px] rounded-lg bg-canvas p-6 shadow-airbnb">
+    <dialog // NOSONAR: light dismiss on the backdrop; the keyboard closes it with Esc
+      ref={dialogRef}
+      aria-label="Filters"
+      onClose={onClose}
+      onClick={handleDialogClick}
+      className="m-auto w-[480px] rounded-lg bg-canvas p-0 shadow-airbnb backdrop:bg-scrim/50"
+    >
+      <div className="p-6">
         <h2 className="mb-4 text-display-sm text-ink">Filters</h2>
 
         <section className="border-b border-hairline pb-4">
           <h3 className="mb-2 text-title-sm text-ink">Price range</h3>
           <div className="flex items-center gap-3">
             <label className="flex flex-1 flex-col text-caption text-muted">
-              Min
+              <span>Min</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -62,7 +83,7 @@ export function FilterPanel({ initial, onApply, onClose }: FilterPanelProps) {
               />
             </label>
             <label className="flex flex-1 flex-col text-caption text-muted">
-              Max
+              <span>Max</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -111,6 +132,6 @@ export function FilterPanel({ initial, onApply, onClose }: FilterPanelProps) {
           <Button onClick={() => onApply(draft)}>Show results</Button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { City } from "@/lib/types";
 
-export function CityLinkGrid({ cities }: { cities: City[] }) {
+export function CityLinkGrid({ cities }: Readonly<{ cities: City[] }>) {
   return (
     <section className="flex flex-col gap-6">
       <h2 className="text-display-sm text-ink">Inspiration for future getaways</h2>

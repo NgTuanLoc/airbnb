@@ -6,7 +6,7 @@ import { pathWithNext, safeNextPath } from "@/lib/auth/next-path";
 
 export const metadata: Metadata = { title: "Log in with SSO · Airbnb" };
 
-export default async function SsoPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default async function SsoPage({ searchParams }: Readonly<{ searchParams: Promise<{ next?: string }> }>) {
   const { next } = await searchParams;
   const safeNext = safeNextPath(next);
   return (

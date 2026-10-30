@@ -10,7 +10,7 @@ import type { Booking, Listing } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Trips · Airbnb" };
 
-function TripCard({ booking, listing }: { booking: Booking; listing: Listing | undefined }) {
+function TripCard({ booking, listing }: Readonly<{ booking: Booking; listing: Listing | undefined }>) {
   return (
     <Link href={`/trips/${booking.id}`} className="flex gap-4 rounded-md border border-hairline p-4 hover:shadow-airbnb">
       <div className="relative size-24 shrink-0 overflow-hidden rounded-sm bg-surface-soft">
@@ -28,7 +28,7 @@ function TripCard({ booking, listing }: { booking: Booking; listing: Listing | u
   );
 }
 
-function TripSection({ title, trips, listings }: { title: string; trips: Booking[]; listings: Map<string, Listing> }) {
+function TripSection({ title, trips, listings }: Readonly<{ title: string; trips: Booking[]; listings: Map<string, Listing> }>) {
   if (trips.length === 0) return null;
   return (
     <section className="flex flex-col gap-4">

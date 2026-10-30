@@ -14,7 +14,7 @@ export function DatePickerDay({
   inRange,
   disabled,
   onSelect,
-}: DatePickerDayProps) {
+}: Readonly<DatePickerDayProps>) {
   return (
     <button
       type="button"

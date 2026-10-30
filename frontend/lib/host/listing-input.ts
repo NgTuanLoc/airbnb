@@ -7,7 +7,9 @@ const MAX_OFFSET_STEPS = 2000; // ±0.02° in 0.00001° steps
 /** A stable offset in [-0.02, 0.02]° from the listing id, so host listings in one city don't share a map pin. */
 export function coordinateOffset(id: string, salt: string): number {
   let hash = 0;
-  for (const ch of salt + id) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  for (const ch of salt + id) {
+    hash = (hash * 31 + (ch.codePointAt(0) ?? 0)) | 0; // NOSONAR: | 0 wraps to 32 bits, as Java's String.hashCode does; it isn't a truncation
+  }
   return ((Math.abs(hash) % (2 * MAX_OFFSET_STEPS + 1)) - MAX_OFFSET_STEPS) / 100000;
 }
 

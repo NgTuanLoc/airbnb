@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const itemClass = "block px-4 py-3 text-left text-body-md text-ink hover:bg-surface-soft";
 
-export function MobileNav({ active }: { active: Product }) {
+export function MobileNav({ active }: Readonly<{ active: Product }>) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -28,7 +28,7 @@ export function MobileNav({ active }: { active: Product }) {
   );
 }
 
-function MobileNavSheet({ active, onClose }: { active: Product; onClose: () => void }) {
+function MobileNavSheet({ active, onClose }: Readonly<{ active: Product; onClose: () => void }>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function MobileNavSheet({ active, onClose }: { active: Product; onClose: () => v
   }
 
   return (
-    <dialog
+    <dialog // NOSONAR: light dismiss on the backdrop and after a link; the keyboard has Esc and the links themselves
       ref={dialogRef}
       aria-label="Menu"
       onClose={onClose}

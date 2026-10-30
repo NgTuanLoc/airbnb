@@ -6,7 +6,7 @@ export interface HostCardProps {
   host: Host;
 }
 
-export function HostCard({ host }: HostCardProps) {
+export function HostCard({ host }: Readonly<HostCardProps>) {
   return (
     <section className="rounded-md border border-hairline bg-canvas p-6 shadow-airbnb">
       <div className="flex items-center gap-4">

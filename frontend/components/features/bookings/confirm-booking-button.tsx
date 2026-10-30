@@ -10,26 +10,32 @@ import type { BookingRequest } from "@/lib/bookings/schemas";
 
 const EXPIRY = /^(\d{2})\s*\/\s*(\d{2})$/;
 
+// A text field's value; the card fields are never files.
+function textOf(form: FormData, name: string): string {
+  const value = form.get(name);
+  return typeof value === "string" ? value : "";
+}
+
 /** The payment form: takes a card and books with it. The card goes to our server once and is never kept. */
-export function ConfirmBookingButton({ request }: { request: BookingRequest }) {
+export function ConfirmBookingButton({ request }: Readonly<{ request: BookingRequest }>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function confirm(event: React.FormEvent<HTMLFormElement>) {
+  async function confirm(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const expiry = EXPIRY.exec(String(form.get("expiry")).trim());
+    const expiry = EXPIRY.exec(textOf(form, "expiry").trim());
     if (!expiry) {
       setError("Enter the expiry as MM/YY");
       return;
     }
     const card = {
-      number: String(form.get("number")),
+      number: textOf(form, "number"),
       expMonth: Number(expiry[1]),
       expYear: 2000 + Number(expiry[2]),
-      cvc: String(form.get("cvc")),
+      cvc: textOf(form, "cvc"),
     };
     setPending(true);
     setError(null);

@@ -27,7 +27,7 @@ function initialView(listings: Listing[]) {
   };
 }
 
-export function ListingMap({ listings, selectedId, onSelect }: ListingMapProps) {
+export function ListingMap({ listings, selectedId, onSelect }: Readonly<ListingMapProps>) {
   return (
     <Map initialViewState={initialView(listings)} mapStyle={MAP_STYLE} style={{ width: "100%", height: "100%" }}>
       {listings.map((listing) => (

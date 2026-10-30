@@ -18,21 +18,21 @@ function overlaps(a: Pick<Booking, "checkIn" | "checkOut">, b: Pick<Booking, "ch
 }
 
 export const mockBookingRepository: BookingRepository = {
-  async listForUser(userId) {
-    return bookingsOf(userId);
+  listForUser(userId) {
+    return Promise.resolve(bookingsOf(userId));
   },
 
-  async findById(userId, id) {
-    return allBookings().find((b) => b.id === id && (b.guestId === userId || b.hostId === userId)) ?? null;
+  findById(userId, id) {
+    return Promise.resolve(allBookings().find((b) => b.id === id && (b.guestId === userId || b.hostId === userId)) ?? null);
   },
 
   // The quote is unused: the route already priced the booking and set its hostId. Without a card it pays (tests only;
   // the route always sends one). The slow test card stays pending: there's no reconciler here.
-  async create(guest, booking, _quote, card) {
+  create(guest, booking, _quote, card) {
     const taken = allBookings().some((b) => holdsNights(b) && b.listingId === booking.listingId && overlaps(b, booking));
-    if (taken) return "unavailable";
+    if (taken) return Promise.resolve("unavailable");
     const outcome = card ? cardOutcome(card, new Date()) : "succeeded";
-    if (outcome !== "succeeded" && outcome !== "pending") return { paymentError: outcome };
+    if (outcome !== "succeeded" && outcome !== "pending") return Promise.resolve({ paymentError: outcome });
     const created: Booking = {
       ...booking,
       id: crypto.randomUUID(),
@@ -43,27 +43,28 @@ export const mockBookingRepository: BookingRepository = {
       createdAt: new Date().toISOString(),
     };
     store.set(guest.id, [...bookingsOf(guest.id), created]);
-    return created;
+    return Promise.resolve(created);
   },
 
-  async cancel(userId, id) {
+  cancel(userId, id) {
     const booking = bookingsOf(userId).find((b) => b.id === id);
-    if (!booking) return "not-found";
-    if (booking.status === "cancelled") return booking;
-    if (booking.checkIn <= today()) return "started";
+    if (!booking) return Promise.resolve("not-found");
+    if (booking.status === "cancelled") return Promise.resolve(booking);
+    if (booking.checkIn <= today()) return Promise.resolve("started");
     const cancelled: Booking = { ...booking, status: "cancelled", cancelledAt: new Date().toISOString() };
     store.set(userId, bookingsOf(userId).map((b) => (b.id === id ? cancelled : b)));
-    return cancelled;
+    return Promise.resolve(cancelled);
   },
 
-  async listForHost(hostId) {
-    return allBookings().filter((b) => b.hostId === hostId).sort(byCheckIn);
+  listForHost(hostId) {
+    return Promise.resolve(allBookings().filter((b) => b.hostId === hostId).sort(byCheckIn));
   },
 
-  async availability(listingId) {
-    return allBookings()
+  availability(listingId) {
+    const taken = allBookings()
       .filter((b) => b.listingId === listingId && holdsNights(b) && b.checkOut > today())
       .sort(byCheckIn)
       .map(({ checkIn, checkOut }) => ({ checkIn, checkOut }));
+    return Promise.resolve(taken);
   },
 };

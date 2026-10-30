@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Login & security · Airbnb" };
 type Params = { connected?: string; error?: string; provider?: string };
 
 /** The sign-in methods on the account: its email, whether it has a password, and Google / GitHub / SSO (OAuth spec section 2). */
-export default async function SecurityPage({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function SecurityPage({ searchParams }: Readonly<{ searchParams: Promise<Params> }>) {
   const user = await requireSession(ACCOUNT_SECURITY_PATH);
   const token = await getSessionToken();
   const info = token

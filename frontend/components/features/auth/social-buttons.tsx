@@ -19,7 +19,7 @@ interface SocialButtonsProps {
 const optionClass = cn(buttonClassName("secondary"), "relative w-full disabled:opacity-60");
 
 /** "or", then Continue with Google / GitHub / SSO; nothing at all when no provider is on. */
-export function SocialButtons({ providers, sso, next = "/" }: SocialButtonsProps) {
+export function SocialButtons({ providers, sso, next = "/" }: Readonly<SocialButtonsProps>) {
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

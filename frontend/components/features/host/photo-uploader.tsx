@@ -21,7 +21,7 @@ export interface PhotoUploaderProps {
 }
 
 /** Uploads host photos and waits for the backend to process them; finished photos leave this list via onReady. */
-export function PhotoUploader({ remaining, onReady, onPendingChange }: PhotoUploaderProps) {
+export function PhotoUploader({ remaining, onReady, onPendingChange }: Readonly<PhotoUploaderProps>) {
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [pickError, setPickError] = useState<string | null>(null);
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -103,10 +103,8 @@ export function PhotoUploader({ remaining, onReady, onPendingChange }: PhotoUplo
   function pick(files: FileList | null) {
     setPickError(null);
     const picked = Array.from(files ?? []);
-    const wrongType = picked.find((file) => !ACCEPTED_TYPES.includes(file.type));
-    const tooLarge = picked.find((file) => file.size > MAX_BYTES);
-    if (wrongType) setPickError(photoUploadMessage("photo_unsupported_type"));
-    else if (tooLarge) setPickError(photoUploadMessage("photo_too_large"));
+    if (picked.some((file) => !ACCEPTED_TYPES.includes(file.type))) setPickError(photoUploadMessage("photo_unsupported_type"));
+    else if (picked.some((file) => file.size > MAX_BYTES)) setPickError(photoUploadMessage("photo_too_large"));
     picked
       .filter((file) => ACCEPTED_TYPES.includes(file.type) && file.size <= MAX_BYTES)
       .slice(0, Math.max(slots, 0))
@@ -123,7 +121,7 @@ export function PhotoUploader({ remaining, onReady, onPendingChange }: PhotoUplo
           if (slots > 0) pick(event.dataTransfer.files);
         }}
       >
-        Upload photos
+        <span>Upload photos</span>
         <input
           type="file"
           className="sr-only"

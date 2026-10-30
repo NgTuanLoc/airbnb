@@ -8,7 +8,7 @@ describe("TripLoading", () => {
     const main = screen.getByRole("main");
     expect(main).toHaveAttribute("id", "main");
     expect(main).toHaveAttribute("aria-busy", "true");
-    expect(container.querySelectorAll(".h-64").length).toBe(1);
-    expect(container.querySelectorAll(".h-4").length).toBe(3);
+    expect(container.querySelectorAll(".h-64")).toHaveLength(1);
+    expect(container.querySelectorAll(".h-4")).toHaveLength(3);
   });
 });

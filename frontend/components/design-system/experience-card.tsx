@@ -2,7 +2,7 @@ import Image from "next/image";
 import type { Experience } from "@/lib/types";
 import { NewBadge } from "./badges";
 
-export function ExperienceCard({ experience }: { experience: Experience }) {
+export function ExperienceCard({ experience }: Readonly<{ experience: Experience }>) {
   return (
     <article className="group flex flex-col gap-2">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-md">

@@ -9,11 +9,11 @@ import { getRepositories } from "@/lib/repositories";
 
 export const metadata: Metadata = { title: "Edit listing · Airbnb" };
 
-export default async function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditListingPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const user = await requireSession(`/host/listings/${id}/edit`);
   const listing = await getRepositories().hostListings.findById(id);
-  if (!listing || listing.hostId !== user.id) notFound();
+  if (listing?.hostId !== user.id) notFound();
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">

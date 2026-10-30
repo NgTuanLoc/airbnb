@@ -7,7 +7,7 @@ export interface ListingOverviewProps {
   viewsNote?: string | null;
 }
 
-export function ListingOverview({ listing, viewsNote }: ListingOverviewProps) {
+export function ListingOverview({ listing, viewsNote }: Readonly<ListingOverviewProps>) {
   const stats = [
     { icon: Users, label: `${listing.maxGuests} guests` },
     { icon: DoorOpen, label: `${listing.bedrooms} bedroom${listing.bedrooms === 1 ? "" : "s"}` },

@@ -12,10 +12,10 @@ import { formatDateRange } from "@/lib/reservation/dates";
 export default async function TripPage({
   params,
   searchParams,
-}: {
+}: Readonly<{
   params: Promise<{ id: string }>;
   searchParams: Promise<{ confirmed?: string }>;
-}) {
+}>) {
   const { id } = await params;
   const { confirmed } = await searchParams;
   const user = await requireSession(`/trips/${id}`);

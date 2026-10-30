@@ -28,7 +28,7 @@ describe("seed listings", () => {
 
   test("every listing has 5 photos, amenities, and a known category", () => {
     for (const l of listings) {
-      expect(l.photos.length).toBe(5);
+      expect(l.photos).toHaveLength(5);
       expect(l.amenities.length).toBeGreaterThan(0);
       expect(allowedCategories).toContain(l.category);
     }

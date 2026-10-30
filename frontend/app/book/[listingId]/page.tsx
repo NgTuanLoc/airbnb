@@ -20,10 +20,10 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 export default async function BookPage({
   params,
   searchParams,
-}: {
+}: Readonly<{
   params: Promise<{ listingId: string }>;
   searchParams: Promise<SearchParams>;
-}) {
+}>) {
   const { listingId } = await params;
   const raw = await searchParams;
   const query: Record<string, string> = {};

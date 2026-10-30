@@ -9,7 +9,7 @@ import { useSessionState } from "./session-provider";
 
 type FieldErrors = Partial<Record<"email" | "password", string>>;
 
-export function LoginForm({ next = "/" }: { next?: string }) {
+export function LoginForm({ next = "/" }: Readonly<{ next?: string }>) {
   const router = useRouter();
   const session = useSessionState();
   const [email, setEmail] = useState("");
@@ -18,7 +18,7 @@ export function LoginForm({ next = "/" }: { next?: string }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = loginSchema.safeParse({ email, password });
     if (!parsed.success) {

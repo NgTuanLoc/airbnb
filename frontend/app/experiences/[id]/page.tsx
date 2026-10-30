@@ -4,7 +4,7 @@ import { TopNav, Footer, RatingDisplay, HostCard } from "@/components/design-sys
 import { ListingGallery } from "@/components/features/listing-gallery";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
 
-export default async function ExperienceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ExperienceDetailPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const repos = getRepositories();
   const experience = await repos.experiences.findById(id);

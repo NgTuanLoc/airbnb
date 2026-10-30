@@ -11,7 +11,7 @@ const emailSchema = z.email();
  * identity typed on /auth/mock-provider. The callback must be this app's own route for the provider, so this is
  * never an open redirect.
  */
-export const GET = withErrorEnvelope(async (request: Request) => {
+export const GET = withErrorEnvelope((request: Request) => {
   if (dataSource().kind !== "mock") return new Response(null, { status: 404 });
   const query = new URL(request.url).searchParams;
   const provider = query.get("provider") ?? "";

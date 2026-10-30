@@ -10,7 +10,7 @@ import { getRepositories } from "@/lib/repositories";
 
 export const metadata: Metadata = { title: "Your listings · Airbnb" };
 
-export default async function HostListingsPage({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
+export default async function HostListingsPage({ searchParams }: Readonly<{ searchParams: Promise<{ created?: string }> }>) {
   const { created } = await searchParams;
   const user = await requireSession("/host/listings");
   const repos = getRepositories();

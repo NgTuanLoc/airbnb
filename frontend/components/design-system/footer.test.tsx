@@ -16,7 +16,7 @@ describe("Footer", () => {
     expect(screen.getByText("English (US)")).toBeInTheDocument();
   });
 
-  test("renders social links with accessible labels", () => {
+  test("renders the social icons with accessible labels", () => {
     render(<Footer />);
     expect(screen.getByLabelText("Facebook")).toBeInTheDocument();
     expect(screen.getByLabelText("Instagram")).toBeInTheDocument();

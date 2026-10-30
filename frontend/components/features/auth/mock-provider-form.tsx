@@ -13,7 +13,7 @@ interface MockProviderFormProps {
 }
 
 /** The demo provider's form: a plain GET, so it works before hydration and the authorize route does the redirect. */
-export function MockProviderForm({ provider, state, redirectUri, loginHint, cancelHref, error }: MockProviderFormProps) {
+export function MockProviderForm({ provider, state, redirectUri, loginHint, cancelHref, error }: Readonly<MockProviderFormProps>) {
   return (
     <form method="get" action="/auth/mock-provider/authorize" className="flex flex-col gap-4">
       <input type="hidden" name="provider" value={provider} />

@@ -6,8 +6,8 @@ import type { HostProfileRepository } from "../host-profile-repository";
 const store: Map<string, Host> = ((globalThis as { __mockHostProfiles?: Map<string, Host> }).__mockHostProfiles ??= new Map());
 
 export const mockHostProfileRepository: HostProfileRepository = {
-  async upsertFromUser(user) {
-    if (store.has(user.id)) return;
+  upsertFromUser(user) {
+    if (store.has(user.id)) return Promise.resolve();
     store.set(user.id, {
       id: user.id,
       name: user.name,
@@ -16,9 +16,10 @@ export const mockHostProfileRepository: HostProfileRepository = {
       responseRate: 100,
       joinedYear: new Date().getFullYear(),
     });
+    return Promise.resolve();
   },
 
-  async findById(id) {
-    return store.get(id) ?? null;
+  findById(id) {
+    return Promise.resolve(store.get(id) ?? null);
   },
 };

@@ -21,7 +21,7 @@ export function useLogout() {
 }
 
 /** The session's account links, shared by the desktop AccountMenu and the mobile nav sheet. */
-export function AccountLinks({ itemClass }: { itemClass: string }) {
+export function AccountLinks({ itemClass }: Readonly<{ itemClass: string }>) {
   const user = useSessionState()?.user ?? null;
   const { logout, error } = useLogout();
   if (!user) {

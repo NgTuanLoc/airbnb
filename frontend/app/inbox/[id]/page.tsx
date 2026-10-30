@@ -8,7 +8,7 @@ import { chatEnabled } from "@/lib/chat/config";
 
 export const metadata: Metadata = { title: "Messages · Airbnb" };
 
-export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ConversationPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const user = await requireSession(`/inbox/${id}`);
 

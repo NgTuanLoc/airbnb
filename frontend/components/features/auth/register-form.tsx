@@ -10,7 +10,7 @@ import { useSessionState } from "./session-provider";
 type RegisterField = "name" | "email" | "password" | "confirmPassword";
 type FieldErrors = Partial<Record<RegisterField, string>>;
 
-export function RegisterForm({ next = "/" }: { next?: string }) {
+export function RegisterForm({ next = "/" }: Readonly<{ next?: string }>) {
   const router = useRouter();
   const session = useSessionState();
   const [values, setValues] = useState({ name: "", email: "", password: "", confirmPassword: "" });
@@ -22,7 +22,7 @@ export function RegisterForm({ next = "/" }: { next?: string }) {
     setValues((current) => ({ ...current, [field]: value }));
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = registerSchema.safeParse(values);
     if (!parsed.success) {

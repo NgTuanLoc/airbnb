@@ -21,7 +21,7 @@ function PropertySkeleton() {
   );
 }
 
-export function PropertyGrid({ listings, isLoading }: PropertyGridProps) {
+export function PropertyGrid({ listings, isLoading }: Readonly<PropertyGridProps>) {
   const hearts = useWishlistHearts();
 
   if (isLoading) {

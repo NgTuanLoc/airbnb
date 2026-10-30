@@ -6,7 +6,7 @@ export interface PriceMarkerProps {
   onClick?: () => void;
 }
 
-export function PriceMarker({ price, selected, onClick }: PriceMarkerProps) {
+export function PriceMarker({ price, selected, onClick }: Readonly<PriceMarkerProps>) {
   return (
     <button
       type="button"

@@ -14,7 +14,7 @@ export interface SkeletonProps {
   radius?: SkeletonRadius;
 }
 
-export function Skeleton({ className, radius = "sm" }: SkeletonProps) {
+export function Skeleton({ className, radius = "sm" }: Readonly<SkeletonProps>) {
   return (
     <div
       data-testid="skeleton"

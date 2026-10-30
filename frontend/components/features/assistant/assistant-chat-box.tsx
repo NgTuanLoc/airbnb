@@ -10,6 +10,7 @@ import { ASK_LIMITS, type AskMessage, type FoundListing } from "@/lib/assistant/
 import { cn } from "@/lib/utils";
 
 interface Turn {
+  id: number;
   role: "user" | "assistant";
   text: string;
   listings?: FoundListing[];
@@ -25,8 +26,9 @@ const plainText = (reply: string) => reply.replace(/\*\*|__/g, "").replace(/^#{1
 
 // A turn as the service takes it back. An answer keeps the places it showed, ids and all, so a follow-up ("is the
 // first one free?") can look them up: the text names places by title only.
-function forHistory(turn: Turn): AskMessage {
-  const places = turn.listings?.length ? `\nPlaces shown: ${turn.listings.map((l) => `${l.title} (${l.id})`).join(", ")}` : "";
+function forHistory(turn: Pick<Turn, "role" | "text" | "listings">): AskMessage {
+  const shown = turn.listings?.map((l) => `${l.title} (${l.id})`).join(", ");
+  const places = shown ? `\nPlaces shown: ${shown}` : "";
   return { role: turn.role, text: turn.text.slice(0, ASK_LIMITS.maxTextLength - places.length) + places };
 }
 
@@ -46,6 +48,7 @@ export function AssistantChatBox() {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const answering = useRef<AbortController | null>(null);
+  const nextTurnId = useRef(0);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -61,7 +64,9 @@ export function AssistantChatBox() {
   // The reply being written is always the last turn.
   const changeReply = (change: (reply: Turn) => Turn | null) =>
     setTurns((current) => {
-      const reply = change(current[current.length - 1]);
+      const last = current.at(-1);
+      if (!last) return current;
+      const reply = change(last);
       return reply ? [...current.slice(0, -1), reply] : current.slice(0, -1);
     });
 
@@ -72,7 +77,9 @@ export function AssistantChatBox() {
     const history = [...turns.filter((t) => !t.failed && t.text), { role: "user" as const, text }]
       .map(forHistory)
       .slice(-ASK_LIMITS.maxMessages);
-    setTurns((current) => [...current, { role: "user", text }, { role: "assistant", text: "" }]);
+    const question: Turn = { id: nextTurnId.current++, role: "user", text };
+    const answer: Turn = { id: nextTurnId.current++, role: "assistant", text: "" };
+    setTurns((current) => [...current, question, answer]);
     setDraft("");
     setBusy(true);
     setError(null);
@@ -124,14 +131,15 @@ export function AssistantChatBox() {
         <span className="text-button-md">Ask</span>
       </button>
       {open && (
-        <section
+        // Non-modal, so the page stays usable beside it on desktop. Escape closes it from anywhere inside.
+        <dialog // NOSONAR: a key handler belongs on a dialog (jsx-a11y's recommended config allows it there)
+          open
           id="assistant-panel"
-          role="dialog"
           aria-label="Ask the assistant"
           onKeyDown={(event) => {
             if (event.key === "Escape") close();
           }}
-          className="fixed inset-0 z-50 flex flex-col bg-canvas md:inset-auto md:bottom-6 md:right-6 md:h-[560px] md:w-[380px] md:rounded-md md:border md:border-hairline md:shadow-airbnb"
+          className="fixed inset-0 z-50 m-0 flex size-full flex-col bg-canvas p-0 text-ink md:inset-auto md:bottom-6 md:right-6 md:h-[560px] md:w-[380px] md:rounded-md md:border md:border-hairline md:shadow-airbnb"
         >
           <header className="flex items-center justify-between border-b border-hairline px-4 py-3">
             <h2 className="text-title-md text-ink">Ask about stays</h2>
@@ -146,7 +154,7 @@ export function AssistantChatBox() {
             <ol aria-label="Conversation" className="flex flex-col gap-3">
               {turns.map((turn, index) => (
                 <li
-                  key={index}
+                  key={turn.id}
                   className={cn(
                     "max-w-[85%] whitespace-pre-wrap break-words rounded-md px-3 py-2 text-body-sm",
                     turn.role === "user" ? "self-end bg-ink text-on-primary" : "self-start bg-surface-soft text-ink",
@@ -208,10 +216,8 @@ export function AssistantChatBox() {
             </div>
           </form>
           {/* The finished answer is read out once, not word by word as it streams. */}
-          <div role="status" className="sr-only">
-            {announcement}
-          </div>
-        </section>
+          <output className="sr-only">{announcement}</output>
+        </dialog>
       )}
     </>
   );

@@ -6,7 +6,7 @@ import { Button } from "@/components/design-system";
 import { startConversation } from "@/lib/api-client/chat";
 
 /** Opens (or reopens) the signed-in guest's conversation about this listing. */
-export function MessageHostButton({ listingId }: { listingId: string }) {
+export function MessageHostButton({ listingId }: Readonly<{ listingId: string }>) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);

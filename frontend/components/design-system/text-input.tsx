@@ -7,7 +7,7 @@ export interface TextInputProps
   error?: string;
 }
 
-export function TextInput({ label, error, className, id, ...props }: TextInputProps) {
+export function TextInput({ label, error, className, id, ...props }: Readonly<TextInputProps>) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   return (

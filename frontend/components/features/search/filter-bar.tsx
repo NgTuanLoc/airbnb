@@ -16,7 +16,7 @@ export function FilterBar({
   onCategoryChange,
   activeFilterCount,
   onOpenFilters,
-}: FilterBarProps) {
+}: Readonly<FilterBarProps>) {
   return (
     <div className="flex items-center gap-4 border-b border-hairline px-6">
       <div className="min-w-0 flex-1">

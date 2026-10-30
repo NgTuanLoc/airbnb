@@ -4,7 +4,7 @@ export interface AmenityListProps {
   amenities: string[];
 }
 
-export function AmenityList({ amenities }: AmenityListProps) {
+export function AmenityList({ amenities }: Readonly<AmenityListProps>) {
   return (
     <section className="border-y border-hairline py-8">
       <h2 className="mb-4 text-display-sm text-ink">What this place offers</h2>

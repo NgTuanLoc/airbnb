@@ -18,7 +18,7 @@ function Skeleton() {
   );
 }
 
-export function ExperienceGrid({ experiences, isLoading }: ExperienceGridProps) {
+export function ExperienceGrid({ experiences, isLoading }: Readonly<ExperienceGridProps>) {
   if (isLoading) {
     return (
       <div className={gridClass}>

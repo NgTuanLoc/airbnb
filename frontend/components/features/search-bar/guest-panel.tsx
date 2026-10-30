@@ -9,7 +9,7 @@ export interface GuestPanelProps {
   onChange: (next: GuestCounts) => void;
 }
 
-export function GuestPanel({ value, onChange }: GuestPanelProps) {
+export function GuestPanel({ value, onChange }: Readonly<GuestPanelProps>) {
   return (
     <div className="w-full max-w-[320px]">
       <GuestStepper value={value} onChange={onChange} maxGuests={MAX_GUESTS} />

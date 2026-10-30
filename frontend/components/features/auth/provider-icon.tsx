@@ -2,7 +2,7 @@ import { Building2, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // lucide has no brand marks, so Google's "G" and GitHub's mark are inline SVG (their sign-in guidelines ask for them).
-function GoogleMark({ className }: { className?: string }) {
+function GoogleMark({ className }: Readonly<{ className?: string }>) {
   return (
     <svg viewBox="0 0 48 48" aria-hidden className={className}>
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -13,7 +13,7 @@ function GoogleMark({ className }: { className?: string }) {
   );
 }
 
-function GitHubMark({ className }: { className?: string }) {
+function GitHubMark({ className }: Readonly<{ className?: string }>) {
   return (
     <svg viewBox="0 0 16 16" aria-hidden fill="currentColor" className={className}>
       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
@@ -22,7 +22,7 @@ function GitHubMark({ className }: { className?: string }) {
 }
 
 /** A provider's mark: Google, GitHub, a building for SSO ("sso" or "sso-<connection>"), a key for anything else. */
-export function ProviderIcon({ provider, className }: { provider: string; className?: string }) {
+export function ProviderIcon({ provider, className }: Readonly<{ provider: string; className?: string }>) {
   const classes = cn("size-5 shrink-0", className);
   if (provider === "google") return <GoogleMark className={classes} />;
   if (provider === "github") return <GitHubMark className={cn(classes, "text-ink")} />;

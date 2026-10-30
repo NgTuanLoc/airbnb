@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { Service } from "@/lib/types";
 
-export function ServiceCard({ service }: { service: Service }) {
+export function ServiceCard({ service }: Readonly<{ service: Service }>) {
   return (
     <article className="group flex flex-col gap-2">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-md">

@@ -5,7 +5,7 @@ import { logIn, unique } from "./helpers";
 // real (Keycloak for SSO, see README), so these skip.
 test.beforeEach(async ({ page }) => {
   const probe = await page.request.get("/auth/mock-provider?provider=google&state=probe&redirect_uri=%2Fapi%2Fauth%2Fcallback%2Fgoogle");
-  test.skip(probe.status() === 404, "needs DATA_SOURCE=mock");
+  test.skip(probe.status() === 404, "needs DATA_SOURCE=mock"); // the demo provider page is a 404 in api mode
 });
 
 /** Plays the person at the demo provider: waits for its page to settle (next dev compiles it on first use), signs in. */

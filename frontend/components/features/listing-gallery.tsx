@@ -10,7 +10,13 @@ export interface ListingGalleryProps {
   title: string;
 }
 
-export function ListingGallery({ photos, title }: ListingGalleryProps) {
+// The cover spans the mosaic; the other photos are hidden below md, so there the cover takes the whole width.
+function tileClass(index: number, tiles: number): string {
+  if (index > 0) return "relative hidden md:block";
+  return tiles === 1 ? "relative col-span-4 row-span-2" : "relative col-span-4 row-span-2 md:col-span-2";
+}
+
+export function ListingGallery({ photos, title }: Readonly<ListingGalleryProps>) {
   const [openAt, setOpenAt] = useState<number | null>(null);
   const mosaic = photos.slice(0, 5);
   return (
@@ -25,14 +31,7 @@ export function ListingGallery({ photos, title }: ListingGalleryProps) {
             type="button"
             aria-label={`Open photo ${i + 1} of ${photos.length}`}
             onClick={() => setOpenAt(i)}
-            className={
-              i === 0
-                ? mosaic.length === 1
-                  ? "relative col-span-4 row-span-2"
-                  : // The other photos are hidden below md, so there the cover takes the whole width.
-                    "relative col-span-4 row-span-2 md:col-span-2"
-                : "relative hidden md:block"
-            }
+            className={tileClass(i, mosaic.length)}
           >
             <Image
               src={src}

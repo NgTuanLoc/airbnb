@@ -40,7 +40,8 @@ export async function apiFetch<T extends z.ZodType>(
     throw new Error(`GET ${path} returned an invalid payload: ${envelope.error.message}`);
   }
   if (!envelope.data.success || envelope.data.data === undefined) {
-    throw new Error(`GET ${path} returned no data${envelope.data.error ? `: ${envelope.data.error}` : ""}`);
+    const reason = envelope.data.error ? `: ${envelope.data.error}` : "";
+    throw new Error(`GET ${path} returned no data${reason}`);
   }
   return envelope.data.data as z.infer<T>;
 }

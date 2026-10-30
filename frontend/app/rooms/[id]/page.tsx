@@ -22,10 +22,10 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 export default async function RoomPage({
   params,
   searchParams,
-}: {
+}: Readonly<{
   params: Promise<{ id: string }>;
   searchParams: Promise<SearchParams>;
-}) {
+}>) {
   const { id } = await params;
   const rawQuery = await searchParams;
   const query: ReservationQuery = {};
@@ -46,6 +46,26 @@ export default async function RoomPage({
   const isOwner = viewer?.id === listing.hostId;
   const isUnlisted = listing.status === "unlisted";
   const initial = toReservationInitDto(parseReservationQuery(query));
+
+  // The host manages the listing; an unlisted place takes no bookings; anyone else can reserve.
+  let sidePanel: React.ReactNode;
+  if (isOwner) {
+    sidePanel = (
+      <aside className="flex flex-col gap-3 rounded-md border border-hairline p-6 shadow-airbnb">
+        <p className="text-title-md text-ink">This is your listing</p>
+        <Link href={`/host/listings/${listing.id}/edit`} className="text-title-sm text-ink underline">Edit listing</Link>
+        <Link href="/host/listings" className="text-title-sm text-ink underline">Manage listings</Link>
+      </aside>
+    );
+  } else if (isUnlisted) {
+    sidePanel = (
+      <aside className="rounded-md border border-hairline p-6 shadow-airbnb">
+        <p className="text-title-md text-ink">This place isn&apos;t taking bookings right now</p>
+      </aside>
+    );
+  } else {
+    sidePanel = <ReservationPanel listingId={listing.id} pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} initial={initial} />;
+  }
 
   return (
     <div className={`min-h-screen bg-canvas ${!isOwner && !isUnlisted ? "pb-24 md:pb-0" : ""}`}>
@@ -92,21 +112,7 @@ export default async function RoomPage({
             </section>
           </div>
 
-          <div className="md:sticky md:top-24 md:self-start">
-            {isOwner ? (
-              <aside className="flex flex-col gap-3 rounded-md border border-hairline p-6 shadow-airbnb">
-                <p className="text-title-md text-ink">This is your listing</p>
-                <Link href={`/host/listings/${listing.id}/edit`} className="text-title-sm text-ink underline">Edit listing</Link>
-                <Link href="/host/listings" className="text-title-sm text-ink underline">Manage listings</Link>
-              </aside>
-            ) : isUnlisted ? (
-              <aside className="rounded-md border border-hairline p-6 shadow-airbnb">
-                <p className="text-title-md text-ink">This place isn&apos;t taking bookings right now</p>
-              </aside>
-            ) : (
-              <ReservationPanel listingId={listing.id} pricePerNight={listing.pricePerNight} maxGuests={listing.maxGuests} initial={initial} />
-            )}
-          </div>
+          <div className="md:sticky md:top-24 md:self-start">{sidePanel}</div>
         </div>
       </main>
       <Footer />

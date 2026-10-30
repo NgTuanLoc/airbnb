@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { TopNav } from "@/components/design-system";
 import { SearchResults } from "@/components/features/search/search-results";
 
-export default async function SearchPage({ params }: { params: Promise<{ location: string }> }) {
+export default async function SearchPage({ params }: Readonly<{ params: Promise<{ location: string }> }>) {
   const { location } = await params;
   const decoded = decodeURIComponent(location);
 

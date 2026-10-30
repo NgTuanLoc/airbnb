@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SESSION_QUERY_KEY, fetchSession, logout as logoutRequest } from "@/lib/api-client/auth";
 import type { User } from "@/lib/types";
@@ -16,20 +16,23 @@ export interface SessionState {
 
 export const SessionContext = createContext<SessionState | null>(null);
 
-export function SessionProvider({ children }: { children: ReactNode }) {
+export function SessionProvider({ children }: Readonly<{ children: ReactNode }>) {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: SESSION_QUERY_KEY, queryFn: fetchSession, staleTime: 0, retry: false });
 
-  const value: SessionState = {
-    user: data ?? null,
-    isLoading,
-    refresh: () => queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY }),
-    async logout() {
-      await logoutRequest();
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload, to drop every client cache
-      window.location.assign("/");
-    },
-  };
+  const value = useMemo<SessionState>(
+    () => ({
+      user: data ?? null,
+      isLoading,
+      refresh: () => queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY }),
+      async logout() {
+        await logoutRequest();
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full reload, to drop every client cache
+        window.location.assign("/");
+      },
+    }),
+    [data, isLoading, queryClient],
+  );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 

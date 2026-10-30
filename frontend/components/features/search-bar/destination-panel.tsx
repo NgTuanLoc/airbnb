@@ -9,14 +9,14 @@ export interface DestinationPanelProps {
   onSelect: (cityName: string) => void;
 }
 
-export function DestinationPanel({ value, suggestions, onChange, onSelect }: DestinationPanelProps) {
+export function DestinationPanel({ value, suggestions, onChange, onSelect }: Readonly<DestinationPanelProps>) {
   const query = value.trim().toLowerCase();
   const filtered = query ? suggestions.filter((city) => city.name.toLowerCase().includes(query)) : suggestions;
 
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1 text-caption text-ink">
-        Where to?
+        <span>Where to?</span>
         <input
           type="text"
           aria-label="Where to?"

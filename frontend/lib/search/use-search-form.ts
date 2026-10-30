@@ -10,6 +10,16 @@ function formatShort(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function datesLabel(checkIn: Date | null, checkOut: Date | null): string {
+  if (checkIn && checkOut) return `${formatShort(checkIn)} – ${formatShort(checkOut)}`;
+  return checkIn ? formatShort(checkIn) : "Add dates";
+}
+
+function guestsLabel(total: number): string {
+  if (total <= 0) return "Add guests";
+  return total === 1 ? "1 guest" : `${total} guests`;
+}
+
 /** The /s/... results URL for a search. Desktop and mobile search both build it here. */
 export function buildSearchUrl(destination: string, guests: GuestCounts, checkIn: Date | null, checkOut: Date | null): string {
   const trimmed = destination.trim();
@@ -62,9 +72,8 @@ export function useSearchForm(): SearchForm {
   }
 
   const total = guests.adults + guests.children;
-  const whenLabel =
-    checkIn && checkOut ? `${formatShort(checkIn)} – ${formatShort(checkOut)}` : checkIn ? formatShort(checkIn) : "Add dates";
-  const whoLabel = total > 0 ? `${total} ${total === 1 ? "guest" : "guests"}` : "Add guests";
+  const whenLabel = datesLabel(checkIn, checkOut);
+  const whoLabel = guestsLabel(total);
 
   return {
     destination,

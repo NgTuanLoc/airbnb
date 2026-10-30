@@ -14,7 +14,7 @@ export interface ReservationPanelProps {
 }
 
 /** The reservation card (rail from md up, in flow on mobile) plus the mobile sticky bar, over one shared state. */
-export function ReservationPanel({ listingId, pricePerNight, maxGuests, initial }: ReservationPanelProps) {
+export function ReservationPanel({ listingId, pricePerNight, maxGuests, initial }: Readonly<ReservationPanelProps>) {
   const [init] = useState(() => fromReservationInitDto(initial));
   const state = useReservationState(listingId, pricePerNight, maxGuests, init);
   return (

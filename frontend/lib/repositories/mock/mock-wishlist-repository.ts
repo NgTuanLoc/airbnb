@@ -8,35 +8,36 @@ const store: Map<string, Wishlist[]> = ((globalThis as { __mockWishlists?: Map<s
 const listsOf = (userId: string): Wishlist[] => store.get(userId) ?? [];
 
 export const mockWishlistRepository: WishlistRepository = {
-  async listForUser(userId) {
-    return listsOf(userId);
+  listForUser(userId) {
+    return Promise.resolve(listsOf(userId));
   },
 
-  async findById(userId, id) {
-    return listsOf(userId).find((w) => w.id === id) ?? null;
+  findById(userId, id) {
+    return Promise.resolve(listsOf(userId).find((w) => w.id === id) ?? null);
   },
 
-  async create(userId, name) {
+  create(userId, name) {
     const wishlist: Wishlist = { id: crypto.randomUUID(), name, listingIds: [], createdAt: new Date().toISOString() };
     store.set(userId, [wishlist, ...listsOf(userId)]);
-    return wishlist;
+    return Promise.resolve(wishlist);
   },
 
-  async addListing(userId, wishlistId, listingId) {
+  addListing(userId, wishlistId, listingId) {
     const current = listsOf(userId).find((w) => w.id === wishlistId);
-    if (!current) return null;
-    if (current.listingIds.includes(listingId)) return current;
+    if (!current) return Promise.resolve(null);
+    if (current.listingIds.includes(listingId)) return Promise.resolve(current);
     const updated: Wishlist = { ...current, listingIds: [...current.listingIds, listingId] };
     store.set(userId, listsOf(userId).map((w) => (w.id === wishlistId ? updated : w)));
-    return updated;
+    return Promise.resolve(updated);
   },
 
-  async removeListing(userId, listingId) {
+  removeListing(userId, listingId) {
     store.set(
       userId,
       listsOf(userId).map((w) =>
         w.listingIds.includes(listingId) ? { ...w, listingIds: w.listingIds.filter((id) => id !== listingId) } : w,
       ),
     );
+    return Promise.resolve();
   },
 };

@@ -55,7 +55,7 @@ export function InboxList() {
   );
 }
 
-function Conversations({ conversations }: { conversations: ConversationSummary[] | null }) {
+function Conversations({ conversations }: Readonly<{ conversations: ConversationSummary[] | null }>) {
   if (!conversations) return <p className="text-body-md text-muted">Loading messages…</p>;
   if (conversations.length === 0) {
     return <p className="text-body-md text-body">No messages yet. Message a host from any listing page.</p>;

@@ -16,7 +16,7 @@ export interface SaveToWishlistDialogProps {
 
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong");
 
-export function SaveToWishlistDialog({ listing, wishlists, onClose }: SaveToWishlistDialogProps) {
+export function SaveToWishlistDialog({ listing, wishlists, onClose }: Readonly<SaveToWishlistDialogProps>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(wishlists.length === 0);
@@ -52,7 +52,7 @@ export function SaveToWishlistDialog({ listing, wishlists, onClose }: SaveToWish
   });
   const busy = save.isPending || create.isPending;
 
-  function submitNew(event: React.FormEvent) {
+  function submitNew(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = wishlistNameSchema.safeParse(name);
     if (!parsed.success) {

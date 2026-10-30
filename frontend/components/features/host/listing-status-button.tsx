@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/design-system";
 import { setHostListingStatus } from "@/lib/api-client/host";
 
-export function ListingStatusButton({ listingId, status }: { listingId: string; status: "listed" | "unlisted" }) {
+export function ListingStatusButton({ listingId, status }: Readonly<{ listingId: string; status: "listed" | "unlisted" }>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
@@ -18,8 +18,8 @@ export function ListingStatusButton({ listingId, status }: { listingId: string; 
     setError(null);
     try {
       await setHostListingStatus(listingId, next);
-      queryClient.invalidateQueries({ queryKey: ["listings"] });
-      queryClient.invalidateQueries({ queryKey: ["search-listings"] });
+      void queryClient.invalidateQueries({ queryKey: ["listings"] });
+      void queryClient.invalidateQueries({ queryKey: ["search-listings"] });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");

@@ -25,6 +25,8 @@ describe("userFromCredentials", () => {
 describe("session cookie", () => {
   const user = userFromCredentials("ana@example.com", "Ana");
 
+  afterEach(() => vi.unstubAllEnvs());
+
   test("round-trips the user", () => {
     expect(decodeSession(encodeSession(user))).toEqual(user);
   });
@@ -41,8 +43,6 @@ describe("session cookie", () => {
     expect(sessionCookie(encodeSession(user))).toBe(`${SESSION_COOKIE}=${encodeSession(user)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
     expect(clearedSessionCookie()).toBe(`${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
   });
-
-  afterEach(() => vi.unstubAllEnvs());
 
   test("adds Secure to both cookies in production only", () => {
     expect(sessionCookie("tok")).not.toContain("Secure");

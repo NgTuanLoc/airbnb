@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/design-system";
 import { cancelBooking } from "@/lib/api-client/availability";
 
-function CancelTripDialog({ bookingId, onClose }: { bookingId: string; onClose: () => void }) {
+function CancelTripDialog({ bookingId, onClose }: Readonly<{ bookingId: string; onClose: () => void }>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -61,7 +61,7 @@ function CancelTripDialog({ bookingId, onClose }: { bookingId: string; onClose: 
   );
 }
 
-export function CancelTripButton({ bookingId }: { bookingId: string }) {
+export function CancelTripButton({ bookingId }: Readonly<{ bookingId: string }>) {
   const [open, setOpen] = useState(false);
   return (
     <>

@@ -24,7 +24,7 @@ describe("PropertyGrid", () => {
 
   test("shows skeletons while loading", () => {
     const { container } = render(<PropertyGrid listings={[]} isLoading />);
-    expect(container.querySelectorAll('[data-testid="property-skeleton"]').length).toBe(8);
+    expect(container.querySelectorAll('[data-testid="property-skeleton"]')).toHaveLength(8);
   });
 
   test("shows an empty state when there are no listings and not loading", () => {

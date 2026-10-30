@@ -7,7 +7,9 @@ export function toIsoDate(date: Date): string {
 
 const dayFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
+const formatDay = (isoDate: string) => dayFormat.format(new Date(`${isoDate}T00:00:00Z`));
+
 /** "Mar 5, 2026 – Mar 8, 2026" for two YYYY-MM-DD dates. */
 export function formatDateRange(checkIn: string, checkOut: string): string {
-  return `${dayFormat.format(new Date(`${checkIn}T00:00:00Z`))} – ${dayFormat.format(new Date(`${checkOut}T00:00:00Z`))}`;
+  return `${formatDay(checkIn)} – ${formatDay(checkOut)}`;
 }

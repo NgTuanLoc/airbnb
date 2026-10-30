@@ -21,10 +21,13 @@ describe("FilterPanel", () => {
     expect(onApply).toHaveBeenCalledWith({});
   });
 
-  test("closes when the backdrop is clicked", async () => {
+  test("closes when the backdrop is clicked, not when its content is", async () => {
     const onClose = vi.fn();
     render(<FilterPanel initial={{}} onApply={vi.fn()} onClose={onClose} />);
-    await userEvent.click(screen.getByTestId("filter-backdrop"));
+    await userEvent.click(screen.getByRole("heading", { name: "Filters" }));
+    expect(onClose).not.toHaveBeenCalled();
+    // The backdrop is the dialog element itself, around its content.
+    await userEvent.click(screen.getByRole("dialog", { name: "Filters" }));
     expect(onClose).toHaveBeenCalled();
   });
 });

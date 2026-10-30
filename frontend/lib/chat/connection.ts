@@ -51,7 +51,9 @@ function listen<T>(hub: HubConnection, event: string, schema: z.ZodType<T>): Sub
 
 function subscribe<T>(subscribers: Subscribers<T>, handler: (payload: T) => void): () => void {
   subscribers.add(handler);
-  return () => void subscribers.delete(handler);
+  return () => {
+    subscribers.delete(handler);
+  };
 }
 
 function fetchToken(): Promise<ChatToken> {
@@ -119,7 +121,9 @@ export async function connectChat(): Promise<ChatConnection> {
     onRead: (handler) => subscribe(receipts, handler),
     onReconnected: (handler) => {
       reconnected.add(handler);
-      return () => void reconnected.delete(handler);
+      return () => {
+        reconnected.delete(handler);
+      };
     },
     onStatusChange: (handler) => subscribe(statuses, handler),
     stop: () => hub.stop(),

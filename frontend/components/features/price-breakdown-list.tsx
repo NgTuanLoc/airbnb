@@ -1,6 +1,6 @@
 import type { PriceBreakdown } from "@/lib/reservation/pricing";
 
-export function PriceBreakdownList({ breakdown }: { breakdown: PriceBreakdown }) {
+export function PriceBreakdownList({ breakdown }: Readonly<{ breakdown: PriceBreakdown }>) {
   return (
     <dl className="flex flex-col gap-2">
       {breakdown.lineItems.map((item) => (

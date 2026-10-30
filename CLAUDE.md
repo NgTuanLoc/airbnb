@@ -12,7 +12,7 @@ Monorepo:
 - `services/chat/` — the chat microservice, same shape (`Airbnb.Chat.slnx`, own props, shares only ServiceDefaults; run by the backend AppHost as two instances behind the YARP `gateway`). Commands from `services/chat`: `dotnet test` (Testcontainers: MongoDB, Redis; the service on real Kestrel so the hub runs over WebSockets).
 - `services/assistant/` — the smart chat box's assistant, same shape (`Airbnb.Assistant.slnx`, own props, shares only ServiceDefaults; run by the backend AppHost on its Ollama model). Commands from `services/assistant`: `dotnet test` (no containers: a scripted `IChatClient` or a fake Ollama endpoint, and a fake catalog).
 - `docs/` — specs and plans (repo root).
-- `tools/sonar/` — local SonarQube: `pwsh tools/sonar/scan.ps1` (Docker) runs SonarQube Community Build on localhost:9000 and scans two projects, `airbnb-dotnet` (backend, services and the repo's other files) and `airbnb-frontend`; `-Coverage` imports test coverage. Open issues land in `tools/sonar/.local/issues-<project>.json` (gitignored, like the generated admin password and token). Versions are pinned at the top of the script; see its README.
+- `tools/sonar/` — local SonarQube: `pwsh tools/sonar/scan.ps1` (Docker) runs SonarQube Community Build on localhost:9000 and scans two projects, `airbnb-dotnet` (backend, services and the repo's other files) and `airbnb-frontend`; `-Coverage` imports test coverage. Open issues land in `tools/sonar/.local/issues-<project>.json` (gitignored, like the generated admin password and token). Versions are pinned at the top of the script; see its README. Keep it at zero issues: suppress a false positive in code with its reason, never in the dashboard: `// NOSONAR: why` on the reported line (for JSX, the element's first line), `[SuppressMessage("Sonar", "Sxxxx", Justification = "...")]` or `#pragma warning disable X // why` in C#.
 - `.devcontainer/` — Linux dev container (docker-in-docker, Node 24, the Aspire CLI pinned in `postCreateCommand` to the AppHost's Aspire version) for Macs older than macOS 15, which can't run Aspire's orchestrator, and for Codespaces. .NET builds go to `$ArtifactsPath` (`/home/vscode/artifacts`), not `bin/`/`obj/`, and `frontend/node_modules`, `frontend/.next` and `~/.microsoft` (user secrets) are volumes: sharing them with the host breaks the other side.
 
 ## Commands
@@ -130,6 +130,13 @@ All shared domain types live in `lib/types.ts`: `Listing`, `Host`, `Review`, `Ci
 
 ### Responsive rule
 Mobile-only UI is a separate component shown with `md:hidden`, never a viewport check in render.
+
+### Code conventions (kept by the Sonar scan)
+- Components take their props as `Readonly<...>`.
+- An in-memory implementation of a Promise-returning interface (the mock repositories, the mock auth gateway) isn't `async` without an `await`: it returns `Promise.resolve(...)`.
+- Modal dialogs are a native `<dialog>` opened with `showModal()` on mount (focus trap, Esc, `::backdrop`), restoring focus to the opener on unmount; a backdrop click closes the filter panel and the mobile nav. The assistant panel is a non-modal `<dialog open>`, so the page stays usable beside it.
+- Live regions are `<output>` (role `status`); errors keep `role="alert"`.
+- maplibre-gl 6 can't find its worker inside a bundled chunk: `listing-map.tsx` calls `setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).toString())`, so Next emits the worker as an asset.
 
 ### Backend Conventions
 - Package versions live only in `backend/Directory.Packages.props`; shared settings in `backend/Directory.Build.props` (warnings are errors, so xUnit tests pass `TestContext.Current.CancellationToken`).

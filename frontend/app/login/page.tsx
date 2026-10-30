@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Log in · Airbnb" };
 
 type Params = { next?: string; error?: string; provider?: string };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function LoginPage({ searchParams }: Readonly<{ searchParams: Promise<Params> }>) {
   const { next, error, provider } = await searchParams;
   const safeNext = safeNextPath(next);
   // ?error= is a code from the OAuth callback; only fixed text is ever shown for it.

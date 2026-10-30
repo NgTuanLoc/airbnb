@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Demo sign-in · Airbnb" };
 type Params = { provider?: string; state?: string; redirect_uri?: string; login_hint?: string; error?: string };
 
 /** Mock mode's stand-in for Google's, GitHub's or Acme's sign-in page (OAuth spec section 2). Gone in api mode. */
-export default async function MockProviderPage({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function MockProviderPage({ searchParams }: Readonly<{ searchParams: Promise<Params> }>) {
   if (dataSource().kind !== "mock") notFound();
   const { provider = "", state, redirect_uri: redirectUri, login_hint: loginHint, error } = await searchParams;
   const name = mockProviderName(provider);

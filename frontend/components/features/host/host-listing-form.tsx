@@ -68,8 +68,8 @@ export function HostListingForm(props: HostListingFormProps) {
   }
 
   function invalidateListingQueries() {
-    queryClient.invalidateQueries({ queryKey: ["listings"] });
-    queryClient.invalidateQueries({ queryKey: ["search-listings"] });
+    void queryClient.invalidateQueries({ queryKey: ["listings"] });
+    void queryClient.invalidateQueries({ queryKey: ["search-listings"] });
   }
 
   async function submit() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useSessionState } from "@/components/features/auth/session-provider";
@@ -17,14 +17,15 @@ export interface WishlistHearts {
 
 const WishlistHeartsContext = createContext<WishlistHearts | null>(null);
 const NO_WISHLISTS: Wishlist[] = [];
+const goTo = (url: string) => window.location.assign(url);
 
 export function WishlistHeartsProvider({
   children,
-  redirectToLogin = (url) => window.location.assign(url),
-}: {
+  redirectToLogin = goTo,
+}: Readonly<{
   children: ReactNode;
   redirectToLogin?: (url: string) => void;
-}) {
+}>) {
   const user = useSessionState()?.user ?? null;
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<Listing | null>(null);
@@ -39,7 +40,7 @@ export function WishlistHeartsProvider({
   });
   const savedIds = useMemo(() => new Set(user ? wishlists.flatMap((w) => w.listingIds) : []), [user, wishlists]);
 
-  const unsave = useMutation({
+  const { mutate: unsave } = useMutation({
     mutationFn: (listingId: string) => removeFromWishlists(listingId),
     onMutate: async (listingId: string) => {
       await queryClient.cancelQueries({ queryKey });
@@ -66,18 +67,23 @@ export function WishlistHeartsProvider({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [error]);
 
-  function toggle(listing: Listing) {
-    setError(null);
-    if (!user) {
-      redirectToLogin(loginPath(window.location.pathname + window.location.search));
-      return;
-    }
-    if (savedIds.has(listing.id)) unsave.mutate(listing.id);
-    else setPending(listing);
-  }
+  const toggle = useCallback(
+    (listing: Listing) => {
+      setError(null);
+      if (!user) {
+        redirectToLogin(loginPath(window.location.pathname + window.location.search));
+        return;
+      }
+      if (savedIds.has(listing.id)) unsave(listing.id);
+      else setPending(listing);
+    },
+    [user, savedIds, unsave, redirectToLogin],
+  );
+  // Stable between renders, so every heart on the page doesn't re-render with the provider.
+  const value = useMemo(() => ({ savedIds, toggle }), [savedIds, toggle]);
 
   return (
-    <WishlistHeartsContext.Provider value={{ savedIds, toggle }}>
+    <WishlistHeartsContext.Provider value={value}>
       {children}
       {pending && <SaveToWishlistDialog listing={pending} wishlists={wishlists} onClose={() => setPending(null)} />}
       {error && (

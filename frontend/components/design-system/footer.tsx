@@ -1,11 +1,13 @@
 // lucide-react v1 removed brand logos (Facebook/Instagram/Twitter) for trademark
 // reasons, so the social row uses evocative generic icons with brand aria-labels.
+import Link from "next/link";
 import { Globe, ThumbsUp, Camera, AtSign } from "lucide-react";
 
-const columns: { heading: string; links: string[] }[] = [
-  { heading: "Support", links: ["Help Center", "AirCover", "Cancellation options"] },
-  { heading: "Hosting", links: ["Airbnb your home", "AirCover for Hosts", "Hosting resources"] },
-  { heading: "Airbnb", links: ["Newsroom", "New features", "Careers"] },
+// Links only where the app has the page; the rest are placeholders, so they read as text rather than dead links.
+const columns: { heading: string; items: { label: string; href?: string }[] }[] = [
+  { heading: "Support", items: [{ label: "Help Center" }, { label: "AirCover" }, { label: "Cancellation options" }] },
+  { heading: "Hosting", items: [{ label: "Airbnb your home", href: "/host" }, { label: "AirCover for Hosts" }, { label: "Hosting resources" }] },
+  { heading: "Airbnb", items: [{ label: "Newsroom" }, { label: "New features" }, { label: "Careers" }] },
 ];
 
 const social: { label: string; Icon: typeof Globe }[] = [
@@ -21,11 +23,17 @@ export function Footer() {
         {columns.map((col) => (
           <div key={col.heading} className="flex flex-col gap-3">
             <h2 className="text-title-sm text-ink">{col.heading}</h2>
-            {col.links.map((link) => (
-              <a key={link} href="#" className="text-body-sm text-ink hover:underline">
-                {link}
-              </a>
-            ))}
+            {col.items.map(({ label, href }) =>
+              href ? (
+                <Link key={label} href={href} className="text-body-sm text-ink hover:underline">
+                  {label}
+                </Link>
+              ) : (
+                <span key={label} className="text-body-sm text-ink">
+                  {label}
+                </span>
+              ),
+            )}
           </div>
         ))}
       </div>
@@ -39,9 +47,7 @@ export function Footer() {
           <span>$ USD</span>
           <div className="flex items-center gap-3">
             {social.map(({ label, Icon }) => (
-              <a key={label} href="#" aria-label={label} className="text-ink hover:text-rausch">
-                <Icon aria-hidden className="size-5" />
-              </a>
+              <Icon key={label} role="img" aria-label={label} className="size-5 text-ink" />
             ))}
           </div>
         </div>

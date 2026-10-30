@@ -3,13 +3,13 @@ import { services } from "@/lib/data/services";
 import type { ServiceFilters, ServiceRepository } from "../service-repository";
 
 export const mockServiceRepository: ServiceRepository = {
-  async findAll(filters?: ServiceFilters): Promise<Service[]> {
+  findAll(filters?: ServiceFilters): Promise<Service[]> {
     const category = filters?.category;
-    if (!category || category === "All") return services;
-    return services.filter((s) => s.serviceCategory === category);
+    if (!category || category === "All") return Promise.resolve(services);
+    return Promise.resolve(services.filter((s) => s.serviceCategory === category));
   },
 
-  async findById(id: string): Promise<Service | null> {
-    return services.find((s) => s.id === id) ?? null;
+  findById(id: string): Promise<Service | null> {
+    return Promise.resolve(services.find((s) => s.id === id) ?? null);
   },
 };

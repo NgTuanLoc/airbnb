@@ -16,7 +16,7 @@ describe("mockExperienceRepository", () => {
   test('findAll with category "All" returns everything', async () => {
     const all = await mockExperienceRepository.findAll({ category: "All" });
     const unfiltered = await mockExperienceRepository.findAll();
-    expect(all.length).toBe(unfiltered.length);
+    expect(all).toHaveLength(unfiltered.length);
   });
 
   test("findById returns the matching experience or null", async () => {

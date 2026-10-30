@@ -13,7 +13,7 @@ function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
-export function DatePanel({ checkIn, checkOut, onSelect }: DatePanelProps) {
+export function DatePanel({ checkIn, checkOut, onSelect }: Readonly<DatePanelProps>) {
   const [month, setMonth] = useState<Date>(() => startOfMonth(checkIn ?? new Date()));
 
   return (

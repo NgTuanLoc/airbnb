@@ -16,6 +16,8 @@ export interface BookingCalendarProps {
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+// The 1st falls under its weekday: one spacer fills the columns before it (by index: the 1st's weekday).
+const LEADING_SPACER = ["", "col-span-1", "col-span-2", "col-span-3", "col-span-4", "col-span-5", "col-span-6"];
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -25,7 +27,7 @@ function sameDay(a: Date | null, b: Date): boolean {
   return a !== null && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export function BookingCalendar({ month, checkIn, checkOut, minDate, blockedRanges = [], onSelect, onMonthChange }: BookingCalendarProps) {
+export function BookingCalendar({ month, checkIn, checkOut, minDate, blockedRanges = [], onSelect, onMonthChange }: Readonly<BookingCalendarProps>) {
   const floor = startOfDay(minDate ?? new Date());
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
@@ -51,9 +53,7 @@ export function BookingCalendar({ month, checkIn, checkOut, minDate, blockedRang
             {w}
           </span>
         ))}
-        {Array.from({ length: firstWeekday }).map((_, i) => (
-          <span key={`pad-${i}`} aria-hidden className="h-10 w-10" />
-        ))}
+        {firstWeekday > 0 && <span aria-hidden className={`h-10 ${LEADING_SPACER[firstWeekday]}`} />}
         {days.map((day) => {
           const date = new Date(year, monthIndex, day);
           const iso = toIsoDate(date);

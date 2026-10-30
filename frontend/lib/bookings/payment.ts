@@ -43,7 +43,7 @@ export function cardOutcome(card: CardInput, today: Date): PaymentError | "pendi
   const expired = card.expYear * 12 + card.expMonth < today.getUTCFullYear() * 12 + today.getUTCMonth() + 1;
   const cvcLength = digits.startsWith("3") ? 4 : 3;
   if (!/^\d{13,19}$/.test(digits) || !passesLuhn(digits) || card.expMonth < 1 || card.expMonth > 12 || expired
-    || !new RegExp(`^\\d{${cvcLength}}$`).test(card.cvc)) {
+    || !new RegExp(String.raw`^\d{${cvcLength}}$`).test(card.cvc)) {
     return "invalid_card";
   }
   if (digits === "4000000000000002") return "card_declined";

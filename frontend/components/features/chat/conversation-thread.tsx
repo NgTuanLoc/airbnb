@@ -10,7 +10,7 @@ const appendOnce = (current: ChatMessage[], message: ChatMessage): ChatMessage[]
   current.some((m) => m.id === message.id) ? current : [...current, message];
 
 /** One conversation: its history, new messages as they arrive, and the composer. Opening it marks it read. */
-export function ConversationThread({ conversationId, me }: { conversationId: string; me: string }) {
+export function ConversationThread({ conversationId, me }: Readonly<{ conversationId: string; me: string }>) {
   const { connection, status, error } = useChatConnection();
   const connected = status === "connected";
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -106,9 +106,9 @@ export function ConversationThread({ conversationId, me }: { conversationId: str
         })}
       </ol>
       {/* Only the other person's new messages are read aloud: not the history, not your own. */}
-      <div role="status" className="sr-only">
+      <output className="sr-only">
         {lastIncoming ? `${otherName}: ${lastIncoming.text}` : ""}
-      </div>
+      </output>
       <form
         className="flex flex-col gap-2"
         onSubmit={(event) => {

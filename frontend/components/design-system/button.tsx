@@ -27,7 +27,7 @@ export function Button({
   variant = "primary",
   className,
   ...props
-}: ButtonProps) {
+}: Readonly<ButtonProps>) {
   return (
     <button className={cn(buttonClassName(variant), className)} {...props} />
   );

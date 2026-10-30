@@ -3,7 +3,7 @@ import { z } from "zod";
 // Listing views counted through Kafka (docs/superpowers/specs/2026-10-28-listing-views-kafka-design.md).
 
 /** Seed listings (l1…) and host listings (hl- + a UUID): the only ids the backend counts views for. */
-export const LISTING_ID_PATTERN = /^(l[0-9]{1,6}|hl-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
+export const LISTING_ID_PATTERN = /^(l\d{1,6}|hl-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 
 export const weeklyViewsSchema = z.object({
   listingId: z.string(),

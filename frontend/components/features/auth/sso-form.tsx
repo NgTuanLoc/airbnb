@@ -9,13 +9,13 @@ import { navigateTo } from "@/lib/navigation";
 const workEmail = z.email("Enter a valid work email");
 
 /** Work email → the company's identity provider (OAuth spec section 2); "not set up" shows here, not on a new page. */
-export function SsoForm({ next = "/" }: { next?: string }) {
+export function SsoForm({ next = "/" }: Readonly<{ next?: string }>) {
   const [email, setEmail] = useState("");
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = workEmail.safeParse(email.trim());
     if (!parsed.success) {

@@ -14,7 +14,7 @@ interface ConnectedAccountsProps {
 }
 
 /** Login & security's provider rows: Connect sends the browser to the provider, Disconnect refreshes the page. */
-export function ConnectedAccounts({ connections, hasPassword }: ConnectedAccountsProps) {
+export function ConnectedAccounts({ connections, hasPassword }: Readonly<ConnectedAccountsProps>) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

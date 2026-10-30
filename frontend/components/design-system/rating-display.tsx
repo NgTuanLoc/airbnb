@@ -1,4 +1,4 @@
-export function RatingDisplay({ value }: { value: number }) {
+export function RatingDisplay({ value }: Readonly<{ value: number }>) {
   return (
     <div className="flex items-center justify-center gap-3" aria-label={`Rated ${value} out of 5`}>
       <span aria-hidden className="text-2xl text-ink">❧</span>

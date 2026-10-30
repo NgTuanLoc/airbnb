@@ -16,7 +16,7 @@ describe("mockServiceRepository", () => {
   test('findAll with category "All" returns everything', async () => {
     const all = await mockServiceRepository.findAll({ category: "All" });
     const unfiltered = await mockServiceRepository.findAll();
-    expect(all.length).toBe(unfiltered.length);
+    expect(all).toHaveLength(unfiltered.length);
   });
 
   test("findById returns the matching service or null", async () => {

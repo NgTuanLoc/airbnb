@@ -6,14 +6,14 @@ import type { ReservationState } from "@/lib/hooks/use-reservation-state";
 
 const short = (date: Date) => date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-export function ReservationBar({ pricePerNight, state }: { pricePerNight: number; state: ReservationState }) {
-  function checkAvailability() {
-    const card = document.getElementById("reserve");
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    card?.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-    card?.querySelector<HTMLButtonElement>("[data-calendar-day]:not(:disabled)")?.focus();
-  }
+function checkAvailability() {
+  const card = document.getElementById("reserve");
+  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  card?.scrollIntoView?.({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+  card?.querySelector<HTMLButtonElement>("[data-calendar-day]:not(:disabled)")?.focus();
+}
 
+export function ReservationBar({ pricePerNight, state }: Readonly<{ pricePerNight: number; state: ReservationState }>) {
   const dates = state.checkIn && state.checkOut ? `${short(state.checkIn)} – ${short(state.checkOut)}` : "Add dates for prices";
 
   return (

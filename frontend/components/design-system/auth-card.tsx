@@ -6,7 +6,7 @@ export interface AuthCardProps {
   children: React.ReactNode;
 }
 
-export function AuthCard({ title, subtitle, children }: AuthCardProps) {
+export function AuthCard({ title, subtitle, children }: Readonly<AuthCardProps>) {
   return (
     <main id="main" className="flex min-h-screen flex-col items-center justify-center bg-surface-soft px-6 py-12">
       <div

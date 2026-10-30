@@ -31,7 +31,7 @@ export async function parseBody<T extends z.ZodType>(
 
 /** Route handlers never answer with a bare 500: anything thrown becomes the error envelope (and is logged here). */
 export function withErrorEnvelope<A extends unknown[]>(
-  handler: (request: Request, ...rest: A) => Promise<Response>,
+  handler: (request: Request, ...rest: A) => Response | Promise<Response>,
 ): (request: Request, ...rest: A) => Promise<Response> {
   return async (request, ...rest) => {
     try {

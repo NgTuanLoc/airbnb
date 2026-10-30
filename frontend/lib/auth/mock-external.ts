@@ -95,23 +95,30 @@ export function completeMockFlow(input: { provider: string; flowId: string; stat
   if (connection && !connection.domains.includes(domainOf(identity.email))) {
     return fail(400, "email_domain_not_allowed", "That account's email isn't on a domain this single sign-on covers.");
   }
+  return flow.linkUser ? connectIdentity(flow.provider, identity, flow.linkUser) : signInWith(flow.provider, identity);
+}
 
-  // The demo provider's subject for a person is their email: one email is one provider account.
-  const key = `${flow.provider}:${identity.email}`;
+// The demo provider's subject for a person is their email: one email is one provider account.
+const linkKey = (provider: string, identity: MockIdentity) => `${provider}:${identity.email}`;
+
+// Login & security's "connect": the signed-in user takes this provider account, unless someone else has it.
+function connectIdentity(provider: string, identity: MockIdentity, user: User): MockCompletion {
+  const key = linkKey(provider, identity);
   const existing = store.links.get(key);
-  const connectedAt = new Date().toISOString();
-  if (flow.linkUser) {
-    const user = flow.linkUser;
-    if (existing && existing.user.id !== user.id) return fail(409, "identity_in_use", "That account is already connected to another user.");
-    if (!existing && connectionOf(user.id, flow.provider)) {
-      return fail(409, "provider_already_connected", "Your account is already connected to a different account with this provider. Disconnect it first.");
-    }
-    if (!existing) store.links.set(key, { user, email: identity.email, connectedAt });
-    return { ok: true, linked: { provider: flow.provider, email: identity.email } };
+  if (existing && existing.user.id !== user.id) return fail(409, "identity_in_use", "That account is already connected to another user.");
+  if (!existing && connectionOf(user.id, provider)) {
+    return fail(409, "provider_already_connected", "Your account is already connected to a different account with this provider. Disconnect it first.");
   }
+  if (!existing) store.links.set(key, { user, email: identity.email, connectedAt: new Date().toISOString() });
+  return { ok: true, linked: { provider, email: identity.email } };
+}
 
+// A sign-in: the account this provider account is connected to, or a new one for its email.
+function signInWith(provider: string, identity: MockIdentity): MockCompletion {
+  const key = linkKey(provider, identity);
+  const existing = store.links.get(key);
   const user = existing?.user ?? userFromCredentials(identity.email, identity.name);
-  if (!existing && !connectionOf(user.id, flow.provider)) store.links.set(key, { user, email: identity.email, connectedAt });
+  if (!existing && !connectionOf(user.id, provider)) store.links.set(key, { user, email: identity.email, connectedAt: new Date().toISOString() });
   return { ok: true, user };
 }
 

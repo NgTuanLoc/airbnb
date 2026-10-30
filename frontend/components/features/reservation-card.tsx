@@ -13,7 +13,7 @@ export interface ReservationCardProps {
   state?: ReservationState;
 }
 
-export function ReservationCard({ pricePerNight, maxGuests, listingId, state }: ReservationCardProps) {
+export function ReservationCard({ pricePerNight, maxGuests, listingId, state }: Readonly<ReservationCardProps>) {
   const own = useReservationState(listingId, pricePerNight, maxGuests);
   const s = state ?? own;
 

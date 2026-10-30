@@ -19,7 +19,7 @@ export interface SearchResultsProps {
   location: string;
 }
 
-export function SearchResults({ location }: SearchResultsProps) {
+export function SearchResults({ location }: Readonly<SearchResultsProps>) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

@@ -23,14 +23,14 @@ function Row({
   onIncrease,
   canDecrease,
   canIncrease,
-}: {
+}: Readonly<{
   label: string;
   count: number;
   onDecrease: () => void;
   onIncrease: () => void;
   canDecrease: boolean;
   canIncrease: boolean;
-}) {
+}>) {
   return (
     <div className="flex items-center justify-between py-3">
       <span className="text-body-md text-ink">{label}</span>
@@ -47,7 +47,7 @@ function Row({
   );
 }
 
-export function GuestStepper({ value, onChange, maxGuests }: GuestStepperProps) {
+export function GuestStepper({ value, onChange, maxGuests }: Readonly<GuestStepperProps>) {
   const total = value.adults + value.children;
   const canAddMore = total < maxGuests;
   return (

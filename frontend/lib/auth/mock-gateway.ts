@@ -14,34 +14,34 @@ const session = (user: User) => ({
 // Dev/test only: any valid input logs in and the token is the readable user (spec section 2, "Mock mode security").
 // Google, GitHub and SSO go through the demo provider page (OAuth spec section 2, "Mock mode").
 export const mockAuthGateway: AuthGateway = {
-  async register({ name, email }) {
-    return session(userFromCredentials(email, name));
+  register({ name, email }) {
+    return Promise.resolve(session(userFromCredentials(email, name)));
   },
-  async login({ email }) {
-    return session(userFromCredentials(email));
+  login({ email }) {
+    return Promise.resolve(session(userFromCredentials(email)));
   },
   async logout() {},
-  async me(token) {
-    return decodeSession(token);
+  me(token) {
+    return Promise.resolve(decodeSession(token));
   },
-  async providers() {
-    return mockProviders();
+  providers() {
+    return Promise.resolve(mockProviders());
   },
-  async startExternal({ provider, email, link }, context) {
+  startExternal({ provider, email, link }, context) {
     const user = link ? decodeSession(context?.token) : null;
-    if (link && !user) return LOG_IN;
-    return startMockFlow({ provider, email }, user);
+    if (link && !user) return Promise.resolve(LOG_IN);
+    return Promise.resolve(startMockFlow({ provider, email }, user));
   },
-  async completeExternal(input) {
+  completeExternal(input) {
     const result = completeMockFlow(input);
-    return result.ok && "user" in result ? session(result.user) : result;
+    return Promise.resolve(result.ok && "user" in result ? session(result.user) : result);
   },
-  async connections(token) {
+  connections(token) {
     const user = decodeSession(token);
-    return user ? mockConnections(user) : null;
+    return Promise.resolve(user ? mockConnections(user) : null);
   },
-  async disconnect(token, provider) {
+  disconnect(token, provider) {
     const user = decodeSession(token);
-    return user ? disconnectMock(user, provider) : LOG_IN;
+    return Promise.resolve(user ? disconnectMock(user, provider) : LOG_IN);
   },
 };

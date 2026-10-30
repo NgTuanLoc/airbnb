@@ -8,7 +8,7 @@ import { signInOptions } from "@/lib/auth/sign-in-options";
 
 export const metadata: Metadata = { title: "Sign up · Airbnb" };
 
-export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default async function RegisterPage({ searchParams }: Readonly<{ searchParams: Promise<{ next?: string }> }>) {
   const { next } = await searchParams;
   const safeNext = safeNextPath(next);
   const options = await signInOptions();

@@ -91,13 +91,13 @@ export function PhotoLightbox({ photos, title, startIndex, onClose }: Readonly<P
             ref={trackRef}
             onScroll={onScroll}
             // A scrollable region must be reachable by keyboard; focused, it scrolls with the arrow keys too.
-            tabIndex={0}
+            tabIndex={0} // NOSONAR: see above (axe: scrollable-region-focusable)
             aria-roledescription="carousel"
             aria-label={`${title} photos`}
             className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scrollbar-none"
           >
             {photos.map((src, i) => (
-              <div
+              <div // NOSONAR: role="group" is the WAI-ARIA carousel pattern's slide; a fieldset is for form controls
                 key={src + i}
                 role="group"
                 aria-roledescription="slide"

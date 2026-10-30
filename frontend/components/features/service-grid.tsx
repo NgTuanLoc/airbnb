@@ -18,7 +18,7 @@ function Skeleton() {
   );
 }
 
-export function ServiceGrid({ services, isLoading }: ServiceGridProps) {
+export function ServiceGrid({ services, isLoading }: Readonly<ServiceGridProps>) {
   if (isLoading) {
     return (
       <div className={gridClass}>

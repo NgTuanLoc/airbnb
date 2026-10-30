@@ -48,6 +48,7 @@ test.describe("logged-in pages", () => {
 
 test("the demo sign-in provider has no serious accessibility violations", async ({ page }) => {
   const path = "/auth/mock-provider?provider=google&state=a11y&redirect_uri=%2Fapi%2Fauth%2Fcallback%2Fgoogle";
+  // The demo provider page exists in mock mode only; in api mode it's a 404.
   test.skip((await page.request.get(path)).status() === 404, "mock mode only");
   await visit(page, path);
   await expectNoSeriousViolations(page);
@@ -55,6 +56,7 @@ test("the demo sign-in provider has no serious accessibility violations", async 
 
 test("the open account menu has no serious accessibility violations", async ({ page }) => {
   await visit(page, "/");
+  // Phones have the account links in the menu sheet instead of this dropdown.
   test.skip(isMobile(page), "desktop-only control");
   await page.getByRole("button", { name: "Account menu" }).click();
   await expectNoSeriousViolations(page);
@@ -62,6 +64,7 @@ test("the open account menu has no serious accessibility violations", async ({ p
 
 test("the mobile nav sheet has no serious accessibility violations", async ({ page }) => {
   await visit(page, "/");
+  // Desktop shows the whole nav, so there's no menu sheet to open.
   test.skip(!isMobile(page), "mobile-only control");
   await page.getByRole("button", { name: "Open menu" }).click();
   await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
@@ -70,6 +73,7 @@ test("the mobile nav sheet has no serious accessibility violations", async ({ pa
 
 test("the mobile search overlay has no serious accessibility violations", async ({ page }) => {
   await visit(page, "/");
+  // Desktop has the full search bar instead of this overlay.
   test.skip(!isMobile(page), "mobile-only control");
   await page.getByRole("button", { name: /start your search/i }).click();
   await expect(page.getByRole("dialog", { name: "Search" })).toBeVisible();

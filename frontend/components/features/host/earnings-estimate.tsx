@@ -10,7 +10,7 @@ export interface EarningsCity {
 
 const DEFAULT_NIGHTS = 7;
 
-export function EarningsEstimate({ cities }: { cities: EarningsCity[] }) {
+export function EarningsEstimate({ cities }: Readonly<{ cities: EarningsCity[] }>) {
   const [cityId, setCityId] = useState(cities[0]?.id ?? "");
   const [nights, setNights] = useState(DEFAULT_NIGHTS);
   const city = cities.find((c) => c.id === cityId);

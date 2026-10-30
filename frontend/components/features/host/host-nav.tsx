@@ -6,7 +6,7 @@ const TABS = [
   { id: "reservations", label: "Reservations", href: "/host/reservations" },
 ] as const;
 
-export function HostNav({ active }: { active: "listings" | "reservations" }) {
+export function HostNav({ active }: Readonly<{ active: "listings" | "reservations" }>) {
   return (
     <nav aria-label="Host" className="flex gap-6 border-b border-hairline">
       {TABS.map((tab) => (

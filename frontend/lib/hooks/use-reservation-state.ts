@@ -30,7 +30,7 @@ export function useReservationState(listingId: string, pricePerNight: number, ma
     init && init.adults + init.children <= maxGuests ? { adults: init.adults, children: init.children } : { adults: 1, children: 0 };
   const [month, setMonth] = useState<Date>(() => startOfMonth(init?.checkIn ?? new Date()));
   const [checkIn, setCheckIn] = useState<Date | null>(init?.checkIn ?? null);
-  const [pickedCheckOut, setCheckOut] = useState<Date | null>(init?.checkOut ?? null);
+  const [pickedCheckOut, setPickedCheckOut] = useState<Date | null>(init?.checkOut ?? null);
   const [guests, setGuests] = useState<GuestCounts>(initialGuests);
   const blockedRanges = useListingAvailability(listingId);
 
@@ -43,10 +43,10 @@ export function useReservationState(listingId: string, pricePerNight: number, ma
     const spansBookedNights = checkIn !== null && !isStayFree(toIsoDate(checkIn), toIsoDate(date), blockedRanges);
     if (checkIn === null || checkOut !== null || date.getTime() <= checkIn.getTime() || spansBookedNights) {
       setCheckIn(date);
-      setCheckOut(null);
+      setPickedCheckOut(null);
       return;
     }
-    setCheckOut(date);
+    setPickedCheckOut(date);
   }
 
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;

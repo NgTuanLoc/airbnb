@@ -3,7 +3,7 @@ import { getRepositories } from "@/lib/repositories";
 import { TopNav, Footer, RatingDisplay } from "@/components/design-system";
 import { ListingGallery } from "@/components/features/listing-gallery";
 
-export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ServiceDetailPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const service = await getRepositories().services.findById(id);
   if (!service) notFound();

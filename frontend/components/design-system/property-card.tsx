@@ -9,11 +9,11 @@ export function PropertyCard({
   listing,
   saved = false,
   onToggleSave,
-}: {
+}: Readonly<{
   listing: Listing;
   saved?: boolean;
   onToggleSave?: () => void;
-}) {
+}>) {
   return (
     <article className="group relative flex flex-col gap-2">
       <Link href={`/rooms/${listing.id}`} className="flex flex-col gap-2">

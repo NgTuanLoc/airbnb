@@ -25,7 +25,7 @@ function ResultSkeleton() {
   );
 }
 
-export function SearchResultsList({ listings, isLoading, location }: SearchResultsListProps) {
+export function SearchResultsList({ listings, isLoading, location }: Readonly<SearchResultsListProps>) {
   const hearts = useWishlistHearts();
   const place = placeLabel(location);
 

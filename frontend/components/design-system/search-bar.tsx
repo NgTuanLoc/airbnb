@@ -26,12 +26,12 @@ function Segment({
   value,
   active,
   onClick,
-}: {
+}: Readonly<{
   label: string;
   value: string;
   active: boolean;
   onClick: () => void;
-}) {
+}>) {
   return (
     <button
       type="button"
@@ -45,7 +45,7 @@ function Segment({
   );
 }
 
-export function SearchBar({ values, activeSegment, onSegmentClick, onSearch }: SearchBarProps) {
+export function SearchBar({ values, activeSegment, onSegmentClick, onSearch }: Readonly<SearchBarProps>) {
   return (
     <div className="flex h-16 items-center rounded-full border border-hairline bg-canvas pr-2 shadow-airbnb">
       {SEGMENTS.map((segment, index) => (

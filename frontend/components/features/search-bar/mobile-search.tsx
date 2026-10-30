@@ -37,7 +37,7 @@ export function MobileSearch() {
   );
 }
 
-function MobileSearchDialog({ onClose }: { onClose: () => void }) {
+function MobileSearchDialog({ onClose }: Readonly<{ onClose: () => void }>) {
   const router = useRouter();
   const form = useSearchForm();
   const [section, setSection] = useState<Section>("where");

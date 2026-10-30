@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/auth/get-session";
 import { getRepositories } from "@/lib/repositories";
 import type { Listing } from "@/lib/types";
 
-export default async function WishlistPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function WishlistPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const user = await requireSession(`/wishlists/${id}`);
   const repos = getRepositories();

@@ -5,7 +5,7 @@ export interface ReviewsGridProps {
   reviews: Review[];
 }
 
-export function ReviewsGrid({ reviews }: ReviewsGridProps) {
+export function ReviewsGrid({ reviews }: Readonly<ReviewsGridProps>) {
   if (reviews.length === 0) {
     return <p className="text-body-md text-muted">No reviews yet.</p>;
   }

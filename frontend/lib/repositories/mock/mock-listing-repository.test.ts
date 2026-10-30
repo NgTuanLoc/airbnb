@@ -19,7 +19,7 @@ describe("mockListingRepository", () => {
   test('findAll with category "All" returns everything', async () => {
     const all = await mockListingRepository.findAll({ category: "All" });
     const unfiltered = await mockListingRepository.findAll();
-    expect(all.length).toBe(unfiltered.length);
+    expect(all).toHaveLength(unfiltered.length);
   });
 
   test("findById returns the matching listing or null", async () => {
@@ -36,7 +36,7 @@ describe("mockListingRepository.findAll filters", () => {
     expect(aspen.length).toBeGreaterThan(0);
     expect(aspen.every((l) => l.location.city === "Aspen")).toBe(true);
     const all = await mockListingRepository.findAll({ location: "anywhere" });
-    expect(all.length).toBe((await mockListingRepository.findAll()).length);
+    expect(all).toHaveLength((await mockListingRepository.findAll()).length);
   });
 
   test("filters by price range", async () => {
