@@ -160,8 +160,8 @@ function Invoke-DotnetScan([string] $Token) {
         'begin', "/k:$($projects.dotnet)", '/n:Airbnb .NET (backend and services)',
         "/d:sonar.host.url=$hostUrl", "/d:sonar.token=$Token",
         # From the repo root, so the scan also covers its other files (Docker, YAML, scripts, secrets in config),
-        # except the frontend, which is its own project.
-        "/d:sonar.projectBaseDir=$root", '/d:sonar.exclusions=frontend/**,**/Migrations/**'
+        # except the frontend, which is its own project (its test files too: exclusions only apply to sources).
+        "/d:sonar.projectBaseDir=$root", '/d:sonar.exclusions=frontend/**,**/Migrations/**', '/d:sonar.test.exclusions=frontend/**'
     )
     if ($Coverage) {
         $reports = $testProjects | ForEach-Object { Join-Path $coverageDir "$($_.BaseName).xml" }
@@ -212,7 +212,7 @@ function Invoke-FrontendScan([string] $Token) {
     Push-Location (Join-Path $root 'frontend')
     try {
         if ($Coverage) {
-            npx vitest run --coverage --coverage.reporter=lcov
+            npx vitest run --coverage --coverage.reporter=lcovonly
             if ($LASTEXITCODE) { Write-Warning "Frontend tests failed (exit code $LASTEXITCODE)" }
         }
         npx --yes "@sonar/scan@$NpmScannerVersion" @properties
