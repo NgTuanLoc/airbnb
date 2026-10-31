@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Http.Resilience;
@@ -25,6 +26,9 @@ public static class Extensions
         builder.AddDefaultHealthChecks();
 
         builder.Services.AddServiceDiscovery();
+
+        // Every response names its trace: X-Trace-Id.
+        builder.Services.AddTransient<IStartupFilter, TraceIdStartupFilter>();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {

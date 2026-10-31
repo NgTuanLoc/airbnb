@@ -1,4 +1,5 @@
 import { withErrorEnvelope } from "@/lib/api/request";
+import { traceHeaders } from "@/lib/api/trace";
 import { broadcastsEnabled } from "@/lib/notifications/config";
 
 // no-transform keeps the response out of compression, which would hold events back until a buffer filled.
@@ -15,7 +16,7 @@ export const GET = withErrorEnvelope(async (request: Request) => {
   // 204 tells EventSource not to reconnect: in mock mode there's no notification service.
   if (!broadcastsEnabled()) return new Response(null, { status: 204 });
 
-  const headers = new Headers({ accept: "text/event-stream" });
+  const headers = new Headers({ accept: "text/event-stream", ...traceHeaders() });
   const lastEventId = request.headers.get("last-event-id");
   if (lastEventId) headers.set("last-event-id", lastEventId);
   try {

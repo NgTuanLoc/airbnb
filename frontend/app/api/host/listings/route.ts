@@ -2,7 +2,7 @@ import { ok } from "@/lib/api/envelope";
 import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
 import { cookieValue, sessionFromRequest } from "@/lib/auth/session";
 import { hostListingInputSchema } from "@/lib/host/schemas";
-import { checkUploadedPhotos } from "@/lib/host/uploaded-photos";
+import { checkUploadedPhotos } from "@/lib/host/photo-status";
 import { getRepositories } from "@/lib/repositories";
 
 export const POST = withErrorEnvelope(async (request: Request) => {

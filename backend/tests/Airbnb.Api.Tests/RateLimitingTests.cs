@@ -21,7 +21,7 @@ public sealed class RateLimitingTests(InfrastructureFixture infrastructure)
 
         Assert.Equal(HttpStatusCode.NotFound, first.StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
-        Assert.Equal("""{"success":false,"error":"Too Many Requests"}""", await second.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(second, "Too Many Requests"), await second.Content.ReadAsStringAsync(Ct));
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { bookingSchema, envelopeSchema, staySchema } from "@/lib/api-client/schemas";
+import { traceHeaders } from "@/lib/api/trace";
 import { SESSION_COOKIE } from "@/lib/auth/session";
 import { PAYMENT_ERRORS, type PaymentError } from "@/lib/bookings/payment";
 import type { Booking, Stay } from "@/lib/types";
@@ -19,7 +20,7 @@ async function sessionToken(): Promise<string> {
 
 /** One call to the backend's Bookings module; returns the status and the parsed envelope (data validated by `schema`). */
 async function call<T extends z.ZodType>(baseUrl: string, method: string, path: string, schema: T, options: { body?: unknown; auth?: boolean; quoteKey?: string } = {}) {
-  const headers: Record<string, string> = { "content-type": "application/json" };
+  const headers: Record<string, string> = { "content-type": "application/json", ...traceHeaders() };
   if (options.auth !== false) headers.authorization = `Bearer ${await sessionToken()}`;
   if (options.quoteKey) headers["x-quote-key"] = options.quoteKey;
   let response: Response;

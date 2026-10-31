@@ -21,7 +21,7 @@ public sealed class ErrorEnvelopeTests(InfrastructureFixture infrastructure)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal(
-            """{"success":false,"error":"Not Found"}""",
+            Envelope.Error(response, "Not Found"),
             await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
@@ -37,7 +37,7 @@ public sealed class ErrorEnvelopeTests(InfrastructureFixture infrastructure)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(
-            """{"success":false,"error":"Bad Request"}""",
+            Envelope.Error(response, "Bad Request"),
             await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 }

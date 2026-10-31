@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ok } from "@/lib/api/envelope";
 import { jsonError, parseBody, unauthorized, withErrorEnvelope } from "@/lib/api/request";
+import { traceHeaders } from "@/lib/api/trace";
 import { sessionFromRequest } from "@/lib/auth/session";
 import { chatService } from "@/lib/chat/config";
 import { dataSource } from "@/lib/data-source";
@@ -32,7 +33,7 @@ export const POST = withErrorEnvelope(async (request: Request) => {
 
   const response = await fetch(new URL("/conversations", chat.baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json", "x-service-key": chat.serviceKey },
+    headers: { "content-type": "application/json", "x-service-key": chat.serviceKey, ...traceHeaders() },
     body: JSON.stringify({
       listingId: listing.id,
       listingTitle: listing.title,

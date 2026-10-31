@@ -64,7 +64,7 @@ public sealed class SubmitReviewTests(InfrastructureFixture infrastructure)
         using var response = await PostAsync(client, With(("subjectType", $"\"{subjectType}\""), ("subjectId", $"\"{subjectId}\"")));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal($$"""{"success":false,"error":"{{error}}"}""", await response.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(response, error), await response.Content.ReadAsStringAsync(Ct));
     }
 
     // Each value is a JSON literal that replaces one field of a valid body.
@@ -110,7 +110,7 @@ public sealed class SubmitReviewTests(InfrastructureFixture infrastructure)
         using var response = await PostAsync(client, json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("""{"success":false,"error":"Bad Request"}""", await response.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(response, "Bad Request"), await response.Content.ReadAsStringAsync(Ct));
     }
 
     private static Task<HttpResponseMessage> PostAsync(HttpClient client, string json) =>

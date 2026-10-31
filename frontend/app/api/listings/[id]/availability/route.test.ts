@@ -10,7 +10,7 @@ test("returns the listing's booked stays without a session", async () => {
   const res = await GET(new Request("http://localhost/api/listings/l1/availability"), { params: Promise.resolve({ id: "l1" }) });
 
   expect(res.status).toBe(200);
-  expect(await res.json()).toEqual({ success: true, data: stays });
+  expect(await res.json()).toEqual({ success: true, data: stays, traceId: expect.any(String) });
   expect(spy).toHaveBeenCalledWith("l1");
   spy.mockRestore();
 });

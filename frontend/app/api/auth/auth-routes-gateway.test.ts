@@ -20,7 +20,7 @@ describe("auth routes over the gateway", () => {
     gateway.login.mockResolvedValueOnce(okSession);
     const response = await login(jsonRequest("http://localhost/api/auth/login", "POST", { email: "ana@example.com", password: "pw-12345" }));
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ success: true, data: user });
+    expect(await response.json()).toEqual({ success: true, data: user, traceId: expect.any(String) });
     expect(response.headers.get("set-cookie")).toMatch(/^session=tok_abc; Path=\/; HttpOnly; SameSite=Lax; Max-Age=604800$/);
   });
 
@@ -48,7 +48,7 @@ describe("auth routes over the gateway", () => {
     gateway.login.mockResolvedValueOnce({ ok: false, status: 401, error: "Email or password is incorrect" });
     const response = await login(jsonRequest("http://localhost/api/auth/login", "POST", { email: "ana@example.com", password: "pw-12345" }));
     expect(response.status).toBe(401);
-    expect(await response.json()).toEqual({ success: false, error: "Email or password is incorrect" });
+    expect(await response.json()).toEqual({ success: false, error: "Email or password is incorrect", traceId: expect.any(String) });
     expect(response.headers.get("set-cookie")).toBeNull();
   });
 
@@ -79,8 +79,8 @@ describe("auth routes over the gateway", () => {
     gateway.me.mockResolvedValueOnce(user).mockRejectedValueOnce(new Error("down"));
     vi.spyOn(console, "error").mockImplementation(() => {});
     const request = () => new Request("http://localhost/api/auth/session", { headers: { cookie: "session=tok_abc", "x-forwarded-for": "203.0.113.7" } });
-    expect(await (await session(request())).json()).toEqual({ success: true, data: user });
+    expect(await (await session(request())).json()).toEqual({ success: true, data: user, traceId: expect.any(String) });
     expect(gateway.me).toHaveBeenCalledWith("tok_abc", { clientIp: "203.0.113.7" });
-    expect(await (await session(request())).json()).toEqual({ success: true, data: null });
+    expect(await (await session(request())).json()).toEqual({ success: true, data: null, traceId: expect.any(String) });
   });
 });

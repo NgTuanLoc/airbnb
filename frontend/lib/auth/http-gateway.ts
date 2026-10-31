@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { envelopeSchema } from "@/lib/api-client/schemas";
+import { traceHeaders } from "@/lib/api/trace";
 import type { User } from "@/lib/types";
 import type { AuthGateway, AuthResult, GatewayFailure, RequestContext } from "./gateway";
 
@@ -31,7 +32,7 @@ const connectionsSchema = z.object({
 });
 
 function headers(context?: RequestContext, bearer?: string): HeadersInit {
-  const result: Record<string, string> = { "content-type": "application/json" };
+  const result: Record<string, string> = { "content-type": "application/json", ...traceHeaders() };
   if (context?.clientIp) result["x-forwarded-for"] = context.clientIp;
   if (bearer) result.authorization = `Bearer ${bearer}`;
   return result;

@@ -16,6 +16,6 @@ describe("GET /api/listings failures", () => {
     const response = await GET(new Request("http://localhost/api/listings"));
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ success: false, error: "Something went wrong. Try again." });
+    expect(await response.json()).toEqual({ success: false, error: "Something went wrong. Try again.", traceId: expect.any(String) });
   });
 });

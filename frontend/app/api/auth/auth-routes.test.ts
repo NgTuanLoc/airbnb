@@ -27,7 +27,7 @@ describe("POST /api/auth/login", () => {
     const res = await login(jsonRequest("http://localhost/api/auth/login", "POST", { email: "nope", password: "supersecret" }));
 
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ success: false, error: "Enter a valid email address" });
+    expect(await res.json()).toEqual({ success: false, error: "Enter a valid email address", traceId: expect.any(String) });
     expect(res.headers.get("set-cookie")).toBeNull();
   });
 

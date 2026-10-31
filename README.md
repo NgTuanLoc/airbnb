@@ -40,6 +40,7 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 ```
 
 - The dashboard URL is printed on start. The API answers at http://localhost:5283 (`/health`, and `/scalar` for the API reference in Development).
+- Debugging a request: every response names its trace, in the `X-Trace-Id` header (the frontend's `/api/*` routes and every .NET service) and as `traceId` in the JSON envelope. Paste it into the dashboard's **Traces** search, or open `/traces/detail/<traceId>` on the dashboard. The frontend passes its trace on to the API (`traceparent`), so one id shows everything a browser request caused: the API's endpoints, database queries, cache and the services it called.
 - Without the Aspire CLI: `dotnet run --project src/Airbnb.AppHost`.
 - In VS Code, start it from a regular terminal (or F5): a plain `aspire run` in the Aspire extension's own terminal fails with "Aspire debug session is not initialized".
 - In the local dev container the dashboard and Keycloak are served with the container's own development certificate, which your browser doesn't trust: continue past the warning.

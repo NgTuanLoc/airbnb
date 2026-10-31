@@ -31,7 +31,7 @@ describe("POST /api/auth/oauth/start", () => {
     const response = await start(jsonRequest("http://localhost/api/auth/oauth/start", "POST", { provider: "google", next: "//evil.com" }));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ success: true, data: { redirectUrl: started.authorizationUrl } });
+    expect(await response.json()).toEqual({ success: true, data: { redirectUrl: started.authorizationUrl }, traceId: expect.any(String) });
     expect(gateway.startExternal).toHaveBeenCalledWith({ provider: "google", email: undefined, link: false }, { clientIp: undefined, token: undefined });
     const [cookie] = setCookies(response);
     expect(cookie).toMatch(/^oauth_flow=.+; Path=\/api\/auth; HttpOnly; SameSite=Lax; Max-Age=600$/);
@@ -57,7 +57,7 @@ describe("POST /api/auth/oauth/start", () => {
     const response = await start(jsonRequest("http://localhost/api/auth/oauth/start", "POST", { provider: "sso", email: "alex@acme.example" }));
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ success: false, error: "Single sign-on isn't set up for that email's domain.", code: "sso_not_configured" });
+    expect(await response.json()).toEqual({ success: false, error: "Single sign-on isn't set up for that email's domain.", code: "sso_not_configured", traceId: expect.any(String) });
     expect(setCookies(response)).toEqual([]);
   });
 
@@ -151,8 +151,8 @@ describe("DELETE /api/auth/connections/[provider]", () => {
     const refused = await disconnect(request("session=tok_abc"), params("google"));
 
     expect(gateway.disconnect).toHaveBeenCalledWith("tok_abc", "google", { clientIp: undefined });
-    expect(await done.json()).toEqual({ success: true, data: null });
+    expect(await done.json()).toEqual({ success: true, data: null, traceId: expect.any(String) });
     expect(refused.status).toBe(409);
-    expect(await refused.json()).toEqual({ success: false, error: "Connect another sign-in method first.", code: "last_login_method" });
+    expect(await refused.json()).toEqual({ success: false, error: "Connect another sign-in method first.", code: "last_login_method", traceId: expect.any(String) });
   });
 });

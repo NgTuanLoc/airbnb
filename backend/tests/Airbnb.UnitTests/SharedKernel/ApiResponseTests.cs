@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Airbnb.SharedKernel;
 
@@ -38,5 +39,27 @@ public sealed class ApiResponseTests
         var json = JsonSerializer.Serialize(ApiResponse.Fail("An account with this email already exists", "account_exists"), JsonSerializerOptions.Web);
 
         Assert.Equal("""{"success":false,"error":"An account with this email already exists","code":"account_exists"}""", json);
+    }
+
+    [Fact]
+    public void Names_the_trace_it_is_written_in()
+    {
+        // A request's trace: what the API has around every response it writes.
+        using var request = new Activity("request").Start();
+
+        var json = JsonSerializer.Serialize(ApiResponse.Fail("Listing was not found"), JsonSerializerOptions.Web);
+
+        Assert.Equal($$"""{"success":false,"error":"Listing was not found","traceId":"{{request.TraceId.ToHexString()}}"}""", json);
+    }
+
+    [Fact]
+    public void A_cached_envelope_names_the_trace_writing_it_not_the_one_that_built_it()
+    {
+        var envelope = ApiResponse.Ok(OneListingId);
+        using var request = new Activity("a later request").Start();
+
+        var json = JsonSerializer.Serialize(envelope, JsonSerializerOptions.Web);
+
+        Assert.Contains($"\"traceId\":\"{request.TraceId.ToHexString()}\"", json);
     }
 }

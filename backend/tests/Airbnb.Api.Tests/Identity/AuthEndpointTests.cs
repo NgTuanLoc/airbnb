@@ -91,7 +91,7 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
         using var second = await RegisterAsync(client, email.ToUpperInvariant());
 
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
-        Assert.Equal("""{"success":false,"error":"An account with that email already exists"}""", await second.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(second, "An account with that email already exists"), await second.Content.ReadAsStringAsync(Ct));
     }
 
     [Fact]
@@ -151,11 +151,11 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
         using var wrongPassword = await LoginAsync(client, email, "wrong-horse!");
         using var unknownEmail = await LoginAsync(client, NewEmail(), "correct-horse");
 
-        const string expected = """{"success":false,"error":"Email or password is incorrect"}""";
+        const string expected = "Email or password is incorrect";
         Assert.Equal(HttpStatusCode.Unauthorized, wrongPassword.StatusCode);
-        Assert.Equal(expected, await wrongPassword.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(wrongPassword, expected), await wrongPassword.Content.ReadAsStringAsync(Ct));
         Assert.Equal(HttpStatusCode.Unauthorized, unknownEmail.StatusCode);
-        Assert.Equal(expected, await unknownEmail.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(unknownEmail, expected), await unknownEmail.Content.ReadAsStringAsync(Ct));
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
         using var login = await LoginAsync(client, email, "any-password");
 
         Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
-        Assert.Equal("""{"success":false,"error":"Email or password is incorrect"}""", await login.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(login, "Email or password is incorrect"), await login.Content.ReadAsStringAsync(Ct));
     }
 
     [Theory]
@@ -193,7 +193,7 @@ public sealed class AuthEndpointTests(InfrastructureFixture infrastructure)
         using var me = await MeAsync(client, token);
 
         Assert.Equal(HttpStatusCode.Unauthorized, me.StatusCode);
-        Assert.Equal("""{"success":false,"error":"Log in to continue"}""", await me.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(Envelope.Error(me, "Log in to continue"), await me.Content.ReadAsStringAsync(Ct));
     }
 
     [Fact]

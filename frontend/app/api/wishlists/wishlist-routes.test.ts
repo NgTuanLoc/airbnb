@@ -21,7 +21,7 @@ describe("wishlist API", () => {
     expect((await addListing(jsonRequest(`${url}/w/listings`, "POST", { listingId: "l1" }), params({ id: "w" }))).status).toBe(401);
     const res = await unsave(jsonRequest(`${url}/saved/l1`, "DELETE"), params({ listingId: "l1" }));
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ success: false, error: "Log in to continue" });
+    expect(await res.json()).toEqual({ success: false, error: "Log in to continue", traceId: expect.any(String) });
   });
 
   test("a garbage session cookie gets 401", async () => {

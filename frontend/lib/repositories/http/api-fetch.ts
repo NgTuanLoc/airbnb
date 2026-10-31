@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { envelopeSchema } from "@/lib/api-client/schemas";
+import { traceHeaders } from "@/lib/api/trace";
 
 const REQUEST_TIMEOUT_MS = 5_000;
 
@@ -16,6 +17,7 @@ export async function apiFetch<T extends z.ZodType>(
   let response: Response;
   try {
     response = await fetch(new URL(path, baseUrl), {
+      headers: traceHeaders(),
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });

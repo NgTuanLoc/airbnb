@@ -1,3 +1,4 @@
+import { traceHeaders } from "@/lib/api/trace";
 import { clientIp } from "@/lib/auth/client-ip";
 import { cookieValue } from "@/lib/auth/session";
 
@@ -17,7 +18,7 @@ export async function relayToApi(
   options: { method?: "GET" | "POST"; timeoutMs?: number; session?: boolean } = {},
 ): Promise<Response> {
   const method = options.method ?? "GET";
-  const headers = new Headers();
+  const headers = new Headers(traceHeaders());
   const token = options.session === false ? undefined : cookieValue(request);
   if (token) headers.set("authorization", `Bearer ${token}`);
   const ip = clientIp(request);
