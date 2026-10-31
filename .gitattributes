@@ -1,2 +1,5 @@
 # SQL Notebook (cmoog.sqlnotebook) splits cells on two LFs: CRLF would merge them all into one cell.
 notebooks/*.sql text eol=lf
+# Shell scripts and git hooks run under sh: Windows line endings would break them on Linux and macOS.
+*.sh text eol=lf
+.githooks/* text eol=lf
