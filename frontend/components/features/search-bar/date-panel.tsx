@@ -17,7 +17,9 @@ export function DatePanel({ checkIn, checkOut, onSelect }: Readonly<DatePanelPro
   const [month, setMonth] = useState<Date>(() => startOfMonth(checkIn ?? new Date()));
 
   return (
-    <div className="w-full max-w-[320px]">
+    // A width of its own: the pop-up around it shrinks to fit, and the day buttons are percentages of this, so without
+    // one the calendar's size would hang on the month shown.
+    <div className="w-80 max-w-full">
       <BookingCalendar
         month={month}
         checkIn={checkIn}

@@ -25,4 +25,12 @@ describe("DatePanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "15" }));
     expect(onSelect).toHaveBeenCalledOnce();
   });
+
+  test("has a width of its own, so the shrink-to-fit pop-up around it keeps one size from month to month", () => {
+    const { container } = render(<DatePanel checkIn={null} checkOut={null} onSelect={() => {}} />);
+
+    const panel = container.firstElementChild as HTMLElement;
+    expect(panel.className).toContain("w-80");
+    expect(panel.className).toContain("max-w-full");
+  });
 });
