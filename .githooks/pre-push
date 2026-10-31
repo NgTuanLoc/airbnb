@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Local CI before anything leaves this machine (ci/local-ci.sh). Enable once per clone: git config core.hooksPath .githooks
+# No --signoff here: GitHub doesn't have the commit yet while this runs.
+exec sh "$(git rev-parse --show-toplevel)/ci/local-ci.sh"

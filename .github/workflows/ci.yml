@@ -1,10 +1,17 @@
 name: CI
 
+# Pull requests are checked on the developer's machine (ci/local-ci.sh, run by the pre-push hook), not here: this runs
+# once a change reaches main, as a backstop on a clean runner, and on demand.
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+
+# A newer push to main makes a run still in progress pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend:
