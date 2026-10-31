@@ -209,3 +209,49 @@ describe("RoomPage messaging", () => {
     expect(screen.queryByRole("button", { name: "Message host" })).not.toBeInTheDocument();
   });
 });
+
+describe("RoomPage, around the place", () => {
+  const renderRoom = async (id: string) =>
+    render(await RoomPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }));
+  const section = (name: string) => screen.getByRole("region", { name });
+
+  test("shows where the place is", async () => {
+    await renderRoom("l1");
+
+    expect(within(section("Where you’ll be")).getByText("Aspen, USA")).toBeInTheDocument();
+  });
+
+  test("lists the house rules and the cancellation policy the app keeps", async () => {
+    await renderRoom("l1");
+
+    const things = section("Things to know");
+    expect(within(things).getByText("4 guests maximum")).toBeInTheDocument();
+    expect(within(things).getByText("Cancel before your trip starts and you won’t be charged.")).toBeInTheDocument();
+  });
+
+  test("suggests things to do in the same city, and nowhere else", async () => {
+    const aspen = (await getRepositories().experiences.findAll()).filter((e) => e.location.city === "Aspen");
+    await renderRoom("l1");
+
+    const links = within(section("Things to do in Aspen")).getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(links).toEqual(expect.arrayContaining(aspen.map((e) => `/experiences/${e.id}`)));
+    expect(links.filter((href) => href?.startsWith("/experiences/"))).toHaveLength(aspen.length);
+  });
+
+  test("suggests up to four other stays in the same city, not this one", async () => {
+    const others = (await getRepositories().listings.findAll({ location: "Aspen" })).filter((l) => l.id !== "l1").slice(0, 4);
+    await renderRoom("l1");
+
+    const hrefs = within(section("More places to stay in Aspen")).getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(hrefs).toEqual(others.map((l) => `/rooms/${l.id}`));
+  });
+
+  test("leaves out the suggestions a city has none of", async () => {
+    vi.spyOn(getRepositories().experiences, "findAll").mockResolvedValue([]);
+    vi.spyOn(getRepositories().listings, "findAll").mockResolvedValue([]);
+    await renderRoom("l1");
+
+    expect(screen.queryByRole("region", { name: "Things to do in Aspen" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "More places to stay in Aspen" })).not.toBeInTheDocument();
+  });
+});

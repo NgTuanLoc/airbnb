@@ -12,6 +12,7 @@ import { ListingViewBeacon } from "@/components/features/listing-view-beacon";
 import { AmenityList } from "@/components/features/amenity-list";
 import { ReviewsGrid } from "@/components/features/reviews-grid";
 import { ReservationPanel } from "@/components/features/reservation-panel";
+import { NearbyExperiences, NearbyStays, ThingsToKnow, WhereYoullBe } from "@/components/features/room/room-sections";
 import { guestViewsText } from "@/lib/insights/views";
 import { parseReservationQuery, toReservationInitDto, type ReservationQuery } from "@/lib/reservation/query";
 
@@ -37,12 +38,17 @@ export default async function RoomPage({
   const listing = await repos.listings.findById(id);
   if (!listing) notFound();
 
-  const [host, reviews, viewer, views] = await Promise.all([
+  const city = listing.location.city;
+  const [host, reviews, viewer, views, experiences, stays] = await Promise.all([
     repos.hosts.findById(listing.hostId),
     repos.reviews.findByListingId(listing.id),
     getSession(),
     repos.listingViews.weekly(listing.id),
+    repos.experiences.findAll(),
+    repos.listings.findAll({ location: city }),
   ]);
+  const nearbyExperiences = experiences.filter((experience) => experience.location.city === city).slice(0, 4);
+  const nearbyStays = stays.filter((stay) => stay.id !== listing.id).slice(0, 4);
   const isOwner = viewer?.id === listing.hostId;
   const isUnlisted = listing.status === "unlisted";
   const initial = toReservationInitDto(parseReservationQuery(query));
@@ -113,6 +119,13 @@ export default async function RoomPage({
           </div>
 
           <div className="md:sticky md:top-24 md:self-start">{sidePanel}</div>
+        </div>
+
+        <div className="mt-12">
+          <WhereYoullBe listing={listing} />
+          <ThingsToKnow listing={listing} />
+          <NearbyExperiences city={city} experiences={nearbyExperiences} />
+          <NearbyStays city={city} listings={nearbyStays} />
         </div>
       </main>
       <Footer />

@@ -49,4 +49,13 @@ describe("TopNav", () => {
 
     expect(screen.getByRole("button", { name: "Notifications" }).closest(".hidden")).toBeNull();
   });
+
+  test("the home link carries the brand mark in Rausch beside the wordmark", () => {
+    render(<TopNav active="homes" />);
+
+    const home = screen.getByRole("link", { name: "Airbnb home" });
+    expect(home.querySelector("svg")).not.toBeNull();
+    expect(home.className).toContain("text-rausch");
+    expect(home).toHaveTextContent("airbnb");
+  });
 });

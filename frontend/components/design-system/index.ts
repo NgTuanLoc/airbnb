@@ -14,3 +14,4 @@ export { Footer } from "./footer";
 export { HostCard } from "./host-card";
 export { AuthCard } from "./auth-card";
 export { SkipLink } from "./skip-link";
+export { BrandMark } from "./brand-mark";

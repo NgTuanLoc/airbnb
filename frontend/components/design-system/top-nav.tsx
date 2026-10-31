@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { NewBadge } from "./badges";
+import { BrandMark } from "./brand-mark";
 // The design-system → features imports: every page's nav needs the live session menu and the notifications bell.
 import { AccountMenu } from "@/components/features/auth/account-menu";
 import { MobileNav } from "@/components/features/nav/mobile-nav";
@@ -12,7 +13,8 @@ export type { Product } from "@/lib/nav";
 export function TopNav({ active = "homes" }: Readonly<{ active?: Product }>) {
   return (
     <header className="flex h-20 items-center justify-between border-b border-hairline bg-canvas px-6 md:px-10 xl:px-20">
-      <Link href="/" className="text-display-sm font-bold text-rausch" aria-label="Airbnb home">
+      <Link href="/" className="flex items-center gap-1 text-display-sm font-bold text-rausch" aria-label="Airbnb home">
+        <BrandMark className="size-8" />
         airbnb
       </Link>
       <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
