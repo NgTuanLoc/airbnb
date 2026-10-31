@@ -1,4 +1,4 @@
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using Airbnb.Modules.Bookings;
 using Airbnb.Modules.Bookings.Contracts;
 using Airbnb.Modules.Experiences;
@@ -112,7 +112,8 @@ public sealed class ModuleRulesTests
         Assert.Equal(moduleProjects, Modules.Keys.Order().ToArray());
     }
 
-    // backend/ from this test assembly's output folder (backend/tests/Airbnb.ArchitectureTests/bin/<config>/<tfm>/).
-    private static string RepoBackend() =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "..", "..", "..", "..", ".."));
+    // backend/, from this source file (backend/tests/Airbnb.ArchitectureTests/), since the compiler records its path: the
+    // build output may be anywhere (--artifacts-path in ci/local-ci.sh and the Sonar scan, $ArtifactsPath in the dev container).
+    private static string RepoBackend([CallerFilePath] string thisFile = "") =>
+        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", ".."));
 }

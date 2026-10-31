@@ -2,7 +2,7 @@
 
 GitHub Actions no longer runs on pull requests: the checks run on your machine before a push, and the cloud workflow
 (`.github/workflows/ci.yml`) runs only once a change reaches `main`, as a backstop on a clean runner, or by hand
-(**Run workflow**). The idea and its trade-offs: https://milanjovanovic.tech/blog/i-turned-off-ci-for-pull-requests
+(**Run workflow**). The idea and its trade-offs: [I turned off CI for pull requests](https://milanjovanovic.tech/blog/i-turned-off-ci-for-pull-requests)
 
 ## Set up (once per clone)
 
