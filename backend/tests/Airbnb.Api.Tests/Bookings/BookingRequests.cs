@@ -9,13 +9,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Airbnb.Api.Tests.Bookings;
 
-// Helpers shared by the booking tests. They book only l13–l16 or fresh hl- listings, in random far-future months.
+// Helpers shared by the booking tests. They book only l13–l16 or fresh hl- listings, in far-future months.
 internal static class BookingRequests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
+    // Months from now: a random start, then one more per call.
+    private static int _monthsAhead = Random.Shared.Next(13, 300);
+
+    // A far-future month no other call in this test run gets. Every stay is shorter than a month, so tests booking the same
+    // listing never overlap (two random months could match, and the second booking then got a 409).
     internal static DateOnly RandomMonth() =>
-        DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Random.Shared.Next(13, 600));
+        DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Interlocked.Increment(ref _monthsAhead));
 
     internal const string QuoteKey = "test-quote-key";
 
