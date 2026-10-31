@@ -33,3 +33,7 @@ TestResults/
 # tools/sonar/scan.ps1: the local server's credentials, the scanner, build output and issue exports
 tools/sonar/.local/
 ci/.local/
+# Azurite run locally (the VS Code extension): Aspire runs it in a container instead.
+__azurite_db_*.json
+__blobstorage__/
+__queuestorage__/
