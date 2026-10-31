@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using Aspire.Hosting.Yarp.Transforms;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -235,8 +236,9 @@ frontend.WithEnvironment("ASSISTANT_HTTP", assistant.GetEndpoint("http"));
 // the browser uses: from inside a container the frontend's own URL would be aspire.dev.internal.
 api.WithEnvironment("Identity__External__RedirectBaseUrl", ReferenceExpression.Create($"{frontend.GetEndpoint("http")}/api/auth/callback"));
 
-// Emails link to the frontend; "Send due reminders now" sends every waiting review reminder without waiting for check-out.
-builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfileName: "http")
+// Emails link to the frontend; "Send due reminders now" sends every waiting review reminder without waiting for check-out,
+// and "Broadcast a message" shows a message on every open page (the frontend relays the service's Server-Sent Events).
+var notifications = builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfileName: "http")
     .WithReference(notificationsDb)
     .WithReference(messaging)
     .WithReference(mailpit)
@@ -254,7 +256,25 @@ builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfile
         IconName = "Mail",
         PrepareRequest = async context =>
             context.Request.Headers.Add("X-Admin-Key", await notificationsAdminKey.Resource.GetValueAsync(context.CancellationToken)),
+    })
+    // The message is a command argument: a field in the dashboard, or `aspire resource notifications broadcast --message "…"`.
+    .WithHttpCommand("/broadcasts", "Broadcast a message", endpointName: "http", commandName: "broadcast", commandOptions: new HttpCommandOptions
+    {
+        Method = HttpMethod.Post,
+        Description = "Show a message on every page open on the site, right away",
+        IconName = "Megaphone",
+        Arguments =
+        [
+            // The service's limit too (BroadcastEndpoints.MaxLength).
+            new InteractionInput { Name = "message", Label = "Message", InputType = InputType.Text, Required = true, MaxLength = 500 },
+        ],
+        PrepareRequest = async context =>
+        {
+            context.Request.Headers.Add("X-Admin-Key", await notificationsAdminKey.Resource.GetValueAsync(context.CancellationToken));
+            context.Request.Content = JsonContent.Create(new { text = context.Arguments.GetString("message") });
+        },
     });
+frontend.WithEnvironment("NOTIFICATIONS_HTTP", notifications.GetEndpoint("http"));
 keycloak.WithEnvironment("ACME_REDIRECT_URI",
     ReferenceExpression.Create($"http://localhost:{frontend.GetEndpoint("http").Property(EndpointProperty.Port)}/api/auth/callback/sso-acme"));
 

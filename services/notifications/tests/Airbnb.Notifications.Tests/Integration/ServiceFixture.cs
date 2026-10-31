@@ -57,7 +57,7 @@ public sealed class ServiceFixture : IAsyncLifetime
         Service.CreateClient().Dispose();
     }
 
-    public WebApplicationFactory<Program> Factory(string? adminKey) =>
+    public WebApplicationFactory<Program> Factory(string? adminKey, Action<IWebHostBuilder>? configure = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder
@@ -65,11 +65,14 @@ public sealed class ServiceFixture : IAsyncLifetime
                 .UseSetting("ConnectionStrings:messaging", MessagingConnectionString)
                 .UseSetting("ConnectionStrings:mailpit", $"Endpoint=smtp://{_mailpit.Hostname}:{_smtpHostPort}")
                 .UseSetting("Notifications:FrontendUrl", "http://localhost:3000")
-                .UseSetting("Notifications:ReminderSweepInterval", "00:00:01");
+                .UseSetting("Notifications:ReminderSweepInterval", "00:00:01")
+                // A ping a second, so a test can tell an event stream is open and listening before it broadcasts.
+                .UseSetting("Notifications:HeartbeatInterval", "00:00:01");
             if (adminKey is not null)
             {
                 builder.UseSetting("Notifications:AdminKey", adminKey);
             }
+            configure?.Invoke(builder);
         });
 
     // Publishes the way the monolith's Wolverine does: to the bookings exchange, the identity as the AMQP type, camelCase JSON.

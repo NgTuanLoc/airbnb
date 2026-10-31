@@ -63,6 +63,11 @@
   outline-offset: 2px;
 }
 
+/* On a dark (bg-ink) surface the ink focus ring would vanish: inside one, it's white. */
+@utility focus-ring-inverse {
+  --color-focus-ring: var(--color-on-primary);
+}
+
 /* Swipeable tracks (the photo viewer) scroll without showing a scrollbar. */
 @utility scrollbar-none {
   scrollbar-width: none;

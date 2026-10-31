@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { inter } from "./fonts";
 import { SkipLink } from "@/components/design-system";
 import { AssistantSlot } from "@/components/features/assistant/assistant-slot";
+import { BroadcastSlot } from "@/components/features/notifications/broadcast-slot";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -21,6 +22,7 @@ export default function RootLayout({
           {children}
           {/* In the layout, so the conversation survives moving between pages. */}
           <AssistantSlot />
+          <BroadcastSlot />
         </Providers>
       </body>
     </html>

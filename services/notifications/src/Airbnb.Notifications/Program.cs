@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Airbnb.Notifications.Broadcasts;
 using Airbnb.Notifications.Data;
 using Airbnb.Notifications.Email;
 using Airbnb.Notifications.Handlers;
@@ -11,7 +12,8 @@ using Wolverine.Postgresql;
 using Wolverine.RabbitMQ;
 
 // The notification service (docs/superpowers/specs/2026-10-28-notification-service-design.md): booking events in from
-// the broker, emails out through SMTP. It never calls the monolith; everything it needs travels in the events.
+// the broker, emails out through SMTP. It never calls the monolith; everything it needs travels in the events. It also
+// broadcasts announcements to every open page as Server-Sent Events (/events).
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -19,6 +21,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SmtpEmailSender>();
 builder.Services.AddHostedService<DueReminderSweep>();
+builder.Services.AddSingleton<BroadcastHub>();
 builder.Services.AddSingleton(new NotificationsSettings(new Uri(builder.Configuration["Notifications:FrontendUrl"]
     ?? throw new InvalidOperationException("Notifications:FrontendUrl is required: the emails link to the site"))));
 
@@ -63,5 +66,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapSendDue();
+app.MapBroadcasts();
 
 await app.RunAsync();
