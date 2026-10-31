@@ -14,6 +14,8 @@ public sealed record Broadcast(long Id, string Text, DateTimeOffset SentAt);
 public sealed class BroadcastHub(TimeProvider time, IConfiguration configuration)
 {
     public const string EventType = "broadcast";
+    // The broadcasts sent before a page opened: its history, not news.
+    public const string RecentType = "recent";
     public const string PingType = "ping";
     private const int Replayable = 20;
     // A page that reads slowly loses its oldest unread broadcasts instead of holding up the others.
@@ -63,24 +65,26 @@ public sealed class BroadcastHub(TimeProvider time, IConfiguration configuration
         }
     }
 
-    // One page's stream: the broadcasts after lastEventId, then each new one as it's sent, with a ping whenever it has
-    // been quiet for the heartbeat interval, so nothing on the way (the Next server's fetch gives up on a body silent
-    // for five minutes) closes it.
+    // One page's stream. First what came before: a page that just opened gets the recent broadcasts as its history
+    // (recent), and one that reconnects with the last id it saw gets the ones it missed as news (broadcast). Then each
+    // new one as it's sent, with a ping whenever it has been quiet for the heartbeat interval, so nothing on the way (the
+    // Next server's fetch gives up on a body silent for five minutes) closes it.
     public async IAsyncEnumerable<SseItem<Broadcast?>> ListenAsync(long? lastEventId, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var listener = Channel.CreateBounded<Broadcast>(
             new BoundedChannelOptions(UnreadPerPage) { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true });
-        Broadcast[] missed;
+        Broadcast[] earlier;
         lock (_gate)
         {
             _listeners.Add(listener.Writer);
-            missed = lastEventId is { } seen ? [.. _recent.Where(b => b.Id > seen)] : [];
+            earlier = lastEventId is { } seen ? [.. _recent.Where(b => b.Id > seen)] : [.. _recent];
         }
+        var earlierType = lastEventId is null ? RecentType : EventType;
         try
         {
-            foreach (var broadcast in missed)
+            foreach (var broadcast in earlier)
             {
-                yield return Item(broadcast);
+                yield return Item(broadcast, earlierType);
             }
             // Until the page goes away (the request is aborted).
             while (!cancellationToken.IsCancellationRequested)
@@ -92,7 +96,7 @@ public sealed class BroadcastHub(TimeProvider time, IConfiguration configuration
                 }
                 while (listener.Reader.TryRead(out var broadcast))
                 {
-                    yield return Item(broadcast);
+                    yield return Item(broadcast, EventType);
                 }
             }
         }
@@ -120,6 +124,6 @@ public sealed class BroadcastHub(TimeProvider time, IConfiguration configuration
         }
     }
 
-    private static SseItem<Broadcast?> Item(Broadcast broadcast) =>
-        new(broadcast, EventType) { EventId = broadcast.Id.ToString(CultureInfo.InvariantCulture) };
+    private static SseItem<Broadcast?> Item(Broadcast broadcast, string type) =>
+        new(broadcast, type) { EventId = broadcast.Id.ToString(CultureInfo.InvariantCulture) };
 }

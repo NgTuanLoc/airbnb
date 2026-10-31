@@ -1,55 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Megaphone, X } from "lucide-react";
-import { BROADCAST_STREAM, broadcastSchema, type Broadcast } from "@/lib/notifications/schemas";
-
-function parse(data: string): unknown {
-  try {
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
+import type { Broadcast } from "@/lib/notifications/schemas";
 
 /**
- * Announcements broadcast to everyone on the site (the Aspire dashboard's "Broadcast a message"), live over
- * Server-Sent Events. The newest one shows until it's dismissed, and screen readers hear it once.
+ * An announcement popping up as it arrives, under the nav by the bell that keeps it. The bar along its foot runs down
+ * and dismisses it (CSS pauses it while it's pointed at or focused); so do its button and Escape. Screen readers hear
+ * it once, from the status region, even while the open panel hides the card.
  */
-export function BroadcastToast() {
-  const [shown, setShown] = useState<Broadcast | null>(null);
+export function BroadcastToast({
+  broadcast,
+  hidden,
+  onDismiss,
+}: Readonly<{ broadcast: Broadcast | null; hidden: boolean; onDismiss: () => void }>) {
+  const shown = broadcast !== null && !hidden;
 
-  useEffect(() => {
-    // EventSource reconnects by itself, sending the last id it saw, so a dropped connection misses nothing.
-    const source = new EventSource(BROADCAST_STREAM);
-    source.addEventListener("broadcast", (event) => {
-      const broadcast = broadcastSchema.safeParse(parse(event.data));
-      if (broadcast.success) setShown(broadcast.data);
-    });
-    return () => source.close();
-  }, []);
-
-  // Escape dismisses it, same as its button.
   useEffect(() => {
     if (!shown) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setShown(null);
+      if (event.key === "Escape") onDismiss();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [shown]);
+  }, [shown, onDismiss]);
 
   return (
     <>
       {/* Always there, so the announcement is read when its text arrives. */}
-      <output className="sr-only">{shown ? `Announcement: ${shown.text}` : ""}</output>
+      <output className="sr-only">{broadcast ? `Announcement: ${broadcast.text}` : ""}</output>
       {shown && (
-        <div className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md items-start gap-3 rounded-sm bg-ink px-4 py-3 text-body-sm text-on-primary shadow-airbnb focus-ring-inverse">
-          <Megaphone aria-hidden className="mt-1 size-4 shrink-0" />
-          <p className="min-w-0 flex-1 wrap-break-word">{shown.text}</p>
-          <button type="button" aria-label="Dismiss announcement" onClick={() => setShown(null)} className="flex size-8 shrink-0 items-center justify-center rounded-full">
-            <X aria-hidden className="size-4" />
-          </button>
+        // Keyed by the announcement, so a newer one drops in and starts its own clock.
+        <div
+          key={broadcast.id}
+          className="toast fixed inset-x-4 top-22 z-50 overflow-hidden rounded-md bg-canvas shadow-airbnb md:left-auto md:right-10 md:w-96 xl:right-20"
+        >
+          <div className="flex items-start gap-4 p-4">
+            <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rausch text-on-primary">
+              <Megaphone className="size-5" />
+            </span>
+            <p className="min-w-0 flex-1 self-center wrap-break-word text-body-md text-ink">{broadcast.text}</p>
+            <button
+              type="button"
+              aria-label="Dismiss announcement"
+              onClick={onDismiss}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-surface-soft"
+            >
+              <X aria-hidden className="size-4 text-ink" />
+            </button>
+          </div>
+          <span aria-hidden onAnimationEnd={onDismiss} className="toast-timer block h-1 bg-rausch" />
         </div>
       )}
     </>

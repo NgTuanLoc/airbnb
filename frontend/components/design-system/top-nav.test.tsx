@@ -1,6 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, screen, within } from "@/lib/test-utils";
+import { NotificationsProvider } from "@/components/features/notifications/notifications-provider";
+import { installFakeEventSource } from "@/lib/notifications/test-event-source";
 import { TopNav } from "./top-nav";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("TopNav", () => {
   test("renders the three product tabs", () => {
@@ -27,7 +31,8 @@ describe("TopNav", () => {
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(nav.className).toContain("hidden");
     expect(nav.className).toContain("md:flex");
-    expect(screen.getByRole("link", { name: "Become a host" }).parentElement?.className).toContain("md:flex");
+    expect(screen.getByRole("link", { name: "Become a host" }).className).toContain("md:block");
+    expect(screen.getByRole("button", { name: /account menu/i }).closest(".hidden")?.className).toContain("md:block");
     expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
   });
 
@@ -36,5 +41,12 @@ describe("TopNav", () => {
     const mobileNav = screen.getByRole("navigation", { name: "Main menu" });
     expect(mobileNav.className).toContain("md:hidden");
     expect(within(mobileNav).getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+  });
+
+  test("the notifications bell shows at every width, when announcements are on", () => {
+    installFakeEventSource();
+    render(<NotificationsProvider enabled><TopNav active="homes" /></NotificationsProvider>);
+
+    expect(screen.getByRole("button", { name: "Notifications" }).closest(".hidden")).toBeNull();
   });
 });

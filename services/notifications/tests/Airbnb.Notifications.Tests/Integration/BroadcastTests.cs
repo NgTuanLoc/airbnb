@@ -40,6 +40,22 @@ public sealed class BroadcastTests(ServiceFixture fixture)
     }
 
     [Fact]
+    public async Task A_page_that_opens_gets_the_recent_ones_first_as_history()
+    {
+        using var client = fixture.Service.CreateClient();
+        var text = $"Sent before the page opened {Guid.NewGuid():N}";
+        using var sent = await BroadcastAsync(client, text);
+
+        await using var page = await OpenAsync(client);
+
+        // The page's bell lists them, but they aren't news: they come as "recent", not "broadcast", before the first ping.
+        var recent = await page.UntilAsync(BroadcastHub.PingType);
+        Assert.Contains(recent, item => item.EventType == BroadcastHub.RecentType
+            && JsonSerializer.Deserialize<JsonElement>(item.Data).GetProperty("text").GetString() == text);
+        Assert.DoesNotContain(recent, item => item.EventType == BroadcastHub.EventType);
+    }
+
+    [Fact]
     public async Task A_page_that_reconnects_gets_what_it_missed()
     {
         using var client = fixture.Service.CreateClient();
@@ -146,6 +162,17 @@ public sealed class BroadcastTests(ServiceFixture fixture)
                 }
             }
             throw new InvalidOperationException($"The stream ended before a '{eventType}' event");
+        }
+
+        // Every event before the first one of the given type.
+        public async Task<List<SseItem<string>>> UntilAsync(string eventType)
+        {
+            var before = new List<SseItem<string>>();
+            while (await events.MoveNextAsync() && events.Current.EventType != eventType)
+            {
+                before.Add(events.Current);
+            }
+            return before;
         }
 
         public async ValueTask DisposeAsync()

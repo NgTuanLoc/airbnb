@@ -133,15 +133,53 @@
   animation: sheetSlideUp 250ms ease-out;
 }
 
+/* An announcement drops in under the nav. */
+.toast {
+  animation: searchPopIn 200ms ease-out;
+}
+
+/* Its bar runs down for 8 s, then dismisses it (onAnimationEnd); pointing at it or focusing it stops the clock. */
+@keyframes toastTimer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.toast-timer {
+  transform-origin: left;
+  animation: toastTimer 8s linear forwards;
+}
+
+.toast:hover .toast-timer,
+.toast:focus-within .toast-timer {
+  animation-play-state: paused;
+}
+
+/* The nav's bell swings when an announcement arrives. */
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(6deg); }
+  80% { transform: rotate(-3deg); }
+}
+
+.bell-ring {
+  transform-origin: 50% 10%;
+  animation: bellRing 800ms ease-in-out;
+}
+
 button:not(:disabled),
 [role="button"] {
   cursor: pointer;
 }
 
+/* The toast's timer bar keeps running: it's what dismisses the toast. */
 @media (prefers-reduced-motion: reduce) {
   .search-pop-in,
   .search-morph-in,
-  .sheet-slide-up {
+  .sheet-slide-up,
+  .toast,
+  .bell-ring {
     animation: none;
   }
   html {

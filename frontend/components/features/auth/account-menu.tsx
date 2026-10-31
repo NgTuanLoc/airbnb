@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Menu, UserCircle } from "lucide-react";
+import { useLightDismiss } from "@/lib/hooks/use-light-dismiss";
 import { useSessionState } from "./session-provider";
 import { AccountLinks } from "./account-links";
 
@@ -13,25 +14,8 @@ export function AccountMenu() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  // A disclosure, not an ARIA menu: Escape and a click outside close it.
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      buttonRef.current?.focus();
-    }
-    function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useLightDismiss(open, close, rootRef, buttonRef);
 
   return (
     <div ref={rootRef} className="relative">

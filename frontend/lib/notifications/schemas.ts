@@ -7,6 +7,7 @@ export const BROADCAST_STREAM = "/api/notifications/stream";
 export const broadcastSchema = z.object({
   id: z.number(),
   text: z.string().min(1),
+  sentAt: z.coerce.date(),
 });
 
 export type Broadcast = z.infer<typeof broadcastSchema>;

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { NewBadge } from "./badges";
-// The one design-system → features import: every page's nav needs the live session menu.
+// The design-system → features imports: every page's nav needs the live session menu and the notifications bell.
 import { AccountMenu } from "@/components/features/auth/account-menu";
 import { MobileNav } from "@/components/features/nav/mobile-nav";
+import { NotificationBell } from "@/components/features/notifications/notification-bell";
 import { NAV_TABS, type Product } from "@/lib/nav";
 
 export type { Product } from "@/lib/nav";
@@ -30,15 +31,19 @@ export function TopNav({ active = "homes" }: Readonly<{ active?: Product }>) {
           </Link>
         ))}
       </nav>
-      <div className="hidden items-center gap-2 md:flex">
-        <Link href="/host" className="text-title-sm text-ink">
+      {/* The bell shows at every width; the host link and account menu from md up, the mobile menu below. */}
+      <div className="flex items-center gap-2">
+        <Link href="/host" className="hidden text-title-sm text-ink md:block">
           Become a host
         </Link>
-        <AccountMenu />
+        <NotificationBell />
+        <div className="hidden md:block">
+          <AccountMenu />
+        </div>
+        <nav aria-label="Main menu" className="md:hidden">
+          <MobileNav active={active} />
+        </nav>
       </div>
-      <nav aria-label="Main menu" className="md:hidden">
-        <MobileNav active={active} />
-      </nav>
     </header>
   );
 }

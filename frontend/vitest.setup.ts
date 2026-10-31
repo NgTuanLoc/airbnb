@@ -1,4 +1,6 @@
 import "@testing-library/jest-dom/vitest";
+// Before React DOM loads: see the file.
+import "./lib/test-animation-event";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 

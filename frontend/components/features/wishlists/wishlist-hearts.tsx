@@ -87,7 +87,7 @@ export function WishlistHeartsProvider({
       {children}
       {pending && <SaveToWishlistDialog listing={pending} wishlists={wishlists} onClose={() => setPending(null)} />}
       {error && (
-        <div role="alert" className="fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-sm bg-ink px-4 py-3 text-body-sm text-on-primary shadow-airbnb md:bottom-6">
+        <div role="alert" className="fixed bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-sm bg-ink px-4 py-3 text-body-sm text-on-primary shadow-airbnb focus-ring-inverse md:bottom-6">
           {error}
           <button type="button" aria-label="Dismiss" onClick={() => setError(null)} className="flex size-8 items-center justify-center rounded-full">
             <X aria-hidden className="size-4" />

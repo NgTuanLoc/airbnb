@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { inter } from "./fonts";
 import { SkipLink } from "@/components/design-system";
 import { AssistantSlot } from "@/components/features/assistant/assistant-slot";
-import { BroadcastSlot } from "@/components/features/notifications/broadcast-slot";
+import { NotificationsProvider } from "@/components/features/notifications/notifications-provider";
+import { broadcastsEnabled } from "@/lib/notifications/config";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -19,10 +20,11 @@ export default function RootLayout({
       <body className="bg-canvas text-ink antialiased">
         <SkipLink />
         <Providers>
-          {children}
-          {/* In the layout, so the conversation survives moving between pages. */}
-          <AssistantSlot />
-          <BroadcastSlot />
+          {/* In the layout, so the announcements stream and the conversation survive moving between pages. */}
+          <NotificationsProvider enabled={broadcastsEnabled()}>
+            {children}
+            <AssistantSlot />
+          </NotificationsProvider>
         </Providers>
       </body>
     </html>
