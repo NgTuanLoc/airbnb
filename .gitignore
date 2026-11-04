@@ -39,3 +39,5 @@ __blobstorage__/
 __queuestorage__/
 # k6 run reports, written by each run (backend/perf/k6/report.js)
 backend/perf/k6/reports/
+# aspire publish/deploy writes the generated Helm chart here (LocalCluster.cs)
+backend/src/Airbnb.AppHost/aspire-output/

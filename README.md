@@ -64,6 +64,30 @@ dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker;
 - Listing views (Kafka): every listing page records a view, which the API publishes to the `listing-views` topic on `kafka`. The Insights module counts the views per listing per day: guests see "N views in the past week" and hosts see their last 7 days on `/host/listings`. Open `kafka-ui` from the dashboard to browse the topic and the `insights-listing-views` consumer group. The topic keeps every view forever, so **Rebuild view stats** (a command on the `api` resource, or `aspire resource api "api-http-http-post-/api/insights/rebuild"`) wipes the counts and recounts them from the log. A k6 run records about a thousand views.
 - Load test: the `k6` resource runs `backend/perf/k6/load.js` when you press Start on it in the dashboard (or `aspire resource k6 start`). For 1 minute, 20 guests browse listings and 10 members read their account and bookings, all signed in as `k6@perf.test` (registered on the first run; the password is the generated `k6-user-password` parameter). While it runs, its **Live dashboard** link shows k6's charts. When it ends, open **Last run's report** on the `k6-report` resource (nested under `k6`): every endpoint's request count, failure rate and avg/median/p90/p95/p99/max, sortable and filterable, with a row's latency spread on click, plus the scenarios, checks, connection phases and a link to the run's charts over time (files in `backend/perf/k6/reports/`, gitignored, replaced by each run). The log has the same per-endpoint table, and the resource ends as failed if p95 goes over 500 ms or more than 1% of requests fail. Under `aspire run` the API's read limit is raised to 100,000/min so the limiter doesn't throttle k6.
 
+
+## Local Kubernetes
+
+The same AppHost deploys the whole app to Docker Desktop's Kubernetes cluster as a Helm chart, instead of a cloud provider.
+
+1. Turn on Kubernetes in Docker Desktop (Settings → Kubernetes), and install Helm 4.2 or later (`winget install Helm.Helm`).
+2. Stop `aspire run` if it's running: both use ports 3000, 5000, 8025 and 8080.
+3. From PowerShell: `pwsh backend/deploy-local.ps1`.
+
+The script refuses to run unless kubectl's context is `docker-desktop`, since `aspire deploy` installs into whatever the current context is. It starts a local image registry (the `airbnb-registry` container on port 5001), then runs `aspire deploy`, which builds every image, pushes them there and installs the chart into the `airbnb` namespace. The first deploy takes a few minutes; later ones reuse the build cache and upgrade the release in place. Then open:
+
+| What | URL |
+|---|---|
+| The app | http://localhost:3000 |
+| Aspire dashboard (traces, logs, metrics) | http://localhost:18888 |
+| Mailpit (the emails) | http://localhost:8025 |
+| Keycloak (Acme SSO: `alex@acme.test` / `acme-demo`) | http://kubernetes.docker.internal:8080 |
+
+- Data lives in persistent volumes, so it survives pod restarts and redeploys. Generated secrets (database passwords, service keys) are kept in `~/.aspire/deployments`, outside the repo.
+- Under the hood: `kubectl get pods -n airbnb`; the generated chart is in `backend/src/Airbnb.AppHost/aspire-output` (gitignored). Services may restart a few times on the first start while their databases come up.
+- The model download (about 2 GB) runs as the `ollama-pull-…` Job, so the smart chat box answers once it completes.
+- k6 runs only under `aspire run`.
+- Remove everything, data included: `kubectl delete namespace airbnb`.
+
 ## Sign in with Google, GitHub or SSO
 
 - **Mock mode** (`npm run dev`): each provider is a demo page (`/auth/mock-provider`) where you type the email to sign in as. "Continue with SSO" works for `@acme.test` emails.

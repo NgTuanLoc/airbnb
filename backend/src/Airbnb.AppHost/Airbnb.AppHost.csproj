@@ -4,7 +4,9 @@
     <OutputType>Exe</OutputType>
     <UserSecretsId>8f3b6c1e-2d47-4a9e-b5c8-1e6f0a7d9c42</UserSecretsId>
     <!-- AspireUseCliBundle stays off: DCP and the dashboard come from NuGet, so build/test work without the Aspire CLI (CI). -->
-    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+    <!-- Preview APIs for the local Kubernetes cluster: ASPIREJAVASCRIPT001 AddNextJsApp (the frontend's standalone image),
+         ASPIREDOCKERFILEBUILDER001 its Node base image, ASPIRECOMPUTE003 the container registry. -->
+    <NoWarn>$(NoWarn);ASPIRE010;ASPIREJAVASCRIPT001;ASPIREDOCKERFILEBUILDER001;ASPIRECOMPUTE003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +14,7 @@
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
     <PackageReference Include="Aspire.Hosting.JavaScript" />
     <PackageReference Include="Aspire.Hosting.Kafka" />
+    <PackageReference Include="Aspire.Hosting.Kubernetes" />
     <PackageReference Include="Aspire.Hosting.MongoDB" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.k6" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.LavinMQ" />

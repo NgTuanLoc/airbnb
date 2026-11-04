@@ -1,0 +1,9 @@
+# The Kubernetes image's build context (Aspire's generated Dockerfile copies this folder after `npm ci`): never the
+# machine's own installs and build output, which are for another OS, nor local env files.
+node_modules
+.next
+coverage
+test-results
+playwright-report
+.env*
+!.env.example

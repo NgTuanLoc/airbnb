@@ -20,6 +20,7 @@
     <PackageVersion Include="Aspire.Hosting.Azure.Functions" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.6.4" />
     <PackageVersion Include="Aspire.Hosting.Yarp" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.4-preview.1.26523.11" />
   </ItemGroup>
 
   <ItemGroup Label="Service defaults">

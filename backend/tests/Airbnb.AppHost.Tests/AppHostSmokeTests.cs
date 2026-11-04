@@ -154,11 +154,11 @@ public sealed partial class AppHostSmokeTests
         Assert.EndsWith("/chat/hub", hubUrl);
 
         // Browsers send the token in the hub URL's query string (WebSockets take no headers), and the gateway's
-        // Information logs, exported to the dashboard, carry full request URLs: they stay at Warning.
+        // Information logs, exported to the dashboard, carry full request URLs: all of them stay at Warning (the image
+        // has no appsettings.json, so every category falls back to Default).
         var gateway = await app.ResourceNotifications.WaitForResourceHealthyAsync("gateway", ct);
         var gatewayEnv = gateway.Snapshot.EnvironmentVariables;
-        Assert.Contains(gatewayEnv, v => v.Name == "Logging__LogLevel__Yarp" && v.Value == "Warning");
-        Assert.Contains(gatewayEnv, v => v.Name == "Logging__LogLevel__Microsoft.AspNetCore" && v.Value == "Warning");
+        Assert.Contains(gatewayEnv, v => v.Name == "Logging__LogLevel__Default" && v.Value == "Warning");
 
         await using var hub = new HubConnectionBuilder()
             .WithUrl(hubUrl, options =>
