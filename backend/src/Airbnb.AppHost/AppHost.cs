@@ -175,15 +175,31 @@ if (builder.ExecutionContext.IsRunMode)
 // Kept in user secrets (a plain generated parameter changes every run): the k6 user registered once must log in again.
 var k6UserPassword = builder.AddResource(
     ParameterResourceBuilderExtensions.CreateDefaultPasswordParameter(builder, "k6-user-password", special: false));
-// No vus/duration here: they would replace the script's two scenarios. Results are in the resource's console log;
-// WithK6OtlpEnvironment is left out because k6 ignores the K6_OTEL_EXPORTER_OTLP_* names it sets.
-builder.AddK6("k6")
+// Each run writes perf/k6/reports (gitignored): index.html, the per-endpoint report from load.js's handleSummary, and
+// dashboard.html, k6's web dashboard export (charts over time). k6 runs as a non-root user, hence the open mode off Windows.
+var k6Reports = Directory.CreateDirectory(Path.Combine(builder.AppHostDirectory, "../../perf/k6/reports")).FullName;
+if (!OperatingSystem.IsWindows())
+    File.SetUnixFileMode(k6Reports, (UnixFileMode)0b111_111_111);
+// No vus/duration here: they would replace the script's two scenarios. WithK6OtlpEnvironment is left out because k6
+// ignores the K6_OTEL_EXPORTER_OTLP_* names it sets. The live dashboard link works only while a run is going.
+var k6 = builder.AddK6("k6")
     .WithBindMount("../../perf/k6", "/scripts", isReadOnly: true)
+    .WithBindMount(k6Reports, "/reports")
     .WithScript("/scripts/load.js")
     .WithEnvironment("API_URL", api.GetEndpoint("http"))
     .WithEnvironment("K6_USER_PASSWORD", k6UserPassword)
+    .WithEnvironment("K6_WEB_DASHBOARD", "true")
+    .WithEnvironment("K6_WEB_DASHBOARD_HOST", "0.0.0.0")
+    .WithEnvironment("K6_WEB_DASHBOARD_EXPORT", "/reports/dashboard.html")
+    .WithHttpEndpoint(targetPort: 5665, name: "dashboard")
+    .WithUrlForEndpoint("dashboard", url => url.DisplayText = "Live dashboard (while running)")
     .WaitFor(api)
     .WithExplicitStart();
+builder.AddContainer("k6-report", "nginx", "1.29-alpine")
+    .WithBindMount(k6Reports, "/usr/share/nginx/html", isReadOnly: true)
+    .WithHttpEndpoint(targetPort: 80)
+    .WithUrlForEndpoint("http", url => url.DisplayText = "Last run's report")
+    .WithParentRelationship(k6);
 
 // Blob-triggered on each original the API stores; needs the Azure Functions Core Tools (`func`) on the PATH.
 builder.AddAzureFunctionsProject<Projects.Airbnb_Functions>("photo-processor")

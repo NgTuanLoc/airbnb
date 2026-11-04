@@ -37,3 +37,5 @@ ci/.local/
 __azurite_db_*.json
 __blobstorage__/
 __queuestorage__/
+# k6 run reports, written by each run (backend/perf/k6/report.js)
+backend/perf/k6/reports/

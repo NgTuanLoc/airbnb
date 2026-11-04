@@ -3,6 +3,7 @@
 // the k6 user and read their account and bookings.
 import http from "k6/http";
 import { check, fail, sleep } from "k6";
+import { htmlReport, textReport } from "./report.js";
 
 const API = __ENV.API_URL;
 const K6_USER = { name: "k6 Load Test", email: "k6@perf.test", password: __ENV.K6_USER_PASSWORD };
@@ -27,6 +28,8 @@ const perEndpoint = ENDPOINTS.flatMap((name) => [
 ]);
 
 export const options = {
+  // p(99) for the report; k6 leaves it out by default.
+  summaryTrendStats: ["avg", "min", "med", "p(90)", "p(95)", "p(99)", "max"],
   scenarios: {
     guests: { executor: "constant-vus", vus: 20, duration: "1m", exec: "guest" },
     members: { executor: "constant-vus", vus: 10, duration: "1m", exec: "member" },
@@ -89,4 +92,9 @@ export function member({ listings, token }) {
   ok(http.get(`${API}/api/bookings/hosting`, params("GET /bookings/hosting")));
   ok(http.get(`${API}/api/bookings/availability?listingId=${pick(listings).id}`, params("GET /bookings/availability")));
   sleep(1);
+}
+
+// Replaces k6's own end-of-run summary: a per-endpoint table in the log, and the HTML report the k6-report resource serves.
+export function handleSummary(data) {
+  return { stdout: textReport(data), "/reports/index.html": htmlReport(data) };
 }
