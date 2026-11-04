@@ -108,6 +108,12 @@ export function htmlReport(data) {
   const all = requests(data.metrics.http_req_failed);
   const seconds = data.state.testRunDurationMs / 1000;
   const allOk = Object.values(data.metrics).every(passed);
+  // A request can't outlast the run: k6 times requests on the wall clock, so a max over the run length means the clock
+  // jumped mid-request (Docker Desktop's VM clock does, by about a minute), not a stall.
+  const impossible = endpoints.filter((r) => r.stats.max > data.state.testRunDurationMs).map((r) => esc(r.name));
+  const clockNote = impossible.length
+    ? `<p class="warn" role="alert">Max over the whole run (${ms(data.state.testRunDurationMs)}) on ${impossible.join(", ")}: the container's clock jumped during those requests, so their max and avg (and maybe p99) are wrong, while the median and p95 hold. Compare <code>docker run --rm alpine date</code> with the host's clock.</p>`
+    : "";
   // Bars are drawn against the endpoints' p95 limit (500 ms in load.js), or the slowest p95 if one went over it.
   const limit = Number(/p\(95\)<(\d+)/.exec(endpoints.flatMap((r) => r.limits).join(" "))?.[1] ?? 500);
   const scale = Math.max(limit, ...endpoints.map((r) => r.stats["p(95)"]));
@@ -134,11 +140,13 @@ tr.detail td{text-align:left;white-space:normal;background:#fafafa}
 .dist{position:relative;height:12px;margin:72px 8px 4px;background:#ffd1da;border-radius:3px}
 .mark{position:absolute;bottom:0;width:2px;height:24px;background:var(--ink)}.mark b{position:absolute;z-index:1;top:-2px;left:3px;padding:0 2px;background:#fafafa;font:600 11px system-ui;white-space:nowrap}
 .dist-scale{display:flex;justify-content:space-between;margin:0 8px;color:var(--muted);font-size:12px}
+.warn{border:1px solid var(--bad);border-radius:8px;padding:8px 12px;color:var(--bad)}
 input{font:inherit;padding:6px 10px;border:1px solid #b0b0b0;border-radius:8px;width:260px}
 </style></head><body>
 <h1>k6 load test <span class="pill ${allOk ? "ok" : "fail"}">${allOk ? "thresholds passed" : "thresholds crossed"}</span></h1>
 <p class="muted">Finished ${new Date().toISOString().replace("T", " ").slice(0, 19)} UTC · ${seconds.toFixed(0)} s ·
 <a href="dashboard.html">Charts over time (k6 web dashboard)</a></p>
+${clockNote}
 <div class="tiles">
 <div class="tile"><small>Requests</small><b>${all.total}</b></div>
 <div class="tile"><small>Throughput</small><b>${(all.total / seconds).toFixed(1)}/s</b></div>
