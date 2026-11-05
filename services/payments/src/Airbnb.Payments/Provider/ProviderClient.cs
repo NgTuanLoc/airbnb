@@ -71,6 +71,31 @@ public sealed class ProviderClient(IHttpClientFactory httpClients, IConfiguratio
         return new ChargeAnswer(ChargeAnswerKind.NoAnswer);
     }
 
+    // The provider's charge for a reference, or null when it has none. Throws when it doesn't answer.
+    public async Task<ProviderCharge?> FindAsync(string reference, CancellationToken cancellationToken)
+    {
+        using var request = Request(HttpMethod.Get, $"/charges/{Uri.EscapeDataString(reference)}");
+        using var response = await httpClients.CreateClient(Name).SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        response.EnsureSuccessStatusCode();
+        return await ReadChargeAsync(response, cancellationToken);
+    }
+
+    // Gives whatever the provider took for the reference back. Done when it answers 200 (refunded, or nothing to give
+    // back) or 404 (it never had the charge); throws otherwise, a charge still processing included.
+    public async Task RefundAsync(string reference, CancellationToken cancellationToken)
+    {
+        using var request = Request(HttpMethod.Post, $"/charges/{Uri.EscapeDataString(reference)}/refund");
+        using var response = await httpClients.CreateClient(Name).SendAsync(request, cancellationToken);
+        if (response.StatusCode is not (HttpStatusCode.OK or HttpStatusCode.NotFound))
+        {
+            throw new HttpRequestException($"The provider didn't refund {reference}: {(int)response.StatusCode}", null, response.StatusCode);
+        }
+    }
+
     // A 4xx is the provider saying no, so nothing was charged; a 408 or 429 only asks to come back later.
     private static bool IsRefusal(HttpStatusCode status) =>
         (int)status is >= 400 and < 500 && status is not (HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests);

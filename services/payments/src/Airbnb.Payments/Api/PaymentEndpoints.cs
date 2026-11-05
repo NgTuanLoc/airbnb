@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Airbnb.Payments.Cards;
 using Airbnb.Payments.Data;
+using Airbnb.Payments.Handlers;
 using Airbnb.Payments.Provider;
 using Microsoft.EntityFrameworkCore;
 using Wolverine.EntityFrameworkCore;
@@ -21,17 +22,56 @@ public static class PaymentEndpoints
 {
     private const string Currency = "USD";
     private const decimal MaxAmount = 1_000_000m;
+    private static readonly TimeSpan RefreshTimeout = TimeSpan.FromSeconds(2);
 
     public static void MapPayments(this IEndpointRouteBuilder app)
     {
         // Only the monolith calls this service; it sends the shared key on every request.
         var payments = app.MapGroup("/payments").AddEndpointFilter(RequireServiceKey);
         payments.MapPost("", ChargeAsync);
-        payments.MapGet("/{bookingId}", async (string bookingId, PaymentsDbContext db, CancellationToken ct) =>
-            await db.Payments.AsNoTracking().SingleOrDefaultAsync(p => p.BookingId == bookingId, ct) is { } payment
-                ? Results.Ok(PaymentDto.From(payment))
-                : Results.NotFound());
+        payments.MapGet("/{bookingId}", ReadAsync);
         payments.MapPost("/{bookingId}/void", VoidAsync);
+    }
+
+    // A payment still processing is refreshed from the provider first. That recovers a webhook that never arrived (the
+    // provider gave up, or this service was down): the monolith's reconciler reads every pending booking's payment.
+    private static async Task<IResult> ReadAsync(string bookingId, IDbContextOutbox<PaymentsDbContext> outbox, ProviderClient provider,
+        TimeProvider time, ILoggerFactory loggers, CancellationToken ct)
+    {
+        var db = outbox.DbContext;
+        if (await db.Payments.AsNoTracking().SingleOrDefaultAsync(p => p.BookingId == bookingId, ct) is not { } payment)
+        {
+            return Results.NotFound();
+        }
+        if (payment.Status == PaymentStatus.Processing && await TryRefreshAsync(outbox, provider, bookingId, time, loggers, ct))
+        {
+            payment = await db.Payments.AsNoTracking().SingleAsync(p => p.BookingId == bookingId, ct);
+        }
+        return Results.Ok(PaymentDto.From(payment));
+    }
+
+    // Settles the payment as the provider now has it. False when nothing changed: still processing there, the
+    // provider has no answer within RefreshTimeout, or another path settled it first.
+    private static async Task<bool> TryRefreshAsync(IDbContextOutbox<PaymentsDbContext> outbox, ProviderClient provider, string bookingId,
+        TimeProvider time, ILoggerFactory loggers, CancellationToken ct)
+    {
+        ProviderCharge? charge;
+        using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct))
+        {
+            timeout.CancelAfter(RefreshTimeout);
+            try
+            {
+                charge = await provider.FindAsync(bookingId, timeout.Token);
+            }
+            catch (Exception exception) when (!ct.IsCancellationRequested)
+            {
+                // The read answers with what's stored; the next one asks again.
+                loggers.CreateLogger(typeof(PaymentEndpoints)).LogWarning(exception, "Refreshing booking {BookingId}'s payment got no answer", bookingId);
+                return false;
+            }
+        }
+        return charge is { Status: PaymentStatus.Succeeded or PaymentStatus.Declined }
+            && await outbox.TrySettleAsync(bookingId, charge.Status, charge.DeclineReason, time.GetUtcNow(), ct);
     }
 
     // The booking id is the idempotency key, here and at the provider: a repeated request gets the stored outcome, never
@@ -97,13 +137,19 @@ public static class PaymentEndpoints
     };
 
     // Compensation: the monolith gave up on the booking. Repeats are fine; a void before any charge blocks later ones.
-    private static async Task<IResult> VoidAsync(string bookingId, PaymentsDbContext db, TimeProvider time, CancellationToken ct)
+    // Whatever the provider took goes back: the refund is queued in the same transaction (durably), and its handler
+    // keeps asking while the charge is still processing there.
+    private static async Task<IResult> VoidAsync(string bookingId, IDbContextOutbox<PaymentsDbContext> outbox, TimeProvider time, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(bookingId) || bookingId.Length > 40)
         {
             return Results.NotFound();
         }
+        var db = outbox.DbContext;
+        await db.Database.BeginTransactionAsync(ct);
         await db.VoidAsync(bookingId, time.GetUtcNow(), ct);
+        await outbox.PublishAsync(new RefundPayment(bookingId));
+        await outbox.SaveChangesAndFlushMessagesAsync(ct);
         return Results.Ok(PaymentDto.From(await db.Payments.AsNoTracking().SingleAsync(p => p.BookingId == bookingId, ct)));
     }
 

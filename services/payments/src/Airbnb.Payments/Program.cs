@@ -53,6 +53,8 @@ builder.UseWolverine(options =>
     options.PublishMessage<PaymentSucceeded>().ToRabbitExchange(PaymentsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
     options.PublishMessage<PaymentDeclined>().ToRabbitExchange(PaymentsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
     options.CodeGeneration.AlwaysUseServiceLocationFor<PaymentsDbContext>();
+    // A void's RefundPayment commits with the void, and survives a restart until the provider has refunded.
+    options.Policies.UseDurableLocalQueues();
 
     options.Policies.OnAnyException()
         .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(10))

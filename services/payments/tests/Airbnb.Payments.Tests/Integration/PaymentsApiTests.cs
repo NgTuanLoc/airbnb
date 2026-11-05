@@ -241,7 +241,63 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     }
 
     [Fact]
-    public async Task Booking_cancelled_refunds_once()
+    public async Task Reading_a_processing_payment_asks_the_provider()
+    {
+        await using var listener = await ListenAsync();
+        var bookingId = NewBookingId();
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Slow));
+        // The provider settled it, and its webhook never arrived.
+        fixture.Provider.Settle(bookingId, "succeeded");
+
+        Assert.Equal("succeeded", await StatusAsync(bookingId));
+        Assert.Equal("payment-succeeded", Assert.Single(await listener.EventsForAsync(bookingId, 2, EventWait)).Type);
+    }
+
+    [Fact]
+    public async Task A_silent_provider_leaves_the_read_as_stored()
+    {
+        var bookingId = NewBookingId();
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Slow));
+        fixture.Provider.Silence(bookingId);
+        var started = DateTime.UtcNow;
+
+        Assert.Equal("processing", await StatusAsync(bookingId));
+        Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(3), $"took {DateTime.UtcNow - started}");
+    }
+
+    [Fact]
+    public async Task Voiding_refunds_at_the_provider()
+    {
+        var bookingId = NewBookingId();
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Good));
+
+        using var voided = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, voided.StatusCode);
+        Assert.Equal("voided", await StatusAsync(bookingId));
+        await WaitUntilAsync(() => fixture.Provider.StatusOf(bookingId) == "refunded", TimeSpan.FromSeconds(10));
+        Assert.Equal("refunded", fixture.Provider.StatusOf(bookingId));
+    }
+
+    [Fact]
+    public async Task Voiding_a_processing_charge_refunds_once_it_settles()
+    {
+        var bookingId = NewBookingId();
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Slow));
+
+        using var voided = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
+        // The provider can't refund a charge still processing: the first attempt is refused, and retried.
+        await WaitUntilAsync(() => fixture.Provider.RefundRequests(bookingId) >= 1, TimeSpan.FromSeconds(10));
+        fixture.Provider.Settle(bookingId, "succeeded");
+
+        await WaitUntilAsync(() => fixture.Provider.StatusOf(bookingId) == "refunded", TimeSpan.FromSeconds(15));
+        Assert.Equal("refunded", fixture.Provider.StatusOf(bookingId));
+        Assert.True(fixture.Provider.RefundRequests(bookingId) >= 2);
+        Assert.Equal("voided", await StatusAsync(bookingId));
+    }
+
+    [Fact]
+    public async Task Booking_cancelled_refunds_at_the_provider()
     {
         var bookingId = NewBookingId();
         using var charged = await PostAsync(Charge(bookingId, FakeProvider.Good));
@@ -266,6 +322,16 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
             await Task.Delay(200, Ct);
         }
         Assert.Equal("refunded", await StatusAsync(bookingId));
+        Assert.Equal("refunded", fixture.Provider.StatusOf(bookingId));
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (!condition() && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100, Ct);
+        }
     }
 
     [Fact]
