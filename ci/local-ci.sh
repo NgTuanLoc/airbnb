@@ -38,10 +38,12 @@ else
     (cd backend && dotnet test --project "tests/$project" --artifacts-path "$artifacts/backend")
   done
 
+  # Every test project of each service's solution (payments has two: the service and its fake provider).
   for service in notifications payments chat assistant; do
-    name="$(printf '%s' "$service" | cut -c1 | tr a-z A-Z)$(printf '%s' "$service" | cut -c2-)"
-    step "$service service tests"
-    (cd "services/$service" && dotnet test --project "tests/Airbnb.$name.Tests" --artifacts-path "$artifacts/$service")
+    for tests in "services/$service"/tests/*/; do
+      step "$service: $(basename "$tests")"
+      (cd "services/$service" && dotnet test --project "tests/$(basename "$tests")" --artifacts-path "$artifacts/$service")
+    done
   done
 
   if [ "$apphost" = true ]; then

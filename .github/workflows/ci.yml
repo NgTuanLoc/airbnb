@@ -71,7 +71,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet test --project tests/Airbnb.Payments.Tests
+      # The payment service, then the fake payment provider beside it in the same solution.
+      - run: |
+          dotnet test --project tests/Airbnb.Payments.Tests
+          dotnet test --project tests/Airbnb.PaymentProvider.Tests
 
   chat:
     runs-on: ubuntu-latest
