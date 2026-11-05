@@ -79,6 +79,9 @@ builder.UseWolverine(options =>
     options.PublishMessage<BookingConfirmed>().ToRabbitExchange(BookingsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
     options.PublishMessage<BookingCancelled>().ToRabbitExchange(BookingsExchange, exchange => exchange.ExchangeType = ExchangeType.Fanout).UseDurableOutbox();
 
+    // The payment service announces each payment's outcome on its "payments" fanout exchange; Bookings settles from it.
+    options.ListenToRabbitQueue("bookings.payments", queue => queue.BindExchange("payments")).UseDurableInbox();
+
     // Each module's handler gets the message on its own, with its own retries: one failing never blocks or re-runs another.
     options.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;
 
@@ -89,6 +92,7 @@ builder.UseWolverine(options =>
     // so Wolverine's generated code has to resolve them from the container.
     options.CodeGeneration.AlwaysUseServiceLocationFor<IListingReviewStats>();
     options.CodeGeneration.AlwaysUseServiceLocationFor<IExperienceReviewStats>();
+    options.CodeGeneration.AlwaysUseServiceLocationFor<IBookingPayments>();
 
     // Transient database errors: three retries with cooldowns, then the error queue (spec §3).
     options.OnException<NpgsqlException>(exception => exception.IsTransient)

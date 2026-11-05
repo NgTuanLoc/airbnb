@@ -8,7 +8,8 @@ using Wolverine.EntityFrameworkCore;
 
 namespace Airbnb.Modules.Bookings.Payments;
 
-// Settles bookings left pending because the payment service didn't answer in time: asks it what happened, and gives up
+// The backup for the payment service's events (a webhook or an event that never arrived): settles bookings left pending
+// by asking the payment service what happened (it asks the provider in turn), and gives up
 // (declining, and voiding first so no charge can stand) when it never finds out. Single API instance assumed; every
 // step is idempotent, so a second instance would only repeat work.
 internal sealed class PaymentReconciler(
@@ -25,7 +26,7 @@ internal sealed class PaymentReconciler(
         {
             return;
         }
-        using var timer = new PeriodicTimer(configuration.GetValue("Bookings:Payments:ReconcileInterval", TimeSpan.FromSeconds(30)));
+        using var timer = new PeriodicTimer(configuration.GetValue("Bookings:Payments:ReconcileInterval", TimeSpan.FromMinutes(2)));
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             try
@@ -81,7 +82,8 @@ internal sealed class PaymentReconciler(
         var age = time.GetUtcNow() - booking.CreatedAt;
         switch (status)
         {
-            case "succeeded":
+            // Disputed was taken all the same: the dispute is a matter of its own.
+            case "succeeded" or "disputed":
                 await PaymentOutcomes.ConfirmAsync(outbox, booking, time, cancellationToken);
                 break;
             case "declined" or "voided" or "refunded":

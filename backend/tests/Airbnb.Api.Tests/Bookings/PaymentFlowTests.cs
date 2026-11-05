@@ -33,20 +33,20 @@ public sealed class PaymentFlowTests(InfrastructureFixture infrastructure)
             }
         });
 
-    private static async Task<JsonElement> BodyAsync(HttpResponseMessage response) =>
+    internal static async Task<JsonElement> BodyAsync(HttpResponseMessage response) =>
         await response.Content.ReadFromJsonAsync<JsonElement>(Ct);
 
-    private static async Task<string> IdAsync(HttpResponseMessage response) =>
+    internal static async Task<string> IdAsync(HttpResponseMessage response) =>
         (await BodyAsync(response)).GetProperty("data").GetProperty("id").GetString()!;
 
-    private static async Task<string> StatusAsync(HttpClient client, string token, string id)
+    internal static async Task<string> StatusAsync(HttpClient client, string token, string id)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/bookings/{id}").Authorized(token);
         using var response = await client.SendAsync(request, Ct);
         return (await BodyAsync(response)).GetProperty("data").GetProperty("status").GetString()!;
     }
 
-    private static async Task<string> WaitForStatusAsync(HttpClient client, string token, string id, string expected)
+    internal static async Task<string> WaitForStatusAsync(HttpClient client, string token, string id, string expected)
     {
         var deadline = DateTime.UtcNow + SettleTimeout;
         string status;
@@ -162,7 +162,25 @@ public sealed class PaymentFlowTests(InfrastructureFixture infrastructure)
     }
 
     [Fact]
-    public async Task Late_success_is_confirmed_by_the_reconciler()
+    public async Task A_processing_answer_is_202_pending_without_retries()
+    {
+        await using var factory = Factory();
+        using var client = factory.CreateClient();
+        var guest = await AuthHelpers.RegisterAsync(client);
+
+        using var response = await BookAsync(client, guest.Token, Stay("l14", RandomMonth(), 2, card: FakePaymentService.Processing));
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        var id = await IdAsync(response);
+        Assert.Equal("pending", await StatusAsync(client, guest.Token, id));
+        Assert.Equal(1, _payments.AttemptsFor(id));
+    }
+
+    // A disputed payment was taken all the same: the dispute is a matter of its own.
+    [Theory]
+    [InlineData("succeeded")]
+    [InlineData("disputed")]
+    public async Task Late_success_is_confirmed_by_the_reconciler(string status)
     {
         await using var factory = Factory(reconcile: true);
         using var client = factory.CreateClient();
@@ -170,7 +188,7 @@ public sealed class PaymentFlowTests(InfrastructureFixture infrastructure)
         var guest = await AuthHelpers.RegisterAsync(client);
         var id = await PendingAsync(client, guest.Token);
 
-        _payments.Settle(id, "succeeded");
+        _payments.Settle(id, status);
 
         Assert.Equal("confirmed", await WaitForStatusAsync(client, guest.Token, id, "confirmed"));
         Assert.Equal("booking-confirmed", Assert.Single(await listener.EventsForAsync(id, 1)).Type);

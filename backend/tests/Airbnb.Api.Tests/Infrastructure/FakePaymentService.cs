@@ -18,6 +18,8 @@ public sealed class FakePaymentService : HttpMessageHandler
     public const string Unanswered = "4000000000000077";
     // The first attempt times out, the retry succeeds.
     public const string TimesOutOnce = "4000000000000119";
+    // Answers 202 at once: the provider is still processing the charge, and the payment service's event settles it.
+    public const string Processing = "4000000000003220";
 
     private readonly ConcurrentDictionary<string, string> _statuses = new();
     private readonly ConcurrentDictionary<string, int> _attempts = new();
@@ -64,6 +66,10 @@ public sealed class FakePaymentService : HttpMessageHandler
         if (number == Invalid)
         {
             return Json(HttpStatusCode.BadRequest, new { code = "invalid_card", error = "Check your card details" });
+        }
+        if (number == Processing)
+        {
+            return Json(HttpStatusCode.Accepted, new { bookingId, status = _statuses.GetOrAdd(bookingId, "processing") });
         }
         var reason = number switch { Declined => "card_declined", InsufficientFunds => "insufficient_funds", _ => null };
         var status = _statuses.GetOrAdd(bookingId, reason is null ? "succeeded" : "declined");

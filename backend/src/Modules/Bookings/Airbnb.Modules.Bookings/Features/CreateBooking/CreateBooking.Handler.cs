@@ -31,8 +31,9 @@ internal static partial class CreateBooking
     };
 
     // A saga without a shared transaction: the booking is saved pending (holding the nights), then charged; the outcome
-    // confirms it (with its BookingConfirmed event, through the outbox), declines it, or leaves it pending for the
-    // PaymentReconciler when the payment service doesn't answer.
+    // confirms it (with its BookingConfirmed event, through the outbox), declines it, or leaves it pending while the
+    // provider processes it or the payment service doesn't answer. Then the payment service's event settles it, or
+    // the PaymentReconciler as a backup.
     internal sealed class Handler(
         IDbContextOutbox<BookingsDbContext> outbox, IListingLookup listings, PaymentsClient payments, TimeProvider time, IConfiguration configuration)
     {

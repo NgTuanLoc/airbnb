@@ -49,6 +49,9 @@ internal sealed class PaymentsClient(IHttpClientFactory httpClients, IConfigurat
                 {
                     case HttpStatusCode.Created:
                         return new ChargeResult(ChargeStatus.Succeeded);
+                    case HttpStatusCode.Accepted:
+                        // The provider is still processing it: the payment service's event settles the booking.
+                        return new ChargeResult(ChargeStatus.Unknown);
                     case HttpStatusCode.PaymentRequired:
                         var body = await response.Content.ReadFromJsonAsync<JsonElement>(timeout.Token);
                         return new ChargeResult(ChargeStatus.Declined, body.TryGetProperty("declineReason", out var reason) ? reason.GetString() : null);

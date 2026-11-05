@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Airbnb.Modules.Bookings.Contracts;
 using Airbnb.Modules.Bookings.Data;
 using Airbnb.Modules.Bookings.Payments;
 using Airbnb.SharedKernel.Persistence;
@@ -29,6 +30,8 @@ public static class BookingsModule
         // An Aspire service-discovery name: https when the payment service offers it, else http.
         builder.Services.AddHttpClient(PaymentsClient.Name, client => client.BaseAddress = new Uri(PaymentsServiceUrl));
         builder.Services.AddSingleton<PaymentsClient>();
+        // The payment service's events settle bookings; the reconciler is the backup for ones that never arrive.
+        builder.Services.AddScoped<IBookingPayments, BookingPayments>();
         builder.Services.AddHostedService<PaymentReconciler>();
         return builder;
     }
