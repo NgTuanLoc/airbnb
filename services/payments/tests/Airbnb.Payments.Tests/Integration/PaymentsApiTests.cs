@@ -1,11 +1,18 @@
 using System.Net;
 using System.Net.Http.Json;
+using Airbnb.Payments.Data;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Wolverine.EntityFrameworkCore;
 
 namespace Airbnb.Payments.Tests.Integration;
 
 public sealed class PaymentsApiTests(PaymentsFixture fixture)
 {
+    // A settled payment's event is on the exchange within moments; "only one" waits this long for a second.
+    private static readonly TimeSpan EventWait = TimeSpan.FromSeconds(2);
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static string NewBookingId() => $"bk_{Guid.NewGuid():N}";
@@ -28,9 +35,12 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
             : (await PaymentsFixture.JsonAsync(response, Ct)).GetProperty("status").GetString();
     }
 
+    private Task<PaymentEventsListener> ListenAsync() => PaymentEventsListener.StartAsync(fixture.MessagingConnectionString);
+
     [Fact]
-    public async Task A_good_card_is_charged_and_only_brand_and_last_four_come_back()
+    public async Task A_good_card_is_charged_and_announced()
     {
+        await using var listener = await ListenAsync();
         var bookingId = NewBookingId();
 
         using var response = await PostAsync(Charge(bookingId, "4242 4242 4242 4242"));
@@ -39,6 +49,10 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         var body = await PaymentsFixture.JsonAsync(response, Ct);
         Assert.Equal(("succeeded", "visa", "4242"), (body.GetProperty("status").GetString(), body.GetProperty("brand").GetString(), body.GetProperty("last4").GetString()));
         Assert.Equal("succeeded", await StatusAsync(bookingId));
+        Assert.Equal(1, fixture.Provider.ChargeRequests(bookingId));
+        var (type, announced) = Assert.Single(await listener.EventsForAsync(bookingId, 2, EventWait));
+        Assert.Equal("payment-succeeded", type);
+        Assert.Equal(["bookingId"], announced.EnumerateObject().Select(p => p.Name).ToArray());
     }
 
     [Fact]
@@ -46,12 +60,13 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     {
         var bookingId = NewBookingId();
 
-        using var first = await PostAsync(Charge(bookingId, "4242424242424242"));
-        using var again = await PostAsync(Charge(bookingId, "4242424242424242"));
+        using var first = await PostAsync(Charge(bookingId, FakeProvider.Good));
+        using var again = await PostAsync(Charge(bookingId, FakeProvider.Good));
 
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal(HttpStatusCode.Created, again.StatusCode);
         Assert.Equal(1L, await CountAsync(bookingId));
+        Assert.Equal(1, fixture.Provider.ChargeRequests(bookingId));
     }
 
     [Fact]
@@ -59,12 +74,13 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     {
         var bookingId = NewBookingId();
 
-        // The slow card keeps the first charge in flight while the second arrives.
-        var responses = await Task.WhenAll(PostAsync(Charge(bookingId, "4000000000000077")), PostAsync(Charge(bookingId, "4000000000000077")));
+        // The provider takes half a second to answer the first charge, so the second arrives while it's in flight.
+        var responses = await Task.WhenAll(PostAsync(Charge(bookingId, FakeProvider.AnswersLate)), PostAsync(Charge(bookingId, FakeProvider.AnswersLate)));
 
         Assert.Contains(responses, r => r.StatusCode == HttpStatusCode.Created);
-        Assert.Contains(responses, r => r.StatusCode is HttpStatusCode.Created or HttpStatusCode.Conflict);
+        Assert.All(responses, r => Assert.True(r.StatusCode is HttpStatusCode.Created or HttpStatusCode.Accepted, r.StatusCode.ToString()));
         Assert.Equal(1L, await CountAsync(bookingId));
+        Assert.Equal(1, fixture.Provider.ChargeRequests(bookingId));
         foreach (var response in responses) response.Dispose();
     }
 
@@ -73,11 +89,11 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     {
         var bookingId = NewBookingId();
 
-        // The monolith times out an attempt and cancels it; the processor has the charge by then, so it must land.
+        // The monolith times out an attempt and cancels it; the provider has the charge by then, so it must land.
         using var giveUp = CancellationTokenSource.CreateLinkedTokenSource(Ct);
-        giveUp.CancelAfter(TimeSpan.FromMilliseconds(300));
+        giveUp.CancelAfter(TimeSpan.FromMilliseconds(200));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            fixture.Client().PostAsJsonAsync("/payments", Charge(bookingId, "4000000000000077"), giveUp.Token));
+            fixture.Client().PostAsJsonAsync("/payments", Charge(bookingId, FakeProvider.AnswersLate), giveUp.Token));
 
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
         while (await StatusAsync(bookingId) != "succeeded" && DateTime.UtcNow < deadline)
@@ -91,19 +107,20 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     public async Task Different_amount_is_a_conflict()
     {
         var bookingId = NewBookingId();
-        using var first = await PostAsync(Charge(bookingId, "4242424242424242", amount: 250m));
+        using var first = await PostAsync(Charge(bookingId, FakeProvider.Good, amount: 250m));
 
-        using var changed = await PostAsync(Charge(bookingId, "4242424242424242", amount: 999m));
+        using var changed = await PostAsync(Charge(bookingId, FakeProvider.Good, amount: 999m));
 
         Assert.Equal(HttpStatusCode.Conflict, changed.StatusCode);
         Assert.Equal("idempotency_conflict", (await PaymentsFixture.JsonAsync(changed, Ct)).GetProperty("code").GetString());
     }
 
     [Theory]
-    [InlineData("4000000000000002", "card_declined")]
-    [InlineData("4000000000009995", "insufficient_funds")]
-    public async Task Declined_cards_answer_402(string number, string reason)
+    [InlineData(FakeProvider.Declined, "card_declined")]
+    [InlineData(FakeProvider.InsufficientFunds, "insufficient_funds")]
+    public async Task Declined_cards_answer_402_and_are_announced(string number, string reason)
     {
+        await using var listener = await ListenAsync();
         var bookingId = NewBookingId();
 
         using var response = await PostAsync(Charge(bookingId, number));
@@ -111,6 +128,77 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         Assert.Equal(HttpStatusCode.PaymentRequired, response.StatusCode);
         Assert.Equal(reason, (await PaymentsFixture.JsonAsync(response, Ct)).GetProperty("declineReason").GetString());
         Assert.Equal("declined", await StatusAsync(bookingId));
+        var (type, announced) = Assert.Single(await listener.EventsForAsync(bookingId, 2, EventWait));
+        Assert.Equal("payment-declined", type);
+        Assert.Equal(reason, announced.GetProperty("declineReason").GetString());
+    }
+
+    [Fact]
+    public async Task A_processing_charge_answers_202()
+    {
+        await using var listener = await ListenAsync();
+        var bookingId = NewBookingId();
+
+        using var response = await PostAsync(Charge(bookingId, FakeProvider.Slow));
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal("processing", (await PaymentsFixture.JsonAsync(response, Ct)).GetProperty("status").GetString());
+        Assert.Empty(await listener.EventsForAsync(bookingId, 1, TimeSpan.FromSeconds(1)));
+    }
+
+    [Fact]
+    public async Task A_webhook_that_lands_before_the_answer_still_gives_201_and_one_event()
+    {
+        await using var listener = await ListenAsync();
+        var bookingId = NewBookingId();
+        // The provider's webhook settles the payment while its answer to the charge is still on the way.
+        fixture.Provider.BeforeAnswering(bookingId, async () =>
+        {
+            await using var scope = fixture.Service.Services.CreateAsyncScope();
+            var outbox = scope.ServiceProvider.GetRequiredService<IDbContextOutbox<PaymentsDbContext>>();
+            Assert.True(await outbox.TrySettleAsync(bookingId, PaymentStatus.Succeeded, null, DateTimeOffset.UtcNow, Ct));
+        });
+
+        using var response = await PostAsync(Charge(bookingId, FakeProvider.Good));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal("payment-succeeded", Assert.Single(await listener.EventsForAsync(bookingId, 2, EventWait)).Type);
+    }
+
+    [Fact]
+    public async Task The_flaky_card_is_retried_with_the_same_reference()
+    {
+        var bookingId = NewBookingId();
+
+        using var response = await PostAsync(Charge(bookingId, FakeProvider.Flaky));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(3, fixture.Provider.ChargeRequests(bookingId));
+        Assert.Equal(1L, await CountAsync(bookingId));
+    }
+
+    [Fact]
+    public async Task No_answer_leaves_it_processing()
+    {
+        var bookingId = NewBookingId();
+
+        using var response = await PostAsync(Charge(bookingId, FakeProvider.NeverAnswers));
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal("processing", await StatusAsync(bookingId));
+        Assert.Equal(3, fixture.Provider.ChargeRequests(bookingId));
+    }
+
+    [Fact]
+    public async Task A_refused_charge_is_503_and_released()
+    {
+        var bookingId = NewBookingId();
+
+        using var response = await PostAsync(Charge(bookingId, FakeProvider.Refused));
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal("processor_error", (await PaymentsFixture.JsonAsync(response, Ct)).GetProperty("code").GetString());
+        Assert.Null(await StatusAsync(bookingId));
     }
 
     [Fact]
@@ -123,28 +211,14 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("invalid_card", (await PaymentsFixture.JsonAsync(response, Ct)).GetProperty("code").GetString());
         Assert.Null(await StatusAsync(bookingId));
-    }
-
-    [Fact]
-    public async Task Processor_error_answers_503_then_succeeds()
-    {
-        var bookingId = NewBookingId();
-
-        using var first = await PostAsync(Charge(bookingId, "4000000000000119"));
-        using var second = await PostAsync(Charge(bookingId, "4000000000000119"));
-        using var third = await PostAsync(Charge(bookingId, "4000000000000119"));
-
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, first.StatusCode);
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, second.StatusCode);
-        Assert.Equal(HttpStatusCode.Created, third.StatusCode);
-        Assert.Equal(1L, await CountAsync(bookingId));
+        Assert.Equal(0, fixture.Provider.ChargeRequests(bookingId));
     }
 
     [Fact]
     public async Task Void_is_idempotent()
     {
         var bookingId = NewBookingId();
-        using var charged = await PostAsync(Charge(bookingId, "4242424242424242"));
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Good));
 
         using var first = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
         using var second = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
@@ -161,19 +235,20 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
 
         // The guest cancelled while the monolith was between charge attempts: the void comes first.
         using var voided = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
-        using var late = await PostAsync(Charge(bookingId, "4242424242424242"));
+        using var late = await PostAsync(Charge(bookingId, FakeProvider.Good));
 
         Assert.Equal(HttpStatusCode.OK, voided.StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, late.StatusCode);
         Assert.Equal("payment_voided", (await PaymentsFixture.JsonAsync(late, Ct)).GetProperty("code").GetString());
         Assert.Equal("voided", await StatusAsync(bookingId));
+        Assert.Equal(0, fixture.Provider.ChargeRequests(bookingId));
     }
 
     [Fact]
     public async Task Booking_cancelled_refunds_once()
     {
         var bookingId = NewBookingId();
-        using var charged = await PostAsync(Charge(bookingId, "4242424242424242"));
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Good));
         var cancelled = new
         {
             bookingId,
@@ -204,8 +279,8 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         using var wrong = fixture.Service.CreateClient();
         wrong.DefaultRequestHeaders.Add("X-Service-Key", "not-the-key");
 
-        using var none = await PostAsync(Charge(NewBookingId(), "4242424242424242"), anonymous);
-        using var bad = await PostAsync(Charge(NewBookingId(), "4242424242424242"), wrong);
+        using var none = await PostAsync(Charge(NewBookingId(), FakeProvider.Good), anonymous);
+        using var bad = await PostAsync(Charge(NewBookingId(), FakeProvider.Good), wrong);
         using var read = await anonymous.GetAsync($"/payments/{NewBookingId()}", Ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, none.StatusCode);
@@ -213,11 +288,21 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, read.StatusCode);
     }
 
+    [Theory]
+    [InlineData("Payments:ProviderKey")]
+    [InlineData("Payments:WebhookSecret")]
+    public async Task Missing_provider_settings_fail_at_startup(string setting)
+    {
+        await using var factory = fixture.Service.WithWebHostBuilder(builder => builder.UseSetting(setting, ""));
+
+        Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+    }
+
     [Fact]
     public async Task Card_number_is_never_stored()
     {
         var bookingId = NewBookingId();
-        using var charged = await PostAsync(Charge(bookingId, "4242424242424242", cvc: "987"));
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.Good, cvc: "987"));
 
         await using var connection = new NpgsqlConnection(fixture.PostgresConnectionString);
         await connection.OpenAsync(Ct);

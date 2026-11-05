@@ -5,6 +5,8 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using Testcontainers.PostgreSql;
 
@@ -16,6 +18,8 @@ namespace Airbnb.Payments.Tests.Integration;
 public sealed class PaymentsFixture : IAsyncLifetime
 {
     public const string ServiceKey = "test-service-key";
+    public const string ProviderKey = "test-provider-key";
+    public const string WebhookSecret = "test-webhook-secret";
     private const int AmqpPort = 5672;
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.3").Build();
@@ -29,7 +33,10 @@ public sealed class PaymentsFixture : IAsyncLifetime
 
     public string PostgresConnectionString => _postgres.GetConnectionString();
 
-    private string MessagingConnectionString => $"amqp://guest:guest@{_broker.Hostname}:{_broker.GetMappedPublicPort(AmqpPort)}";
+    public string MessagingConnectionString => $"amqp://guest:guest@{_broker.Hostname}:{_broker.GetMappedPublicPort(AmqpPort)}";
+
+    // One for the run: every test charges its own booking ids.
+    public FakeProvider Provider { get; } = new();
 
     public async ValueTask InitializeAsync()
     {
@@ -39,7 +46,11 @@ public sealed class PaymentsFixture : IAsyncLifetime
             .UseSetting("ConnectionStrings:paymentsdb", _postgres.GetConnectionString())
             .UseSetting("ConnectionStrings:messaging", MessagingConnectionString)
             .UseSetting("Payments:ServiceKey", ServiceKey)
-            .UseSetting("Payments:SlowCardDelay", "00:00:01"));
+            .UseSetting("Payments:ProviderKey", ProviderKey)
+            .UseSetting("Payments:WebhookSecret", WebhookSecret)
+            .UseSetting("Payments:ProviderAttemptTimeout", "00:00:01")
+            .ConfigureTestServices(services =>
+                services.AddHttpClient("payment-provider").ConfigurePrimaryHttpMessageHandler(() => Provider)));
         // Starts the host: migrations, Wolverine's tables, the queue and its binding to the bookings exchange.
         Service.CreateClient().Dispose();
     }

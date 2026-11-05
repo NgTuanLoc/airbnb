@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Airbnb.Payments.Cards;
 using Airbnb.Payments.Data;
+using Airbnb.Payments.Provider;
 using Microsoft.EntityFrameworkCore;
+using Wolverine.EntityFrameworkCore;
 
 namespace Airbnb.Payments.Api;
 
@@ -32,10 +34,12 @@ public static class PaymentEndpoints
         payments.MapPost("/{bookingId}/void", VoidAsync);
     }
 
-    // The booking id is the idempotency key: a repeated request gets the stored outcome, never a second charge.
+    // The booking id is the idempotency key, here and at the provider: a repeated request gets the stored outcome, never
+    // a second charge.
     private static async Task<IResult> ChargeAsync(
-        ChargeRequest request, PaymentsDbContext db, FakeProcessor processor, TimeProvider time, CancellationToken ct)
+        ChargeRequest request, IDbContextOutbox<PaymentsDbContext> outbox, ProviderClient provider, TimeProvider time, CancellationToken ct)
     {
+        var db = outbox.DbContext;
         if (string.IsNullOrWhiteSpace(request.BookingId) || request.BookingId.Length > 40 || request.Amount is <= 0 or > MaxAmount)
         {
             return Results.BadRequest(new ErrorDto("invalid_request", "A booking id and an amount are required"));
@@ -65,24 +69,22 @@ public static class PaymentEndpoints
                 : Outcome(existing);
         }
 
-        // From here on the caller's cancellation is ignored: a charge sent to the processor can't be taken back, so its
+        // From here on the caller's cancellation is ignored: a charge sent to the provider can't be taken back, so its
         // outcome must be recorded even when the monolith stops waiting (it reads it later, or voids it).
-        var result = await processor.ChargeAsync(request.BookingId, card, request.Amount, CancellationToken.None);
+        var answer = await provider.ChargeAsync(request.BookingId, request.Amount, Currency, request.Card);
         ct = CancellationToken.None;
-        if (result.Outcome == ChargeOutcome.Error)
+        switch (answer)
         {
-            // Nothing was charged: release the claim so a retry can try again.
-            await db.Payments.Where(p => p.BookingId == request.BookingId && p.Status == PaymentStatus.Processing).ExecuteDeleteAsync(ct);
-            return Results.Json(new ErrorDto("processor_error", "The card processor is unavailable"), statusCode: StatusCodes.Status503ServiceUnavailable);
+            case { Kind: ChargeAnswerKind.Charged, Charge: { Status: PaymentStatus.Succeeded or PaymentStatus.Declined } charge }:
+                // Only from processing: if the webhook got here first, or the monolith voided it meanwhile, that stands.
+                await outbox.TrySettleAsync(request.BookingId, charge.Status, charge.DeclineReason, time.GetUtcNow(), ct);
+                break;
+            case { Kind: ChargeAnswerKind.Refused }:
+                // Nothing was charged: release the claim so a retry can try again.
+                await db.Payments.Where(p => p.BookingId == request.BookingId && p.Status == PaymentStatus.Processing).ExecuteDeleteAsync(ct);
+                return Results.Json(new ErrorDto("processor_error", "The card processor is unavailable"), statusCode: StatusCodes.Status503ServiceUnavailable);
         }
-
-        var status = result.Outcome == ChargeOutcome.Succeeded ? PaymentStatus.Succeeded : PaymentStatus.Declined;
-        // Only from processing: if the monolith voided it meanwhile (it gave up waiting), the void stands.
-        await db.Payments.Where(p => p.BookingId == request.BookingId && p.Status == PaymentStatus.Processing)
-            .ExecuteUpdateAsync(set => set
-                .SetProperty(p => p.Status, status)
-                .SetProperty(p => p.DeclineReason, result.DeclineReason)
-                .SetProperty(p => p.UpdatedAt, time.GetUtcNow()), ct);
+        // Still processing, or no answer at all (the charge may exist): the webhook or a refresh settles it.
         return Outcome(await db.Payments.AsNoTracking().SingleAsync(p => p.BookingId == request.BookingId, ct));
     }
 
@@ -90,7 +92,7 @@ public static class PaymentEndpoints
     {
         PaymentStatus.Succeeded => Results.Json(PaymentDto.From(payment), statusCode: StatusCodes.Status201Created),
         PaymentStatus.Declined => Results.Json(PaymentDto.From(payment), statusCode: StatusCodes.Status402PaymentRequired),
-        PaymentStatus.Processing => Results.Conflict(new ErrorDto("payment_in_progress", "This booking is being charged right now")),
+        PaymentStatus.Processing => Results.Json(PaymentDto.From(payment), statusCode: StatusCodes.Status202Accepted),
         _ => Results.Conflict(new ErrorDto($"payment_{payment.Status}", $"This booking's payment was {payment.Status}")),
     };
 
