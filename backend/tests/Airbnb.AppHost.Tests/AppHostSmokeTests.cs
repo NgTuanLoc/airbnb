@@ -29,6 +29,9 @@ public sealed partial class AppHostSmokeTests
     // Outbox relay, broker, the service's inbox and SMTP: a few hops, each quick.
     private static readonly TimeSpan EmailTimeout = TimeSpan.FromSeconds(60);
 
+    // The provider settles the slow card after 10 s; then its webhook, the outbox, the broker and Bookings' inbox.
+    private static readonly TimeSpan WebhookTimeout = TimeSpan.FromSeconds(60);
+
     // The demo host answers after 1.5 s; the rest is the gateway and the first connection.
     private static readonly TimeSpan ChatReplyTimeout = TimeSpan.FromSeconds(30);
 
@@ -105,6 +108,7 @@ public sealed partial class AppHostSmokeTests
         await A_listing_view_reaches_its_count_through_kafka(api, ct);
         await A_booking_is_paid_and_emailed(app, api, ct);
         await A_declined_card_books_nothing(api, ct);
+        await A_slow_card_is_confirmed_by_the_providers_webhook(api, ct);
         await A_guest_chats_with_a_demo_host_through_the_gateway(app, ct);
         await A_question_to_the_assistant_streams_an_answer(app, ct);
     }
@@ -187,12 +191,19 @@ public sealed partial class AppHostSmokeTests
         Assert.Contains("demo host", reply.GetProperty("text").GetString());
     }
 
-    private static async Task<HttpResponseMessage> BookL14Async(HttpClient api, string email, string cardNumber, CancellationToken ct)
+    private static async Task<HttpResponseMessage> BookL14Async(HttpClient api, string email, string cardNumber, CancellationToken ct) =>
+        await BookL14AsAsync(api, await RegisterAsync(api, email, ct), cardNumber, ct);
+
+    private static async Task<string> RegisterAsync(HttpClient api, string email, CancellationToken ct)
     {
         using var registered = await api.PostAsJsonAsync("/api/auth/register", new { name = "Mail Guest", email, password = "correct-horse" }, ct);
         registered.EnsureSuccessStatusCode();
-        var token = (await registered.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("token").GetString();
+        return (await registered.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("token").GetString()!;
+    }
 
+    // As the guest whose session token this is.
+    private static async Task<HttpResponseMessage> BookL14AsAsync(HttpClient api, string token, string cardNumber, CancellationToken ct)
+    {
         // A random far-future month, so runs against the persistent dev database never collide.
         var checkIn = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(Random.Shared.Next(24, 1200));
         using var book = new HttpRequestMessage(HttpMethod.Post, "/api/bookings")
@@ -240,6 +251,30 @@ public sealed partial class AppHostSmokeTests
 
         Assert.Equal(HttpStatusCode.PaymentRequired, declined.StatusCode);
         Assert.Equal("card_declined", (await declined.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("code").GetString());
+    }
+
+    // The payment provider end to end: the slow card's charge is still processing when the guest gets a 202. The
+    // provider settles it 10 s later and says so by signed webhook; the payment service announces it on the broker, and
+    // Bookings confirms the booking.
+    private static async Task A_slow_card_is_confirmed_by_the_providers_webhook(HttpClient api, CancellationToken ct)
+    {
+        var token = await RegisterAsync(api, $"slow-{Guid.NewGuid():N}@example.com", ct);
+        using var booked = await BookL14AsAsync(api, token, "4000000000000077", ct);
+        Assert.Equal(HttpStatusCode.Accepted, booked.StatusCode);
+        var id = (await booked.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("id").GetString();
+
+        var deadline = DateTime.UtcNow + WebhookTimeout;
+        string? status;
+        do
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            using var read = new HttpRequestMessage(HttpMethod.Get, $"/api/bookings/{id}");
+            read.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await api.SendAsync(read, ct);
+            status = (await response.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("data").GetProperty("status").GetString();
+        }
+        while (status == "pending" && DateTime.UtcNow < deadline);
+        Assert.Equal("confirmed", status);
     }
 
     // Listing views end to end: the API publishes the view to Kafka, the projection counts it, and the count is served.

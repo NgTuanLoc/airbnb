@@ -1,7 +1,7 @@
 // The whole app: `aspire run` runs it locally with the dashboard; `aspire deploy` puts it on the local Kubernetes
 // cluster (LocalCluster.cs). Each part is set up in its own file:
 //   Infrastructure.cs  Postgres, Redis, the AMQP broker, Kafka, MongoDB, Mailpit, Blob Storage
-//   Services.cs        the shared keys, payments, chat + gateway, notifications, the assistant
+//   Services.cs        the shared keys, payments and its fake provider, chat + gateway, notifications, the assistant
 //   Api.cs             migrations, the API, Acme SSO (Keycloak), the photo processor
 //   Frontend.cs        the Next.js app and the URLs a browser uses
 //   LoadTest.cs        k6 (aspire run only)

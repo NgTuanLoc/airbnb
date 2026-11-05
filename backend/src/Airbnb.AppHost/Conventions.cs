@@ -17,16 +17,17 @@ internal static class Conventions
                 url.DisplayText = "API reference";
             });
 
-    // A dashboard command that POSTs to an admin endpoint with the X-Admin-Key header.
+    // A dashboard command that POSTs to an admin endpoint with the key in a header (X-Admin-Key unless the service names
+    // another).
     public static IResourceBuilder<ProjectResource> WithAdminCommand(this IResourceBuilder<ProjectResource> project,
         string path, string displayName, IResourceBuilder<ParameterResource> adminKey, HttpCommandOptions options,
-        string? commandName = null)
+        string? commandName = null, string keyHeader = "X-Admin-Key")
     {
         var prepare = options.PrepareRequest;
         options.Method = HttpMethod.Post;
         options.PrepareRequest = async context =>
         {
-            context.Request.Headers.Add("X-Admin-Key", await adminKey.Resource.GetValueAsync(context.CancellationToken));
+            context.Request.Headers.Add(keyHeader, await adminKey.Resource.GetValueAsync(context.CancellationToken));
             if (prepare is not null) await prepare(context);
         };
         return project.WithHttpCommand(path, displayName, endpointName: "http", commandName: commandName, commandOptions: options);

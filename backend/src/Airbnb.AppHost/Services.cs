@@ -10,7 +10,9 @@ internal sealed record Keys(
     IResourceBuilder<ParameterResource> BookingsQuote,
     IResourceBuilder<ParameterResource> InsightsAdmin,
     IResourceBuilder<ParameterResource> NotificationsAdmin,
-    IResourceBuilder<ParameterResource> AcmeClientSecret)
+    IResourceBuilder<ParameterResource> AcmeClientSecret,
+    IResourceBuilder<ParameterResource> PaymentProvider,
+    IResourceBuilder<ParameterResource> PaymentWebhook)
 {
     public static Keys Generate(IDistributedApplicationBuilder builder) => new(
         builder.AddGeneratedKey("payments-service-key"),
@@ -20,23 +22,61 @@ internal sealed record Keys(
         builder.AddGeneratedKey("bookings-quote-key"),
         builder.AddGeneratedKey("insights-admin-key"),
         builder.AddGeneratedKey("notifications-admin-key"),
-        builder.AddGeneratedKey("sso-acme-client-secret"));
+        builder.AddGeneratedKey("sso-acme-client-secret"),
+        // The payment service's API key at the payment provider, and the secret the provider signs its webhooks with.
+        builder.AddGeneratedKey("payment-provider-key"),
+        builder.AddGeneratedKey("payment-webhook-secret"));
 }
 
 // The microservices in services/: each its own solution, run by this AppHost.
 internal static class ServiceExtensions
 {
     // services/payments: the monolith charges, reads and voids payments over HTTP with a shared service key, and the
-    // service refunds cancelled bookings it hears about on the broker. Its own database on the same server.
+    // service refunds cancelled bookings it hears about on the broker. Its own database on the same server. The charges
+    // go to the payment provider, which reports each outcome by signed webhook; the service announces outcomes on the
+    // broker ("payments" exchange) for Bookings.
     public static IResourceBuilder<ProjectResource> AddPayments(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
     {
+        var provider = builder.AddPaymentProvider(keys);
         var db = infra.Postgres.AddDatabase("paymentsdb", "payments");
-        return builder.AddProject<Projects.Airbnb_Payments>("payments", launchProfileName: "http")
+        var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchProfileName: "http")
             .WithReference(db).WaitFor(db)
             .WithReference(infra.Messaging).WaitFor(infra.Messaging)
+            .WithReference(provider).WaitFor(provider)
             .WithEnvironment("Payments__ServiceKey", keys.PaymentsService)
+            .WithEnvironment("Payments__ProviderKey", keys.PaymentProvider)
+            .WithEnvironment("Payments__WebhookSecret", keys.PaymentWebhook)
             .AsHttpApi();
+        // And back: the provider's webhooks go to the payment service.
+        provider.WithEnvironment("Provider__WebhookUrl", ReferenceExpression.Create($"{payments.GetEndpoint("http")}/webhooks/provider"));
+        return payments;
     }
+
+    // services/payments' fake payment provider (src/Airbnb.PaymentProvider): a stand-in for an outside processor like
+    // Stripe. Its commands do what the real one's dashboard and the guest's bank would: resend a webhook (a duplicate the
+    // payment service must ignore) and dispute a charge.
+    private static IResourceBuilder<ProjectResource> AddPaymentProvider(this IDistributedApplicationBuilder builder, Keys keys) =>
+        builder.AddProject<Projects.Airbnb_PaymentProvider>("payment-provider", launchProfileName: "http")
+            .WithEnvironment("Provider__ApiKey", keys.PaymentProvider)
+            .WithEnvironment("Provider__WebhookSecret", keys.PaymentWebhook)
+            .AsHttpApi()
+            .WithAdminCommand("/events/resend-latest", "Resend the latest webhook", keys.PaymentProvider, keyHeader: "X-Api-Key", options: new HttpCommandOptions
+            {
+                Description = "Send the most recent webhook again, with the same event id: the payment service changes nothing",
+                IconName = "ArrowRepeatAll",
+            })
+            // The booking id is a command argument: a field in the dashboard, or `aspire resource payment-provider dispute --bookingId "…"`.
+            .WithAdminCommand("/disputes", "Dispute a payment", keys.PaymentProvider, commandName: "dispute", keyHeader: "X-Api-Key", options: new HttpCommandOptions
+            {
+                Description = "Play the guest's bank contesting a booking's succeeded charge",
+                IconName = "Warning",
+                Arguments = [new InteractionInput { Name = "bookingId", Label = "Booking id", InputType = InputType.Text, Required = true, MaxLength = 40 }],
+                PrepareRequest = context =>
+                {
+                    context.Request.Content = JsonContent.Create(new { reference = context.Arguments.GetString("bookingId") });
+                    return Task.CompletedTask;
+                },
+            });
 
     // services/chat: guests message hosts live over SignalR. MongoDB, two instances that reach each other's connections
     // through the Redis backplane, and the only service the browser talks to directly: through the gateway, with a
