@@ -297,6 +297,42 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
     }
 
     [Fact]
+    public async Task A_success_after_the_void_is_refunded()
+    {
+        var bookingId = NewBookingId();
+        // The provider stalls: no answer, so the payment stays processing.
+        using var charged = await PostAsync(Charge(bookingId, FakeProvider.NeverAnswers));
+        // The guest cancels; the refund reaches the provider before the stalled charge does, so there's nothing to refund.
+        using var voided = await fixture.Client().PostAsync($"/payments/{bookingId}/void", content: null, Ct);
+        await WaitUntilAsync(() => fixture.Provider.RefundRequests(bookingId) >= 1, TimeSpan.FromSeconds(10));
+        Assert.Null(fixture.Provider.StatusOf(bookingId));
+
+        // Then the stalled charge lands after all, and the provider says so.
+        fixture.Provider.Settle(bookingId, "succeeded");
+        using var webhook = await Webhook.PostSignedAsync(fixture, Webhook.Event("charge.succeeded", bookingId, "succeeded"));
+
+        Assert.Equal(HttpStatusCode.OK, webhook.StatusCode);
+        await WaitUntilAsync(() => fixture.Provider.StatusOf(bookingId) == "refunded", TimeSpan.FromSeconds(15));
+        Assert.Equal("refunded", fixture.Provider.StatusOf(bookingId));
+        Assert.Equal("voided", await StatusAsync(bookingId));
+    }
+
+    [Fact]
+    public async Task A_success_for_a_payment_never_kept_is_refunded()
+    {
+        var bookingId = NewBookingId();
+        // A charge the provider holds although this service released its claim (it took a refusal for the answer).
+        fixture.Provider.Settle(bookingId, "succeeded");
+
+        using var webhook = await Webhook.PostSignedAsync(fixture, Webhook.Event("charge.succeeded", bookingId, "succeeded"));
+
+        Assert.Equal(HttpStatusCode.OK, webhook.StatusCode);
+        await WaitUntilAsync(() => fixture.Provider.StatusOf(bookingId) == "refunded", TimeSpan.FromSeconds(15));
+        Assert.Equal("refunded", fixture.Provider.StatusOf(bookingId));
+        Assert.Null(await StatusAsync(bookingId));
+    }
+
+    [Fact]
     public async Task Booking_cancelled_refunds_at_the_provider()
     {
         var bookingId = NewBookingId();
