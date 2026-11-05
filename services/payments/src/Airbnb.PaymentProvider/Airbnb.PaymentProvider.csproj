@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Airbnb.PaymentProvider.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Telemetry and health checks only: it stands in for an outside company, so it shares nothing else. -->
+    <ProjectReference Include="..\..\..\..\backend\src\Airbnb.ServiceDefaults\Airbnb.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>
