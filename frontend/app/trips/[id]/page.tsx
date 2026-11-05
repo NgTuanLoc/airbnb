@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Footer, TopNav } from "@/components/design-system";
 import { CancelTripButton } from "@/components/features/bookings/cancel-trip-button";
+import { RefreshWhilePending } from "@/components/features/bookings/refresh-while-pending";
 import { PriceBreakdownList } from "@/components/features/price-breakdown-list";
 import { requireSession } from "@/lib/auth/get-session";
 import { statusLabel } from "@/lib/bookings/trips";
@@ -50,9 +51,11 @@ export default async function TripPage({
           {!isGuest && (
             <p className="text-body-md text-body">Reservation by {booking.guestName ?? booking.guestEmail ?? booking.guestId}</p>
           )}
-          <p className="text-body-sm text-muted">
+          {/* A live region: when a processing payment settles, the refreshed status is announced. */}
+          <output className="block text-body-sm text-muted">
             Booking {booking.id.slice(-8)} · {statusLabel(booking.status)}
-          </p>
+          </output>
+          {booking.status === "pending" && <RefreshWhilePending />}
           {canCancel && <CancelTripButton bookingId={booking.id} />}
         </section>
         <PriceBreakdownList breakdown={booking.priceBreakdown} />

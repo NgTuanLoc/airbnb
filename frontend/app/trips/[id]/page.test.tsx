@@ -1,19 +1,29 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@/lib/test-utils";
 import { getRepositories } from "@/lib/repositories";
+import type { CardInput } from "@/lib/bookings/payment";
 import { calculatePriceBreakdown } from "@/lib/reservation/pricing";
 
 const session = vi.hoisted(() => ({ requireSession: vi.fn() }));
 vi.mock("@/lib/auth/get-session", () => session);
 
+const refresh = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useRouter: () => ({ refresh }),
+}));
+
 import TripPage from "./page";
 
 const user = () => ({ id: `u-${crypto.randomUUID()}`, name: "ana", email: "ana@example.com" });
 
-async function bookFor(userId: string, checkIn: string, checkOut: string) {
+// Mock mode keeps a booking paid with this card pending: nothing settles it there.
+const SLOW_CARD: CardInput = { number: "4000000000000077", expMonth: 12, expYear: 2040, cvc: "123" };
+
+async function bookFor(userId: string, checkIn: string, checkOut: string, card?: CardInput) {
   const booking = await getRepositories().bookings.create({ id: userId, name: "ana", email: "ana@example.com" }, {
     listingId: "l1", hostId: "h1", checkIn, checkOut, guests: { adults: 2, children: 0 }, priceBreakdown: calculatePriceBreakdown(100, 2),
-  });
+  }, undefined, card);
   if (booking === "unavailable" || "paymentError" in booking) throw new Error("unexpected");
   return booking;
 }
@@ -23,7 +33,14 @@ const props = (id: string, query: Record<string, string> = {}) => ({
   searchParams: Promise.resolve(query),
 });
 
-beforeEach(() => session.requireSession.mockReset());
+beforeEach(() => {
+  session.requireSession.mockReset();
+  refresh.mockReset();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("TripPage", () => {
   test("celebrates a fresh booking and shows its details", async () => {
@@ -79,6 +96,31 @@ describe("TripPage", () => {
     render(await TripPage(props(booking.id)));
 
     expect(screen.queryByRole("button", { name: "Cancel trip" })).not.toBeInTheDocument();
+  });
+
+  test("a trip whose payment is processing says so and refreshes itself", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const guest = user();
+    session.requireSession.mockResolvedValue(guest);
+    const booking = await bookFor(guest.id, daysFromToday(60), daysFromToday(62), SLOW_CARD);
+
+    render(await TripPage(props(booking.id)));
+
+    expect(screen.getByRole("status")).toHaveTextContent(`Booking ${booking.id.slice(-8)} · Payment processing`);
+    vi.advanceTimersByTime(3000);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  test("a confirmed trip doesn't refresh itself", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const guest = user();
+    session.requireSession.mockResolvedValue(guest);
+    const booking = await bookFor(guest.id, daysFromToday(70), daysFromToday(72));
+
+    render(await TripPage(props(booking.id)));
+
+    vi.advanceTimersByTime(30_000);
+    expect(refresh).not.toHaveBeenCalled();
   });
 
   test("the host sees who booked and cannot cancel", async () => {
