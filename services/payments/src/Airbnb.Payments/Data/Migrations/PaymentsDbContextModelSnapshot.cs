@@ -66,6 +66,25 @@ namespace Airbnb.Payments.Data.Migrations
 
                     b.ToTable("payments", (string)null);
                 });
+
+            modelBuilder.Entity("Airbnb.Payments.Data.WebhookEvent", b =>
+                {
+                    b.Property<string>("EventId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("webhook_events", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

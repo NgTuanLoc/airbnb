@@ -1,10 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
-using Airbnb.Payments.Data;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using Wolverine.EntityFrameworkCore;
 
 namespace Airbnb.Payments.Tests.Integration;
 
@@ -154,9 +151,8 @@ public sealed class PaymentsApiTests(PaymentsFixture fixture)
         // The provider's webhook settles the payment while its answer to the charge is still on the way.
         fixture.Provider.BeforeAnswering(bookingId, async () =>
         {
-            await using var scope = fixture.Service.Services.CreateAsyncScope();
-            var outbox = scope.ServiceProvider.GetRequiredService<IDbContextOutbox<PaymentsDbContext>>();
-            Assert.True(await outbox.TrySettleAsync(bookingId, PaymentStatus.Succeeded, null, DateTimeOffset.UtcNow, Ct));
+            using var webhook = await Webhook.PostSignedAsync(fixture, Webhook.Event("charge.succeeded", bookingId, "succeeded"));
+            Assert.Equal(HttpStatusCode.OK, webhook.StatusCode);
         });
 
         using var response = await PostAsync(Charge(bookingId, FakeProvider.Good));

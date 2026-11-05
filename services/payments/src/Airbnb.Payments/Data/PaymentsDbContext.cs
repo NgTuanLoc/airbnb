@@ -5,12 +5,22 @@ namespace Airbnb.Payments.Data;
 
 public static class PaymentStatus
 {
-    // Claimed before the processor is called, so a concurrent request for the same booking can't charge again.
+    // Claimed before the provider is called, so a concurrent request for the same booking can't charge again.
     public const string Processing = "processing";
     public const string Succeeded = "succeeded";
     public const string Declined = "declined";
     public const string Voided = "voided";
     public const string Refunded = "refunded";
+    // The guest's bank contested a succeeded charge (the provider's charge.dispute.created).
+    public const string Disputed = "disputed";
+}
+
+// The receipt log of the provider's webhooks, by event id: a repeat is recognised and changes nothing.
+public sealed class WebhookEvent
+{
+    public required string EventId { get; init; }
+    public required string Type { get; init; }
+    public required DateTimeOffset ReceivedAt { get; init; }
 }
 
 // One payment per booking: the booking id is the idempotency key. Brand and last 4 digits only, never the card.
@@ -31,7 +41,10 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
 {
     public DbSet<Payment> Payments => Set<Payment>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+    public DbSet<WebhookEvent> WebhookEvents => Set<WebhookEvent>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Payment>(payment =>
         {
             payment.ToTable("payments");
@@ -44,6 +57,22 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
             payment.Property(p => p.Last4).HasMaxLength(4);
             payment.Property(p => p.DeclineReason).HasMaxLength(40);
         });
+        modelBuilder.Entity<WebhookEvent>(webhookEvent =>
+        {
+            webhookEvent.ToTable("webhook_events");
+            webhookEvent.HasKey(e => e.EventId);
+            webhookEvent.Property(e => e.EventId).HasMaxLength(64);
+            webhookEvent.Property(e => e.Type).HasMaxLength(64);
+        });
+    }
+
+    // Records a webhook's event id. False when it was recorded before: the insert waits on a concurrent delivery's row
+    // lock, then sees the conflict.
+    public async Task<bool> TryRecordEventAsync(string eventId, string type, DateTimeOffset now, CancellationToken cancellationToken) =>
+        await Database.ExecuteSqlAsync($"""
+            INSERT INTO webhook_events ("EventId", "Type", "ReceivedAt") VALUES ({eventId}, {type}, {now})
+            ON CONFLICT DO NOTHING
+            """, cancellationToken) == 1;
 
     // Claims the booking's payment as processing. False when a payment for it already exists (or is being made): the
     // insert waits on a concurrent claim's row lock, then sees the conflict.

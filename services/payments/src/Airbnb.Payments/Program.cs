@@ -3,6 +3,7 @@ using Airbnb.Payments.Api;
 using Airbnb.Payments.Contracts;
 using Airbnb.Payments.Data;
 using Airbnb.Payments.Provider;
+using Airbnb.Payments.Webhooks;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Wolverine;
@@ -76,5 +77,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapPayments();
+app.MapProviderWebhooks();
 
 await app.RunAsync();
