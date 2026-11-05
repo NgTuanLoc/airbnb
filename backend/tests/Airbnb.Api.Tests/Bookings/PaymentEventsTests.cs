@@ -7,7 +7,9 @@ using static Airbnb.Api.Tests.Bookings.BookingRequests;
 namespace Airbnb.Api.Tests.Bookings;
 
 // What Bookings hears from the payment service: payment-succeeded and payment-declined on the "payments" fanout
-// exchange, which settle a booking left pending. The reconciler stays off (ApiFactory), so only the events settle.
+// exchange, which settle a booking left pending. The reconciler stays off (ApiFactory), so only the events settle; and
+// not beside PaymentFlowTests, whose reconciler would settle these pending bookings too.
+[Collection(PendingBookings.Collection)]
 public sealed class PaymentEventsTests(InfrastructureFixture infrastructure)
 {
     // Only one booking-confirmed: this long for a second one to show up.

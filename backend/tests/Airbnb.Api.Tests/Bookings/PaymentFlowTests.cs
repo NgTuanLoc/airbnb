@@ -12,7 +12,9 @@ using static Airbnb.Api.Tests.Bookings.BookingRequests;
 namespace Airbnb.Api.Tests.Bookings;
 
 // Booking and payment agreeing without a shared transaction: charge, hold, reconcile, compensate.
-// The only tests that leave bookings pending (and run the reconciler), so they share nothing with the other classes.
+// Its reconciler (on a moved clock) settles every pending booking in the shared database, so the classes that leave
+// bookings pending share a collection: they never run side by side.
+[Collection(PendingBookings.Collection)]
 public sealed class PaymentFlowTests(InfrastructureFixture infrastructure)
 {
     private static readonly TimeSpan SettleTimeout = TimeSpan.FromSeconds(15);

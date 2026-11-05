@@ -9,6 +9,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Airbnb.Api.Tests.Bookings;
 
+// The test classes that leave bookings pending: one collection, so they run one after another.
+internal static class PendingBookings
+{
+    public const string Collection = "Pending bookings";
+}
+
 // Helpers shared by the booking tests. They book only l13–l16 or fresh hl- listings, in far-future months.
 internal static class BookingRequests
 {
