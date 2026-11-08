@@ -39,8 +39,10 @@ internal static class LocalCluster
                 .PublishAsKubernetesService(k => k.Service!.Spec.Type = "LoadBalancer"));
 
     // Opens the resource's service on the machine at `port`, which must be the port Aspire gave its http endpoint:
-    // the other services address it there too.
-    public static IResourceBuilder<T> OnLocalClusterPort<T>(this IResourceBuilder<T> resource, int port) where T : IComputeResource =>
+    // the other services address it there too. Docker Desktop opens every port of the service, so `onlyThisPort`
+    // drops the others (when nothing in the cluster uses them) rather than take more of the machine's ports.
+    public static IResourceBuilder<T> OnLocalClusterPort<T>(this IResourceBuilder<T> resource, int port, bool onlyThisPort = false)
+        where T : IComputeResource =>
         resource.PublishAsKubernetesService(k =>
         {
             var service = k.Service ?? throw new InvalidOperationException($"{resource.Resource.Name} has no service to expose");
@@ -48,6 +50,10 @@ internal static class LocalCluster
             {
                 throw new InvalidOperationException(
                     $"{resource.Resource.Name}'s service has no port {port}: {string.Join(", ", service.Spec.Ports.Select(p => p.Port))}");
+            }
+            if (onlyThisPort)
+            {
+                service.Spec.Ports.RemoveAll(p => p.Port != port);
             }
             service.Spec.Type = "LoadBalancer";
         });
@@ -94,11 +100,12 @@ internal static class LocalCluster
         api.PublishAsKubernetesService(k =>
             k.Workload!.PodTemplate.Spec.HostAliases.Add(new HostAliasV1 { Ip = DockerDesktopHostIp, Hostnames = { KeycloakHost } }));
 
-    // Keycloak's production mode (what Aspire publishes) refuses plain HTTP and needs to know its public URL.
+    // Keycloak's production mode (what Aspire publishes) refuses plain HTTP and needs to know its public URL. Its
+    // management port (9000: health, metrics) stays off the machine, where SonarQube wants 9000.
     public static IResourceBuilder<KeycloakResource> WithKeycloakOverHttp(this IResourceBuilder<KeycloakResource> keycloak, string url) =>
         keycloak.WithEnvironment("KC_HTTP_ENABLED", "true")
             .WithEnvironment("KC_HOSTNAME", url)
-            .OnLocalClusterPort(KeycloakPort);
+            .OnLocalClusterPort(KeycloakPort, onlyThisPort: true);
 
     // Every container's volume becomes a persistent volume claim. Aspire would publish them as emptyDir volumes named
     // after the AppHost ("airbnb.apphost-…-postgres-data"): lost with the pod, and refused for the dots in the name.
