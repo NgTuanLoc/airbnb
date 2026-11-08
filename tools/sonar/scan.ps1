@@ -25,7 +25,9 @@ param(
     [switch] $SkipTests,
     [switch] $IssuesOnly,
     [switch] $Stop,
-    [switch] $Reset
+    [switch] $Reset,
+    # The server's port on localhost. Changing it recreates the container; its data volumes stay.
+    [int] $Port = 9000
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,7 +39,7 @@ $NpmScannerVersion = '5.0.2'
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $local = Join-Path $PSScriptRoot '.local'
-$hostUrl = 'http://localhost:9000'
+$hostUrl = "http://localhost:$Port"
 $container = 'airbnb-sonarqube'
 $volumes = 'airbnb-sonarqube-data', 'airbnb-sonarqube-extensions', 'airbnb-sonarqube-logs'
 $projects = [ordered]@{ dotnet = 'airbnb-dotnet'; frontend = 'airbnb-frontend' }
@@ -80,12 +82,17 @@ function Start-Server {
         Remove-Server
         $image = $null
     }
+    if ($image -and (docker inspect -f '{{(index (index .HostConfig.PortBindings "9000/tcp") 0).HostPort}}' $container) -ne "$Port") {
+        Write-Host "Moving the server to port $Port (its data stays)."
+        docker rm -f $container | Out-Null
+        $image = $null
+    }
     if ($image) {
         docker start $container | Out-Null
         Assert-ExitCode 'docker start'
     } else {
         # Localhost only: until the first scan sets the admin password, it's admin/admin.
-        docker run -d --name $container -p 127.0.0.1:9000:9000 -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true `
+        docker run -d --name $container -p "127.0.0.1:${Port}:9000"-e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true `
             -v "$($volumes[0]):/opt/sonarqube/data" -v "$($volumes[1]):/opt/sonarqube/extensions" `
             -v "$($volumes[2]):/opt/sonarqube/logs" $SonarQubeImage | Out-Null
         Assert-ExitCode 'docker run'

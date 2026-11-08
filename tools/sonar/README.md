@@ -23,6 +23,7 @@ From the repo root:
 ./tools/sonar/scan.ps1 -SkipTests       # faster: reuse the coverage of the last run that ran the tests
 ./tools/sonar/scan.ps1 -Rules core      # a smaller rule set (see Rules)
 ./tools/sonar/scan.ps1 -IssuesOnly      # print and export the last results again, without scanning
+./tools/sonar/scan.ps1 -Port 9001       # serve on another port (default 9000); its data stays
 ./tools/sonar/scan.ps1 -Stop            # stop the server (its data stays)
 ./tools/sonar/scan.ps1 -Reset           # delete the server, its data and the local credentials
 ```
@@ -130,7 +131,7 @@ Read the release notes before a major version. For example:
 | Problem | Fix |
 |---|---|
 | `Docker (is it running?) failed` | Start Docker. |
-| Port 9000 is taken | Stop whatever uses it, or change `$hostUrl` and the `-p` mapping in `scan.ps1`. |
+| `ports are not available ... 127.0.0.1:9000` | Something holds port 9000 (on Windows, WSL's relay can keep it after a Kubernetes service let it go, until Docker Desktop restarts): pass `-Port 9001`, and the same `-Port` on later runs. |
 | `SonarQube isn't up after 5 minutes` | `docker logs airbnb-sonarqube`. It's usually memory: give Docker more. |
 | `The admin password ... doesn't match` | The data volume and the saved password disagree (the volume was recreated by hand, say): `-Reset`. |
 | The first scan is slow | It pulls the image, and the scanners download a JRE and the analyzers (cached in `~/.sonar/cache`). Later scans are faster. |
