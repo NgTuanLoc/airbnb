@@ -19,12 +19,11 @@ using Wolverine.RabbitMQ;
 var builder = WebApplication.CreateBuilder(args);
 
 // Bad settings fail at startup: without them nothing can be charged, or no webhook trusted.
-foreach (var required in new[] { "Payments:ProviderKey", "Payments:WebhookSecret" })
+string[] requiredSettings = ["Payments:ProviderKey", "Payments:WebhookSecret"];
+var missing = requiredSettings.FirstOrDefault(k => string.IsNullOrEmpty(builder.Configuration[k]));
+if (missing is not null)
 {
-    if (string.IsNullOrEmpty(builder.Configuration[required]))
-    {
-        throw new InvalidOperationException($"{required} is required");
-    }
+    throw new InvalidOperationException($"{missing} is required");
 }
 
 builder.AddServiceDefaults();

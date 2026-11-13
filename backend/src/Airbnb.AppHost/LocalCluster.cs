@@ -2,6 +2,8 @@ using Aspire.Hosting.Kubernetes;
 using Aspire.Hosting.Kubernetes.Resources;
 using YamlDotNet.Serialization;
 
+namespace Airbnb.AppHost;
+
 // `aspire deploy` / `aspire publish`: the app as a Helm chart on a local Kubernetes cluster (Docker Desktop's, the
 // current kubectl context). Docker Desktop opens each LoadBalancer service's port on the machine, so the browser
 // reaches the frontend, the chat gateway, Keycloak, Mailpit and the Aspire dashboard on fixed ports. Everything else
@@ -22,19 +24,22 @@ internal static class LocalCluster
     // browser's tokens carry. Docker Desktop's hosts entry sends the name to 127.0.0.1 on the machine (where the
     // LoadBalancer ports are); ReachesKeycloak points it at the machine from inside the API pod.
     public const string KeycloakHost = "kubernetes.docker.internal";
-    public static readonly string KeycloakUrl = $"http://{KeycloakHost}:{KeycloakPort}";
+    public static readonly string KeycloakUrl = $"http://{KeycloakHost}:{KeycloakPort}"; // NOSONAR: the local cluster has no TLS
     // Docker Desktop's address for the machine inside containers: what host.docker.internal resolves to there.
-    private const string DockerDesktopHostIp = "192.168.65.254";
+    private const string DockerDesktopHostIp = "192.168.65.254"; // NOSONAR: fixed by Docker Desktop
+
+    // The Helm release, its namespace and the images' repository.
+    private const string AppName = "airbnb";
 
     // Azurite's account for the cluster's photo storage.
-    public const string StorageAccount = "airbnb";
+    public const string StorageAccount = AppName;
 
     public static bool IsLocalCluster(this IDistributedApplicationBuilder builder) => builder.ExecutionContext.IsPublishMode;
 
     public static IResourceBuilder<KubernetesEnvironmentResource> AddLocalCluster(this IDistributedApplicationBuilder builder) =>
         builder.AddKubernetesEnvironment("k8s")
-            .WithContainerRegistry(builder.AddContainerRegistry("registry", $"localhost:{RegistryPort}", "airbnb"))
-            .WithHelm(helm => helm.WithNamespace("airbnb").WithReleaseName("airbnb"))
+            .WithContainerRegistry(builder.AddContainerRegistry("registry", $"localhost:{RegistryPort}", AppName))
+            .WithHelm(helm => helm.WithNamespace(AppName).WithReleaseName(AppName))
             .WithDashboard(dashboard => dashboard.WithServicePort(DashboardPort)
                 .PublishAsKubernetesService(k => k.Service!.Spec.Type = "LoadBalancer"));
 
@@ -89,7 +94,8 @@ internal static class LocalCluster
                 Args =
                 {
                     "--fail", "--silent", "--show-error", "--retry", "60", "--retry-connrefused", "--retry-delay", "5",
-                    "http://ollama-service:11434/api/pull", "--data", $"{{\"model\":\"{model}\",\"stream\":false}}",
+                    "http://ollama-service:11434/api/pull", "--data", // NOSONAR: inside the cluster, no TLS
+                    $"{{\"model\":\"{model}\",\"stream\":false}}",
                 },
             });
             k.AdditionalResources.Add(job);

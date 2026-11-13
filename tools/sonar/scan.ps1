@@ -177,7 +177,9 @@ function Invoke-DotnetScan([string] $Token) {
         "/d:sonar.host.url=$hostUrl", "/d:sonar.token=$Token",
         # From the repo root, so the scan also covers its other files (Docker, YAML, scripts, secrets in config),
         # except the frontend, which is its own project (its test files too: exclusions only apply to sources).
-        "/d:sonar.projectBaseDir=$root", '/d:sonar.exclusions=frontend/**,**/Migrations/**', '/d:sonar.test.exclusions=frontend/**'
+        "/d:sonar.projectBaseDir=$root", '/d:sonar.exclusions=frontend/**,**/Migrations/**', '/d:sonar.test.exclusions=frontend/**',
+        # The AppHost is only composition, run by the smoke test, which the scan leaves out.
+        '/d:sonar.coverage.exclusions=backend/src/Airbnb.AppHost/**'
     )
     # Without a report the C# analysis counts every executable line as uncovered (0%), failing the gate's coverage
     # condition: this run's tests write the reports, or -SkipTests reuses the last ones.

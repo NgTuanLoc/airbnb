@@ -1,5 +1,7 @@
 using Aspire.Hosting.Azure;
 
+namespace Airbnb.AppHost;
+
 // The modular monolith (src/Airbnb.Api) and what runs beside it: its migrations, the Acme SSO identity provider and
 // the photo processor.
 internal static class ApiExtensions

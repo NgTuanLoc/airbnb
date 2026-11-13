@@ -1,3 +1,5 @@
+namespace Airbnb.AppHost;
+
 // The k6 load test (perf/k6/load.js), under `aspire run` only: it mounts folders from this machine, and starts only
 // from the dashboard's Start button (or `aspire resource k6 start`).
 internal static class LoadTestExtensions

@@ -1,6 +1,8 @@
 using Aspire.Hosting.JavaScript;
 using Aspire.Hosting.Yarp;
 
+namespace Airbnb.AppHost;
+
 // The URLs a browser uses, which some services hand out (links in emails, OAuth redirects, the chat hub address).
 // `aspire run`: localhost and each endpoint's port, never a container-network name (from a container, an endpoint's
 // own URL would be aspire.dev.internal). The local cluster: the LoadBalancer ports Docker Desktop opens on the machine.

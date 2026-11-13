@@ -1,3 +1,5 @@
+namespace Airbnb.AppHost;
+
 // Small helpers every service's setup shares.
 internal static class Conventions
 {

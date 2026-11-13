@@ -2,6 +2,8 @@ using System.Net.Http.Json;
 using Aspire.Hosting.Yarp;
 using Aspire.Hosting.Yarp.Transforms;
 
+namespace Airbnb.AppHost;
+
 // The shared secrets between the parts of the app, generated once (user secrets) and passed to both sides.
 internal sealed record Keys(
     IResourceBuilder<ParameterResource> PaymentsService,

@@ -1,3 +1,5 @@
+using Airbnb.AppHost;
+
 // The whole app: `aspire run` runs it locally with the dashboard; `aspire deploy` puts it on the local Kubernetes
 // cluster (LocalCluster.cs). Each part is set up in its own file:
 //   Infrastructure.cs  Postgres, Redis, the AMQP broker, Kafka, MongoDB, Mailpit, Blob Storage

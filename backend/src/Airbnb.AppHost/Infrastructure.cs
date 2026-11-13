@@ -1,3 +1,5 @@
+namespace Airbnb.AppHost;
+
 // The backing services every part of the app shares: databases, cache, brokers, storage, mail.
 // Container lifetimes are persistent so `aspire run` keeps their data between runs; the local cluster keeps it in
 // persistent volumes instead (LocalCluster.UsePersistentVolumes).

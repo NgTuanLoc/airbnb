@@ -87,6 +87,8 @@ takes about 10 minutes. Two suites are left out:
 - the architecture tests, which run no product code
 - the AppHost smoke test, which needs the whole stack and port 3000
 
+So the AppHost itself (`backend/src/Airbnb.AppHost`) has no coverage expectations; its issues still count.
+
 Failing tests show up as warnings; the scan goes on with the coverage they produced.
 
 `-SkipTests` scans in a few minutes and reuses the reports the last full run left in `tools/sonar/.local/coverage` and

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { BROADCAST_STREAM, broadcastSchema, type Broadcast } from "@/lib/notifications/schemas";
 import { BroadcastToast } from "./broadcast-toast";
 
@@ -42,7 +42,7 @@ function LiveNotifications({ children }: Readonly<{ children: React.ReactNode }>
   const [broadcasts, setBroadcasts] = useState<readonly Broadcast[]>([]);
   const [lastRead, setLastRead] = useState(readLastRead);
   const [news, setNews] = useState<Broadcast | null>(null);
-  const [panelOpen, setPanelOpenState] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     // EventSource reconnects by itself, sending the last id it saw, so a dropped connection misses nothing.
@@ -67,19 +67,25 @@ function LiveNotifications({ children }: Readonly<{ children: React.ReactNode }>
     return () => source.close();
   }, []);
 
-  function setPanelOpen(open: boolean) {
-    setPanelOpenState(open);
-    // The panel shows the news now (or showed it, on closing).
-    setNews(null);
-    const newest = broadcasts[0]?.id ?? 0;
-    if (newest > lastRead) {
-      setLastRead(newest);
-      writeLastRead(newest);
-    }
-  }
+  const changePanel = useCallback(
+    (open: boolean) => {
+      setPanelOpen(open);
+      // The panel shows the news now (or showed it, on closing).
+      setNews(null);
+      const newest = broadcasts[0]?.id ?? 0;
+      if (newest > lastRead) {
+        setLastRead(newest);
+        writeLastRead(newest);
+      }
+    },
+    [broadcasts, lastRead],
+  );
 
   const unread = panelOpen ? 0 : broadcasts.filter((broadcast) => broadcast.id > lastRead).length;
-  const value: Notifications = { broadcasts, unread, lastRead, news, panelOpen, setPanelOpen };
+  const value = useMemo<Notifications>(
+    () => ({ broadcasts, unread, lastRead, news, panelOpen, setPanelOpen: changePanel }),
+    [broadcasts, unread, lastRead, news, panelOpen, changePanel],
+  );
   return (
     <NotificationsContext.Provider value={value}>
       {children}
