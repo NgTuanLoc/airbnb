@@ -1,0 +1,81 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="aspire.config.json" />
+    <File Path="global.json" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".gitignore" />
+    <File Path="CLAUDE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/backend/">
+    <File Path="backend/Directory.Build.props" />
+    <File Path="backend/Directory.Packages.props" />
+    <File Path="backend/dotnet-tools.json" />
+  </Folder>
+  <Folder Name="/backend/src/">
+    <Project Path="backend/src/Airbnb.Api/Airbnb.Api.csproj" />
+    <Project Path="backend/src/Airbnb.AppHost/Airbnb.AppHost.csproj" />
+    <Project Path="backend/src/Airbnb.Functions/Airbnb.Functions.csproj" />
+    <Project Path="backend/src/Airbnb.MigrationService/Airbnb.MigrationService.csproj" />
+    <Project Path="backend/src/Airbnb.ServiceDefaults/Airbnb.ServiceDefaults.csproj" />
+    <Project Path="backend/src/Airbnb.SharedKernel/Airbnb.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/" />
+  <Folder Name="/backend/src/Modules/Bookings/">
+    <Project Path="backend/src/Modules/Bookings/Airbnb.Modules.Bookings/Airbnb.Modules.Bookings.csproj" />
+    <Project Path="backend/src/Modules/Bookings/Airbnb.Modules.Bookings.Contracts/Airbnb.Modules.Bookings.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Experiences/">
+    <Project Path="backend/src/Modules/Experiences/Airbnb.Modules.Experiences/Airbnb.Modules.Experiences.csproj" />
+    <Project Path="backend/src/Modules/Experiences/Airbnb.Modules.Experiences.Contracts/Airbnb.Modules.Experiences.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Hosts/">
+    <Project Path="backend/src/Modules/Hosts/Airbnb.Modules.Hosts/Airbnb.Modules.Hosts.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Identity/">
+    <Project Path="backend/src/Modules/Identity/Airbnb.Modules.Identity/Airbnb.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Insights/">
+    <Project Path="backend/src/Modules/Insights/Airbnb.Modules.Insights/Airbnb.Modules.Insights.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Media/">
+    <Project Path="backend/src/Modules/Media/Airbnb.Modules.Media/Airbnb.Modules.Media.csproj" />
+    <Project Path="backend/src/Modules/Media/Airbnb.Modules.Media.Contracts/Airbnb.Modules.Media.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Reviews/">
+    <Project Path="backend/src/Modules/Reviews/Airbnb.Modules.Reviews/Airbnb.Modules.Reviews.csproj" />
+    <Project Path="backend/src/Modules/Reviews/Airbnb.Modules.Reviews.Contracts/Airbnb.Modules.Reviews.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Services/">
+    <Project Path="backend/src/Modules/Services/Airbnb.Modules.Services/Airbnb.Modules.Services.csproj" />
+  </Folder>
+  <Folder Name="/backend/src/Modules/Stays/">
+    <Project Path="backend/src/Modules/Stays/Airbnb.Modules.Stays/Airbnb.Modules.Stays.csproj" />
+    <Project Path="backend/src/Modules/Stays/Airbnb.Modules.Stays.Contracts/Airbnb.Modules.Stays.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/backend/tests/">
+    <Project Path="backend/tests/Airbnb.Api.Tests/Airbnb.Api.Tests.csproj" />
+    <Project Path="backend/tests/Airbnb.AppHost.Tests/Airbnb.AppHost.Tests.csproj" />
+    <Project Path="backend/tests/Airbnb.ArchitectureTests/Airbnb.ArchitectureTests.csproj" />
+    <Project Path="backend/tests/Airbnb.UnitTests/Airbnb.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/services/" />
+  <Folder Name="/services/assistant/">
+    <Project Path="services/assistant/src/Airbnb.Assistant/Airbnb.Assistant.csproj" />
+    <Project Path="services/assistant/tests/Airbnb.Assistant.Tests/Airbnb.Assistant.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/chat/">
+    <Project Path="services/chat/src/Airbnb.Chat/Airbnb.Chat.csproj" />
+    <Project Path="services/chat/tests/Airbnb.Chat.Tests/Airbnb.Chat.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/notifications/">
+    <Project Path="services/notifications/src/Airbnb.Notifications/Airbnb.Notifications.csproj" />
+    <Project Path="services/notifications/tests/Airbnb.Notifications.Tests/Airbnb.Notifications.Tests.csproj" />
+  </Folder>
+  <Folder Name="/services/payments/">
+    <Project Path="services/payments/src/Airbnb.PaymentProvider/Airbnb.PaymentProvider.csproj" />
+    <Project Path="services/payments/src/Airbnb.Payments/Airbnb.Payments.csproj" />
+    <Project Path="services/payments/tests/Airbnb.PaymentProvider.Tests/Airbnb.PaymentProvider.Tests.csproj" />
+    <Project Path="services/payments/tests/Airbnb.Payments.Tests/Airbnb.Payments.Tests.csproj" />
+  </Folder>
+</Solution>

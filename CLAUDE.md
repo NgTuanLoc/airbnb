@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Layout
 
-Monorepo:
+Monorepo. `Airbnb.slnx` (root, with its own `global.json`) holds every .NET project, the backend's and the services', for the IDE and `dotnet build`/`dotnet test` from the root; each part also keeps its own solution, which CI and the Sonar scan use:
 - `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
 - `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.6. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`, `src/Airbnb.Functions` (the photo-processor Azure Function), modules (`src/Modules/<Name>`: Stays, Experiences, Services, Hosts, Reviews, Identity, Bookings, Media, Insights), module Contracts projects (`src/Modules/<Name>/Airbnb.Modules.<Name>.Contracts`: plain interfaces and records other modules may reference); tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration), `tests/Airbnb.AppHost.Tests` (Aspire smoke test). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
 - `services/notifications/` — the notification microservice: its own solution (`Airbnb.Notifications.slnx`, own `global.json`, `Directory.Build.props`, `Directory.Packages.props`), sharing only `backend/src/Airbnb.ServiceDefaults`; run by the backend AppHost. Commands from `services/notifications`: `dotnet test` (Testcontainers: Postgres, LavinMQ, Mailpit).
