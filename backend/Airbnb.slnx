@@ -57,4 +57,13 @@
     <Project Path="tests/Airbnb.ArchitectureTests/Airbnb.ArchitectureTests.csproj" />
     <Project Path="tests/Airbnb.UnitTests/Airbnb.UnitTests.csproj" />
   </Folder>
+  <!-- The services the AppHost runs: Visual Studio launches only projects loaded in the open solution. Their tests
+       stay in each service's own solution. -->
+  <Folder Name="/services/">
+    <Project Path="../services/assistant/src/Airbnb.Assistant/Airbnb.Assistant.csproj" />
+    <Project Path="../services/chat/src/Airbnb.Chat/Airbnb.Chat.csproj" />
+    <Project Path="../services/notifications/src/Airbnb.Notifications/Airbnb.Notifications.csproj" />
+    <Project Path="../services/payments/src/Airbnb.PaymentProvider/Airbnb.PaymentProvider.csproj" />
+    <Project Path="../services/payments/src/Airbnb.Payments/Airbnb.Payments.csproj" />
+  </Folder>
 </Solution>
