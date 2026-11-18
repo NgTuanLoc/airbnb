@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Layout
 
-Monorepo. `Airbnb.slnx` (root, with its own `global.json`) holds every .NET project, the backend's and the services', for the IDE and `dotnet build`/`dotnet test` from the root; each part also keeps its own solution, which CI and the Sonar scan use:
+Monorepo. `Airbnb.slnx` (root, with its own `global.json`) holds every .NET project, the backend's and the services', for the IDE, `dotnet build`/`dotnet test` and the Sonar scan; each service also keeps its own solution (`dotnet test` in its folder). CI names test projects directly:
 - `frontend/` — Next.js app. **All frontend commands run from `frontend/`, and all frontend paths below are relative to `frontend/`.**
-- `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.6. Solution `backend/Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`, `src/Airbnb.Functions` (the photo-processor Azure Function), modules (`src/Modules/<Name>`: Stays, Experiences, Services, Hosts, Reviews, Identity, Bookings, Media, Insights), module Contracts projects (`src/Modules/<Name>/Airbnb.Modules.<Name>.Contracts`: plain interfaces and records other modules may reference); tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration), `tests/Airbnb.AppHost.Tests` (Aspire smoke test). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
+- `backend/` — ASP.NET Core (.NET 10) modular monolith orchestrated by Aspire 13.6. In the root `Airbnb.slnx`: `src/Airbnb.AppHost` (Aspire), `src/Airbnb.Api` (host), `src/Airbnb.ServiceDefaults`, `src/Airbnb.SharedKernel`, `src/Airbnb.MigrationService`, `src/Airbnb.Functions` (the photo-processor Azure Function), modules (`src/Modules/<Name>`: Stays, Experiences, Services, Hosts, Reviews, Identity, Bookings, Media, Insights), module Contracts projects (`src/Modules/<Name>/Airbnb.Modules.<Name>.Contracts`: plain interfaces and records other modules may reference); tests in `tests/Airbnb.UnitTests`, `tests/Airbnb.ArchitectureTests`, `tests/Airbnb.Api.Tests` (integration), `tests/Airbnb.AppHost.Tests` (Aspire smoke test). SDK and test runner pinned by `backend/global.json`. Design: `docs/superpowers/specs/2026-09-26-backend-modular-monolith-design.md`.
 - `services/notifications/` — the notification microservice: its own solution (`Airbnb.Notifications.slnx`, own `global.json`, `Directory.Build.props`, `Directory.Packages.props`), sharing only `backend/src/Airbnb.ServiceDefaults`; run by the backend AppHost. Commands from `services/notifications`: `dotnet test` (Testcontainers: Postgres, LavinMQ, Mailpit).
 - `services/payments/` — the payment microservice, same shape (`Airbnb.Payments.slnx`, own props, shares only ServiceDefaults; run by the backend AppHost), plus the fake payment provider it charges through (`src/Airbnb.PaymentProvider`, a stand-in for Stripe that reports charges by signed webhook; the AppHost runs it as `payment-provider`). Commands from `services/payments`: `dotnet test` runs both test projects (the service's with Testcontainers: Postgres, LavinMQ; the provider's in memory).
 - `services/chat/` — the chat microservice, same shape (`Airbnb.Chat.slnx`, own props, shares only ServiceDefaults; run by the backend AppHost as two instances behind the YARP `gateway`). Commands from `services/chat`: `dotnet test` (Testcontainers: MongoDB, Redis; the service on real Kestrel so the hub runs over WebSockets).
@@ -39,9 +39,9 @@ Backend (run from `backend/`; Aspire commands from PowerShell; Docker must be ru
 ```bash
 aspire run                         # whole stack + dashboard
 pwsh deploy-local.ps1               # the same stack on Docker Desktop's Kubernetes (app on localhost:3000)
-dotnet test                        # all test projects (Microsoft Testing Platform)
+dotnet test --solution ../Airbnb.slnx   # all test projects, backend and services (Microsoft Testing Platform)
 dotnet test --project tests/Airbnb.UnitTests --filter-class "Airbnb.UnitTests.Api.EnvelopeProblemDetailsWriterTests"
-dotnet test --coverage --coverage-output-format cobertura   # coverage files under TestResults/
+dotnet test --solution ../Airbnb.slnx --coverage --coverage-output-format cobertura   # coverage files under TestResults/
 reportgenerator -reports:"TestResults/*.cobertura.xml" -targetdir:TestResults/report -reporttypes:TextSummary "-classfilters:-*.Generated*;-System.Runtime.CompilerServices*"   # summary without source-generated code
 ```
 

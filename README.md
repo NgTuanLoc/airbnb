@@ -36,7 +36,7 @@ Run from PowerShell; Docker must be running. On a Mac older than macOS 15 (Aspir
 ```powershell
 cd backend
 aspire run    # dashboard + postgres, redis, messaging (LavinMQ), kafka, mailpit, mongo, ollama, migrations, api, notifications, payments, payment-provider, chat (×2), gateway, assistant, frontend (http://localhost:3000, on the API)
-dotnet test   # unit, architecture, integration and AppHost smoke tests (Docker; the smoke test needs port 3000 free)
+dotnet test --solution ../Airbnb.slnx   # every .NET test project, backend and services: unit, architecture, integration, AppHost smoke (Docker; the smoke test needs port 3000 free)
 ```
 
 - The dashboard URL is printed on start. The API answers at http://localhost:5283 (`/health`, and `/scalar` for the API reference in Development).

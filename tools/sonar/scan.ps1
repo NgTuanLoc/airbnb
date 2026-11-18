@@ -1,7 +1,7 @@
 #Requires -Version 7.2
 <#
 .SYNOPSIS
-    Scans the repo with a local SonarQube: the .NET solutions (backend and services) and the frontend.
+    Scans the repo with a local SonarQube: the root .NET solution (backend and services) and the frontend.
 
 .DESCRIPTION
     Runs SonarQube Community Build in Docker, runs the tests for coverage, scans, waits for the server to process each
@@ -167,7 +167,8 @@ function Invoke-DotnetScan([string] $Token) {
     $work = Join-Path $local 'dotnet'
     $artifacts = Join-Path $local 'artifacts'
     $coverageDir = Join-Path $local 'coverage'
-    $solutions = @(Get-Item (Join-Path $root 'backend/Airbnb.slnx')) + @(Get-ChildItem (Join-Path $root 'services/*/*.slnx'))
+    # The root solution holds every .NET project, the backend's and the services'.
+    $solutions = @(Get-Item (Join-Path $root 'Airbnb.slnx'))
     # Unit and integration tests. The architecture tests run no product code; the AppHost smoke test needs the whole stack.
     $testProjects = Get-ChildItem (Join-Path $root 'backend/tests/*/*.csproj'), (Join-Path $root 'services/*/tests/*/*.csproj') |
         Where-Object BaseName -NotMatch 'ArchitectureTests|AppHost\.Tests'

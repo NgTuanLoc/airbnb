@@ -47,7 +47,7 @@ The dashboard is at <http://localhost:9000>. Sign in as `admin` with the passwor
 
 | Project | Covers | Scanner |
 |---|---|---|
-| `airbnb-dotnet` | `backend/` and the four `services/` solutions (C#), plus the repo's other files: YAML, JSON, scripts, the k6 script, and secrets in config files | SonarScanner for .NET: `begin`, a build of each solution, `end` |
+| `airbnb-dotnet` | every project of the root `Airbnb.slnx` (C#: `backend/` and the four `services/`), plus the repo's other files: YAML, JSON, scripts, the k6 script, and secrets in config files | SonarScanner for .NET: `begin`, a build of the solution, `end` |
 | `airbnb-frontend` | `frontend/` (TypeScript, CSS) | SonarScanner for NPM |
 
 - **Skipped:** gitignored files (`node_modules`, `.next`, `bin`, `obj`, ...) and EF migrations (generated code).
@@ -57,8 +57,6 @@ The dashboard is at <http://localhost:9000>. Sign in as `admin` with the passwor
   - in the frontend, `*.test.ts(x)`, the `test-*.ts(x)` helpers, `vitest.setup.ts` and `e2e/`
 - **Build:** the .NET builds use the SDK pinned by `backend/global.json` and write to `tools/sonar/.local/artifacts`.
   A running `aspire run` or your IDE's builds aren't touched.
-- **Expected warnings:** `Duplicate ProjectGuid ... will not be analyzed` is fine. Projects that several solutions build
-  (ServiceDefaults, and the services the AppHost references) are analyzed once.
 
 ## Rules
 
