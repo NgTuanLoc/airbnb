@@ -4,9 +4,8 @@
     <OutputType>Exe</OutputType>
     <UserSecretsId>8f3b6c1e-2d47-4a9e-b5c8-1e6f0a7d9c42</UserSecretsId>
     <!-- DCP and the dashboard come from the Aspire CLI's bundle: aspire run, the smoke test and CI need the CLI installed. -->
-    <!-- Preview APIs for the local Kubernetes cluster: ASPIREJAVASCRIPT001 AddNextJsApp (the frontend's standalone image),
-         ASPIREDOCKERFILEBUILDER001 its Node base image, ASPIRECOMPUTE003 the container registry. -->
-    <NoWarn>$(NoWarn);ASPIRE010;ASPIREJAVASCRIPT001;ASPIREDOCKERFILEBUILDER001;ASPIRECOMPUTE003</NoWarn>
+    <!-- A preview API for the local Kubernetes cluster: ASPIRECOMPUTE003, the container registry. -->
+    <NoWarn>$(NoWarn);ASPIRECOMPUTE003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

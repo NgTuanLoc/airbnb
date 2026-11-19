@@ -15,6 +15,9 @@ if (-not (docker ps --quiet --filter "name=^airbnb-registry$")) {
 }
 
 Push-Location (Join-Path $PSScriptRoot "src/Airbnb.AppHost")
+# The generated chart: aspire deploy writes over it but never deletes, so a template the AppHost no longer makes
+# (a renamed Job, say) would still be installed.
+Remove-Item aspire-output -Recurse -Force -ErrorAction SilentlyContinue
 try { aspire deploy @args; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
 finally { Pop-Location }
 

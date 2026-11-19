@@ -5,17 +5,17 @@ using Aspire.Hosting.Yarp;
 namespace Airbnb.AppHost;
 
 // The URLs a browser uses, which some services hand out (links in emails, OAuth redirects, the chat hub address).
-// `aspire run`: localhost and each endpoint's port, never a container-network name (from a container, an endpoint's
-// own URL would be aspire.dev.internal). The local cluster: the LoadBalancer ports Docker Desktop opens on the machine.
+// `aspire run`: each endpoint's browser origin (localhost and its port, even for a container, where the endpoint's own
+// URL would be aspire.dev.internal). The local cluster: the LoadBalancer ports Docker Desktop opens on the machine.
 internal sealed record BrowserUrls(ReferenceExpression Frontend, ReferenceExpression Gateway)
 {
     public static BrowserUrls For(IResourceBuilder<NextJsAppResource> frontend, IResourceBuilder<YarpResource> gateway) =>
         frontend.ApplicationBuilder.IsLocalCluster()
             ? new(ReferenceExpression.Create($"{LocalCluster.FrontendUrl}"), ReferenceExpression.Create($"{LocalCluster.GatewayUrl}"))
-            : new(Localhost(frontend.GetEndpoint("http")), Localhost(gateway.GetEndpoint("http")));
+            : new(BrowserOrigin(frontend.GetEndpoint("http")), BrowserOrigin(gateway.GetEndpoint("http")));
 
-    private static ReferenceExpression Localhost(EndpointReference endpoint) =>
-        ReferenceExpression.Create($"http://localhost:{endpoint.Property(EndpointProperty.Port)}");
+    private static ReferenceExpression BrowserOrigin(EndpointReference endpoint) =>
+        ReferenceExpression.Create($"{endpoint.PrimaryBrowserOrigin}");
 }
 
 internal static class FrontendExtensions

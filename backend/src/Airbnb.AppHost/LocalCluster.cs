@@ -65,18 +65,18 @@ internal static class LocalCluster
         });
 
     // A program that does its work and exits (the migrations) runs as a Job rather than a Deployment, which would
-    // restart it forever. A Helm hook, so each deploy replaces it (a Job's pod template can't change in place) and
-    // Helm waits for it to finish.
+    // restart it forever. Part of the release, not a hook: a post-install hook would wait for every Deployment to be
+    // ready, and the API isn't until the migrations have run. A Job's pod template can't change in place, so each
+    // deploy gets its own (named after the release revision; Helm waits for it and removes the last one), and a
+    // finished Job deletes itself after 10 minutes.
     public static IResourceBuilder<T> RunsOnceOnLocalCluster<T>(this IResourceBuilder<T> resource) where T : IComputeResource =>
         resource.PublishAsKubernetesService(k =>
         {
             var template = k.Workload!.PodTemplate;
             template.Spec.RestartPolicy = "OnFailure";
             var job = new Job { Spec = { Template = template } };
-            job.Metadata.Name = $"{resource.Resource.Name}-job";
+            job.Metadata.Name = $"{resource.Resource.Name}-job-{{{{ .Release.Revision }}}}";
             job.Metadata.Labels = k.Workload.Metadata.Labels;
-            job.Metadata.Annotations["helm.sh/hook"] = "post-install,post-upgrade";
-            job.Metadata.Annotations["helm.sh/hook-delete-policy"] = "before-hook-creation";
             k.Workload = job;
         });
 
@@ -100,6 +100,22 @@ internal static class LocalCluster
                 },
             });
             k.AdditionalResources.Add(job);
+        });
+
+    // Aspire 17's publisher writes an HTTP probe's scheme as the endpoint's ("http"); Kubernetes accepts only HTTP or HTTPS.
+    public static IResourceBuilder<T> WithKubernetesProbeSchemes<T>(this IResourceBuilder<T> resource) where T : IComputeResource =>
+        resource.PublishAsKubernetesService(k =>
+        {
+            foreach (var container in k.Workload!.PodTemplate.Spec.Containers)
+            {
+                foreach (var probe in new[] { container.LivenessProbe, container.ReadinessProbe, container.StartupProbe })
+                {
+                    if (probe?.HttpGet is { Scheme: not null } httpGet)
+                    {
+                        httpGet.Scheme = httpGet.Scheme.ToUpperInvariant();
+                    }
+                }
+            }
         });
 
     // From inside the API pod, KeycloakHost is the machine, whose port KeycloakPort is Keycloak's LoadBalancer.
@@ -150,6 +166,9 @@ internal sealed class JobSpec
 {
     [YamlMember(Alias = "backoffLimit")]
     public int BackoffLimit { get; set; } = 10;
+
+    [YamlMember(Alias = "ttlSecondsAfterFinished")]
+    public int TtlSecondsAfterFinished { get; set; } = 600;
 
     [YamlMember(Alias = "template")]
     public PodTemplateSpecV1 Template { get; set; } = new();

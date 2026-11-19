@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Hosting;
 using Airbnb.Api.Tests.Infrastructure;
 
 namespace Airbnb.Api.Tests;
@@ -35,10 +36,21 @@ public sealed class HealthEndpointTests(InfrastructureFixture infrastructure)
         Assert.Equal("Healthy", body);
     }
 
-    private async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path)
+    // The cluster's pods run as Production, and Kubernetes probes them there.
+    [Fact]
+    public async Task Alive_is_served_outside_development()
+    {
+        var (status, body) = await GetAsync(UnreachableDatabase, "/alive", environment: "Production");
+
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal("Healthy", body);
+    }
+
+    private async Task<(HttpStatusCode Status, string Body)> GetAsync(string connectionString, string path,
+        string environment = "Development")
     {
         await using var factory = new ApiFactory(infrastructure, postgresConnectionString: connectionString, withMessaging: false);
-        using var client = factory.CreateClient();
+        using var client = factory.WithWebHostBuilder(host => host.UseEnvironment(environment)).CreateClient();
 
         using var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
 
