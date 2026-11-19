@@ -6,7 +6,7 @@
 
   <!-- Aspire as in the backend; ASP.NET Core 10.0.15, the first with the fixes for CVE-2026-70159 and GHSA-wr8v-9x5q-ggcm (SignalR). -->
   <ItemGroup Label="Service">
-    <PackageVersion Include="Aspire.MongoDB.Driver" Version="13.6.5" />
+    <PackageVersion Include="Aspire.MongoDB.Driver" Version="17.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.15" />
   </ItemGroup>

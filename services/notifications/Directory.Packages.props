@@ -6,6 +6,7 @@
 
   <!-- Kept on the backend's versions where they overlap (Wolverine, EF Core, Aspire), so both sides of the broker agree. -->
   <ItemGroup Label="Service">
+    <!-- 13.6.5: its Aspire 17 release is still a preview. -->
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.5" />
     <PackageVersion Include="MailKit" Version="4.18.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" />

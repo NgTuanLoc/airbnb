@@ -1,3 +1,4 @@
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.Kubernetes;
 using Aspire.Hosting.Kubernetes.Resources;
 using YamlDotNet.Serialization;
@@ -102,7 +103,7 @@ internal static class LocalCluster
         });
 
     // From inside the API pod, KeycloakHost is the machine, whose port KeycloakPort is Keycloak's LoadBalancer.
-    public static IResourceBuilder<ProjectResource> ReachesKeycloak(this IResourceBuilder<ProjectResource> api) =>
+    public static IResourceBuilder<DotnetProjectResource> ReachesKeycloak(this IResourceBuilder<DotnetProjectResource> api) =>
         api.PublishAsKubernetesService(k =>
             k.Workload!.PodTemplate.Spec.HostAliases.Add(new HostAliasV1 { Ip = DockerDesktopHostIp, Hostnames = { KeycloakHost } }));
 

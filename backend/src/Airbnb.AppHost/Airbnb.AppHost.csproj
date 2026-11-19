@@ -1,15 +1,17 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>8f3b6c1e-2d47-4a9e-b5c8-1e6f0a7d9c42</UserSecretsId>
-    <!-- AspireUseCliBundle stays off: DCP and the dashboard come from NuGet, so build/test work without the Aspire CLI (CI). -->
+    <!-- DCP and the dashboard come from the Aspire CLI's bundle: aspire run, the smoke test and CI need the CLI installed. -->
     <!-- Preview APIs for the local Kubernetes cluster: ASPIREJAVASCRIPT001 AddNextJsApp (the frontend's standalone image),
          ASPIREDOCKERFILEBUILDER001 its Node base image, ASPIRECOMPUTE003 the container registry. -->
     <NoWarn>$(NoWarn);ASPIRE010;ASPIREJAVASCRIPT001;ASPIREDOCKERFILEBUILDER001;ASPIRECOMPUTE003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
     <PackageReference Include="Aspire.Hosting.Azure.Functions" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
     <PackageReference Include="Aspire.Hosting.JavaScript" />
@@ -25,21 +27,6 @@
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Redis" />
     <PackageReference Include="Aspire.Hosting.Yarp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Airbnb.Api\Airbnb.Api.csproj" />
-    <ProjectReference Include="..\Airbnb.Functions\Airbnb.Functions.csproj" />
-    <ProjectReference Include="..\Airbnb.MigrationService\Airbnb.MigrationService.csproj" />
-    <!-- The notification service lives in its own solution (services/notifications); this AppHost still runs it. -->
-    <ProjectReference Include="..\..\..\services\notifications\src\Airbnb.Notifications\Airbnb.Notifications.csproj" />
-    <!-- So does the payment service (services/payments), and the fake payment provider beside it. -->
-    <ProjectReference Include="..\..\..\services\payments\src\Airbnb.Payments\Airbnb.Payments.csproj" />
-    <ProjectReference Include="..\..\..\services\payments\src\Airbnb.PaymentProvider\Airbnb.PaymentProvider.csproj" />
-    <!-- And the chat service (services/chat). -->
-    <ProjectReference Include="..\..\..\services\chat\src\Airbnb.Chat\Airbnb.Chat.csproj" />
-    <!-- And the assistant (services/assistant). -->
-    <ProjectReference Include="..\..\..\services\assistant\src\Airbnb.Assistant\Airbnb.Assistant.csproj" />
   </ItemGroup>
 
 </Project>

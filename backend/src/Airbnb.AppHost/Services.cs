@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.Yarp;
 using Aspire.Hosting.Yarp.Transforms;
 
@@ -37,11 +38,11 @@ internal static class ServiceExtensions
     // service refunds cancelled bookings it hears about on the broker. Its own database on the same server. The charges
     // go to the payment provider, which reports each outcome by signed webhook; the service announces outcomes on the
     // broker ("payments" exchange) for Bookings.
-    public static IResourceBuilder<ProjectResource> AddPayments(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
+    public static IResourceBuilder<DotnetProjectResource> AddPayments(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
     {
         var provider = builder.AddPaymentProvider(keys);
         var db = infra.Postgres.AddDatabase("paymentsdb", "payments");
-        var payments = builder.AddProject<Projects.Airbnb_Payments>("payments", launchProfileName: "http")
+        var payments = builder.AddDotnetProject("payments", "../../../services/payments/src/Airbnb.Payments", o => o.LaunchProfileName = "http")
             .WithReference(db).WaitFor(db)
             .WithReference(infra.Messaging).WaitFor(infra.Messaging)
             .WithReference(provider).WaitFor(provider)
@@ -57,8 +58,8 @@ internal static class ServiceExtensions
     // services/payments' fake payment provider (src/Airbnb.PaymentProvider): a stand-in for an outside processor like
     // Stripe. Its commands do what the real one's dashboard and the guest's bank would: resend a webhook (a duplicate the
     // payment service must ignore) and dispute a charge.
-    private static IResourceBuilder<ProjectResource> AddPaymentProvider(this IDistributedApplicationBuilder builder, Keys keys) =>
-        builder.AddProject<Projects.Airbnb_PaymentProvider>("payment-provider", launchProfileName: "http")
+    private static IResourceBuilder<DotnetProjectResource> AddPaymentProvider(this IDistributedApplicationBuilder builder, Keys keys) =>
+        builder.AddDotnetProject("payment-provider", "../../../services/payments/src/Airbnb.PaymentProvider", o => o.LaunchProfileName = "http")
             .WithEnvironment("Provider__ApiKey", keys.PaymentProvider)
             .WithEnvironment("Provider__WebhookSecret", keys.PaymentWebhook)
             .AsHttpApi()
@@ -83,10 +84,10 @@ internal static class ServiceExtensions
     // services/chat: guests message hosts live over SignalR. MongoDB, two instances that reach each other's connections
     // through the Redis backplane, and the only service the browser talks to directly: through the gateway, with a
     // token the API signs (chat-token-key). The Next server starts conversations with chat-service-key.
-    public static IResourceBuilder<ProjectResource> AddChat(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
+    public static IResourceBuilder<DotnetProjectResource> AddChat(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
     {
         var db = infra.Mongo.AddDatabase("chatdb", "chat");
-        return builder.AddProject<Projects.Airbnb_Chat>("chat", launchProfileName: "http")
+        return builder.AddDotnetProject("chat", "../../../services/chat/src/Airbnb.Chat", o => o.LaunchProfileName = "http")
             .WithReference(db).WaitFor(db)
             .WithReference(infra.Redis).WaitFor(infra.Redis)
             .WithEnvironment("Chat__ServiceKey", keys.ChatService)
@@ -101,7 +102,7 @@ internal static class ServiceExtensions
     // (WebSockets take no headers), so it logs at Warning (all of it: the image has no appsettings.json, so every
     // category falls back to Default): no token reaches the console or dashboard. One Default, since Helm can't
     // address a variable named after a category with dots (Logging__LogLevel__Microsoft.AspNetCore).
-    public static IResourceBuilder<YarpResource> AddGateway(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> chat) =>
+    public static IResourceBuilder<YarpResource> AddGateway(this IDistributedApplicationBuilder builder, IResourceBuilder<DotnetProjectResource> chat) =>
         builder.AddYarp("gateway")
             .WithConfiguration(yarp => yarp.AddRoute("/chat/{**catch-all}", chat).WithTransformPathRemovePrefix("/chat"))
             .WithEnvironment("Logging__LogLevel__Default", "Warning")
@@ -110,10 +111,10 @@ internal static class ServiceExtensions
     // services/notifications: hears about bookings only through the broker and emails guests through Mailpit.
     // "Send due reminders now" sends every waiting review reminder without waiting for check-out, and "Broadcast a
     // message" shows a message on every open page (the frontend relays the service's Server-Sent Events).
-    public static IResourceBuilder<ProjectResource> AddNotifications(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
+    public static IResourceBuilder<DotnetProjectResource> AddNotifications(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys)
     {
         var db = infra.Postgres.AddDatabase("notificationsdb", "notifications");
-        return builder.AddProject<Projects.Airbnb_Notifications>("notifications", launchProfileName: "http")
+        return builder.AddDotnetProject("notifications", "../../../services/notifications/src/Airbnb.Notifications", o => o.LaunchProfileName = "http")
             .WithReference(db).WaitFor(db)
             .WithReference(infra.Messaging).WaitFor(infra.Messaging)
             .WithReference(infra.Mailpit).WaitFor(infra.Mailpit)
@@ -142,7 +143,7 @@ internal static class ServiceExtensions
     // services/assistant, the smart chat box: a local model on Ollama. The model downloads once into the data volume
     // (about 2 GB for the default); Assistant:Model swaps it, and Assistant:Gpu=true uses an NVIDIA GPU (it fails to
     // start without one). Open WebUI chats with the same models in the browser.
-    public static IResourceBuilder<ProjectResource> AddAssistant(this IDistributedApplicationBuilder builder)
+    public static IResourceBuilder<DotnetProjectResource> AddAssistant(this IDistributedApplicationBuilder builder)
     {
         var ollama = builder.AddOllama("ollama")
             .WithOpenWebUI(ui => ui.WithLifetime(ContainerLifetime.Persistent).WithImageTag("v0.12.4"))
@@ -157,7 +158,7 @@ internal static class ServiceExtensions
         // Aspire downloads the model under `aspire run`; in the cluster a Job asks Ollama to.
         ollama.PullsModelOnLocalCluster(modelName);
 
-        var assistant = builder.AddProject<Projects.Airbnb_Assistant>("assistant", launchProfileName: "http")
+        var assistant = builder.AddDotnetProject("assistant", "../../../services/assistant/src/Airbnb.Assistant", o => o.LaunchProfileName = "http")
             .WithReference(model).WaitFor(model)
             .AsHttpApi();
         // The cluster publisher renames ConnectionStrings__assistant-model to ConnectionStrings__assistant_model, which

@@ -1,5 +1,8 @@
 {
   "appHost": {
     "path": "backend/src/Airbnb.AppHost/Airbnb.AppHost.csproj"
+  },
+  "sdk": {
+    "version": "17.0.0"
   }
 }

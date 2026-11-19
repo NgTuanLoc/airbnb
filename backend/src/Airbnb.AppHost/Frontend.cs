@@ -1,3 +1,4 @@
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.JavaScript;
 using Aspire.Hosting.Yarp;
 
@@ -22,7 +23,7 @@ internal static class FrontendExtensions
     // The Next.js app (frontend/). Port 3000 so Playwright (baseURL localhost:3000, reuseExistingServer) can run e2e
     // against it. `aspire run` starts `next dev`; the cluster runs Next's standalone server from a generated image.
     public static IResourceBuilder<NextJsAppResource> AddFrontend(this IDistributedApplicationBuilder builder,
-        IResourceBuilder<ProjectResource> api, IResourceBuilder<ProjectResource> chat, Keys keys) =>
+        IResourceBuilder<DotnetProjectResource> api, IResourceBuilder<DotnetProjectResource> chat, Keys keys) =>
         builder.AddNextJsApp("frontend", "../../../frontend")
             // The image builds and runs on Node 24, like CI and the dev container (Aspire's default is 22).
             .WithDockerfileBaseImage("node:24-slim", "node:24-alpine")

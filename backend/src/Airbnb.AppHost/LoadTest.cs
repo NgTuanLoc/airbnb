@@ -1,10 +1,11 @@
+using Aspire.Hosting.Dotnet;
 namespace Airbnb.AppHost;
 
 // The k6 load test (perf/k6/load.js), under `aspire run` only: it mounts folders from this machine, and starts only
 // from the dashboard's Start button (or `aspire resource k6 start`).
 internal static class LoadTestExtensions
 {
-    public static void AddLoadTest(this IDistributedApplicationBuilder builder, IResourceBuilder<ProjectResource> api)
+    public static void AddLoadTest(this IDistributedApplicationBuilder builder, IResourceBuilder<DotnetProjectResource> api)
     {
         if (!builder.ExecutionContext.IsRunMode)
         {

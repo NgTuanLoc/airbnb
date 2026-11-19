@@ -1,4 +1,5 @@
 using Aspire.Hosting.Azure;
+using Aspire.Hosting.Dotnet;
 
 namespace Airbnb.AppHost;
 
@@ -7,17 +8,17 @@ namespace Airbnb.AppHost;
 internal static class ApiExtensions
 {
     // Applies every module's migrations and seeds empty tables, then exits. In the cluster it runs as a Job.
-    public static IResourceBuilder<ProjectResource> AddMigrations(this IDistributedApplicationBuilder builder, Infrastructure infra) =>
-        builder.AddProject<Projects.Airbnb_MigrationService>("migrations")
+    public static IResourceBuilder<DotnetProjectResource> AddMigrations(this IDistributedApplicationBuilder builder, Infrastructure infra) =>
+        builder.AddDotnetProject("migrations", "../Airbnb.MigrationService")
             .WithReference(infra.Db)
             .WaitFor(infra.Db)
             .RunsOnceOnLocalCluster();
 
     // The http profile only: an HTTPS endpoint would need a dev certificate, which CI runners don't have.
-    public static IResourceBuilder<ProjectResource> AddApi(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys,
-        IResourceBuilder<ProjectResource> migrations, IResourceBuilder<ProjectResource> payments)
+    public static IResourceBuilder<DotnetProjectResource> AddApi(this IDistributedApplicationBuilder builder, Infrastructure infra, Keys keys,
+        IResourceBuilder<DotnetProjectResource> migrations, IResourceBuilder<DotnetProjectResource> payments)
     {
-        var api = builder.AddProject<Projects.Airbnb_Api>("api", launchProfileName: "http")
+        var api = builder.AddDotnetProject("api", "../Airbnb.Api", o => o.LaunchProfileName = "http")
             .WithReference(infra.Db).WaitFor(infra.Db)
             .WithReference(infra.Redis).WaitFor(infra.Redis)
             .WithReference(infra.Messaging).WaitFor(infra.Messaging)
@@ -38,11 +39,12 @@ internal static class ApiExtensions
                 IconName = "ArrowSync",
             });
 
-        // The k6 load test's traffic comes from one container IP, so under `aspire run` the per-IP read and view
-        // limits are raised out of its way.
+        // The k6 load test's traffic comes from one container IP, and the smoke test's from loopback, so under `aspire run`
+        // the per-IP read, write and view limits are raised out of their way.
         if (builder.ExecutionContext.IsRunMode)
         {
             api.WithEnvironment("RateLimiting__ReadsPerMinute", "100000")
+                .WithEnvironment("RateLimiting__WritesPerMinute", "100000")
                 .WithEnvironment("RateLimiting__ViewsPerMinute", "100000");
         }
 
@@ -55,7 +57,7 @@ internal static class ApiExtensions
     // (alex@acme.test / acme-demo). The realm file reads its client secret and redirect URI from the environment, so
     // the secret is generated rather than committed. The API trusts it as the "acme" connection.
     public static IResourceBuilder<KeycloakResource> AddAcmeSso(this IDistributedApplicationBuilder builder, Keys keys,
-        IResourceBuilder<ProjectResource> api, BrowserUrls urls)
+        IResourceBuilder<DotnetProjectResource> api, BrowserUrls urls)
     {
         var keycloak = builder.AddKeycloak("keycloak")
             .WithLifetime(ContainerLifetime.Persistent)
@@ -98,13 +100,13 @@ internal static class ApiExtensions
     {
         if (!builder.IsLocalCluster())
         {
-            builder.AddAzureFunctionsProject<Projects.Airbnb_Functions>("photo-processor")
+            builder.AddAzureFunctionsProject("photo-processor", "../Airbnb.Functions/Airbnb.Functions.csproj")
                 .WithHostStorage((IResourceBuilder<AzureStorageResource>)storage.Server)
                 .WithReference(storage.Blobs)
                 .WaitFor(storage.Server);
             return;
         }
-        builder.AddProject<Projects.Airbnb_Functions>("photo-processor")
+        builder.AddDotnetProject("photo-processor", "../Airbnb.Functions")
             .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
             .WithEnvironment("AzureWebJobsStorage", storage.Blobs.Resource.ConnectionStringExpression)
             .WithReference(storage.Blobs)
@@ -113,7 +115,7 @@ internal static class ApiExtensions
 
     // Passed to the API as secret parameters (masked in the dashboard), and only when both values are configured: an
     // unset parameter would hold every `aspire run` at a prompt.
-    private static IResourceBuilder<ProjectResource> WithSocialProvider(this IResourceBuilder<ProjectResource> api, string provider)
+    private static IResourceBuilder<DotnetProjectResource> WithSocialProvider(this IResourceBuilder<DotnetProjectResource> api, string provider)
     {
         var builder = api.ApplicationBuilder;
         if (string.IsNullOrWhiteSpace(builder.Configuration[$"Identity:{provider}:ClientId"])

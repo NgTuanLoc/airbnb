@@ -119,4 +119,6 @@ jobs:
         working-directory: frontend
       # Aspire runs the photo-processor Azure Function with the Core Tools' `func` host.
       - run: npm i -g azure-functions-core-tools@4 --unsafe-perm true
+      # The AppHost takes DCP and the dashboard from the Aspire CLI's bundle (keep it on the AppHost's Aspire version).
+      - run: dotnet tool install -g Aspire.Cli --version 17.0.0
       - run: dotnet test --project tests/Airbnb.AppHost.Tests

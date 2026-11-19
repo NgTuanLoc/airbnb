@@ -1,3 +1,4 @@
+using Aspire.Hosting.Dotnet;
 namespace Airbnb.AppHost;
 
 // Small helpers every service's setup shares.
@@ -11,7 +12,7 @@ internal static class Conventions
         builder.AddParameter(name, new GenerateParameterDefault { MinLength = minLength, Special = false }, secret: true);
 
     // An HTTP API: health-checked, and its dashboard link opens its Scalar reference (development only).
-    public static IResourceBuilder<ProjectResource> AsHttpApi(this IResourceBuilder<ProjectResource> project) =>
+    public static IResourceBuilder<DotnetProjectResource> AsHttpApi(this IResourceBuilder<DotnetProjectResource> project) =>
         project.WithHttpHealthCheck(HealthPath)
             .WithUrlForEndpoint("http", url =>
             {
@@ -21,7 +22,7 @@ internal static class Conventions
 
     // A dashboard command that POSTs to an admin endpoint with the key in a header (X-Admin-Key unless the service names
     // another).
-    public static IResourceBuilder<ProjectResource> WithAdminCommand(this IResourceBuilder<ProjectResource> project,
+    public static IResourceBuilder<DotnetProjectResource> WithAdminCommand(this IResourceBuilder<DotnetProjectResource> project,
         string path, string displayName, IResourceBuilder<ParameterResource> adminKey, HttpCommandOptions options,
         string? commandName = null, string keyHeader = "X-Admin-Key")
     {
