@@ -15,6 +15,7 @@
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.LavinMQ" Version="13.6.1" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.6.1" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="13.6.1" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Umami" Version="13.6.1" />
     <PackageVersion Include="Aspire.Hosting.Keycloak" Version="17.0.0-preview.1.26567.5" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="17.0.0" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="17.0.0" />

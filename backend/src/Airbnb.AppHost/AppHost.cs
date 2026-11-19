@@ -6,6 +6,7 @@ using Airbnb.AppHost;
 //   Services.cs        the shared keys, payments and its fake provider, chat + gateway, notifications, the assistant
 //   Api.cs             migrations, the API, Acme SSO (Keycloak), the photo processor
 //   Frontend.cs        the Next.js app and the URLs a browser uses
+//   Analytics.cs       Umami web analytics (aspire run only)
 //   LoadTest.cs        k6 (aspire run only)
 var builder = DistributedApplication.CreateBuilder(args);
 var cluster = builder.AddLocalCluster();
@@ -38,6 +39,7 @@ frontend.WithEnvironment("CHAT_HUB_URL", ReferenceExpression.Create($"{urls.Gate
     .WithEnvironment("ASSISTANT_HTTP", assistant.GetEndpoint("http"))
     .WithEnvironment("NOTIFICATIONS_HTTP", notifications.GetEndpoint("http"));
 
+builder.AddAnalytics(infra, frontend);
 builder.AddLoadTest(api);
 
 builder.UsePersistentVolumes(cluster);
