@@ -6,6 +6,9 @@
     <!-- DCP and the dashboard come from the Aspire CLI's bundle: aspire run, the smoke test and CI need the CLI installed. -->
     <!-- A preview API for the local Kubernetes cluster: ASPIRECOMPUTE003, the container registry. -->
     <NoWarn>$(NoWarn);ASPIRECOMPUTE003</NoWarn>
+    <!-- F5 in Visual Studio starts the AppHost itself: Aspire's run hook would swap it for "cmd /C aspire.cmd run",
+         which VS can't debug. aspire run doesn't use the hook. -->
+    <ASPIRE_SUPPRESS_CLI_RUN_HOOK>true</ASPIRE_SUPPRESS_CLI_RUN_HOOK>
   </PropertyGroup>
 
   <ItemGroup>
