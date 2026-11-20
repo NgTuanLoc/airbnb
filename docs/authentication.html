@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Airbnb Clone Sign-in</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column, figures full column width, sequences scroll sideways on phones */
+:root {
+  --bg: #fbfaf9; --surface: #ffffff; --fg: #222222; --muted: #6a6a6a; --line: #dddddd; --accent: #e0284f; --code-bg: #f3f1ef;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17151a; --surface: #201e23; --fg: #ece9ee; --muted: #a49fa8; --line: #3a363e; --accent: #ff5a78; --code-bg: #2a272e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #17151a; --surface: #201e23; --fg: #ece9ee; --muted: #a49fa8; --line: #3a363e; --accent: #ff5a78; --code-bg: #2a272e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+main { max-width: 980px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 2.2rem; }
+h2 { font-size: 1.4rem; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; gap: 14px; min-width: 0; }
+.lede { color: var(--muted); }
+code { font-family: var(--mono); font-size: .86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+.frame { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+figcaption { color: var(--muted); font-size: .9rem; max-width: 68ch; }
+svg.map { display: block; width: 100%; min-width: 640px; height: auto; color: var(--fg); font-family: var(--body); }
+.map .box { fill: var(--surface); stroke: currentColor; stroke-width: 1.4; }
+.map .box.hot { stroke: var(--accent); stroke-width: 2; }
+.map .t { font-size: 14px; font-weight: 600; fill: currentColor; text-anchor: middle; }
+.map .s { font-size: 11.5px; fill: var(--muted); text-anchor: middle; }
+.map .lbl { font-size: 12px; fill: currentColor; text-anchor: middle; }
+.map .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
+.map .edge.dash { stroke-dasharray: 5 4; }
+.map .edge.hot { stroke: var(--accent); }
+.map .lbl.hot { fill: var(--accent); font-weight: 600; }
+pre.mermaid { margin: 0; background: transparent; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--display); font-weight: 600; }
+.tbl { overflow-x: auto; }
+ul { margin: 0; padding-left: 20px; max-width: 68ch; }
+</style>
+<style>body { margin: 0 }</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:10px">
+    <h1>Sign-in, end to end</h1>
+    <p class="lede">The backend's Identity module owns accounts and sessions. The Next.js server stands between it and the browser, so page JavaScript never holds a backend token. The one exception is the short-lived chat token the browser needs for the chat service.</p>
+  </header>
+
+  <section>
+    <h2>Who holds what</h2>
+    <figure>
+      <div class="frame">
+        <svg class="map" viewBox="0 0 1000 410" role="img" aria-label="The browser holds only an httpOnly session cookie. The Next server turns it into a bearer token for the API, which looks the token's SHA-256 up in Postgres. The API exchanges OAuth codes with Google, GitHub or Keycloak. The browser reaches the chat service directly with a 10-minute JWT.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+            <marker id="arrHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+          </defs>
+
+          <!-- providers -->
+          <rect class="box" x="580" y="20" width="200" height="70" rx="10"/>
+          <text class="t" x="680" y="50">Identity providers</text>
+          <text class="s" x="680" y="70">Google · GitHub · Keycloak (Acme SSO)</text>
+
+          <!-- browser -->
+          <rect class="box" x="20" y="150" width="170" height="80" rx="10"/>
+          <text class="t" x="105" y="183">Browser</text>
+          <text class="s" x="105" y="203">no readable backend token</text>
+
+          <!-- next -->
+          <rect class="box hot" x="290" y="150" width="190" height="80" rx="10"/>
+          <text class="t" x="385" y="183">Next.js server</text>
+          <text class="s" x="385" y="203">lib/auth · app/api/auth</text>
+
+          <!-- api -->
+          <rect class="box" x="580" y="150" width="200" height="80" rx="10"/>
+          <text class="t" x="680" y="183">API · Identity module</text>
+          <text class="s" x="680" y="203">Session auth scheme</text>
+
+          <!-- db -->
+          <rect class="box" x="860" y="150" width="125" height="80" rx="10"/>
+          <text class="t" x="922" y="183">Postgres</text>
+          <text class="s" x="922" y="203">identity schema</text>
+
+          <!-- chat -->
+          <rect class="box" x="580" y="320" width="200" height="70" rx="10"/>
+          <text class="t" x="680" y="350">Chat service</text>
+          <text class="s" x="680" y="370">via the YARP gateway</text>
+
+          <!-- browser <-> next -->
+          <line class="edge hot" x1="190" y1="190" x2="288" y2="190" marker-start="url(#arrHot)" marker-end="url(#arrHot)"/>
+          <text class="lbl hot" x="240" y="180">httpOnly</text>
+          <text class="lbl hot" x="240" y="210">session cookie</text>
+
+          <!-- next -> api -->
+          <line class="edge" x1="480" y1="190" x2="578" y2="190" marker-end="url(#arr)"/>
+          <text class="lbl" x="530" y="180">Bearer</text>
+          <text class="lbl" x="530" y="210">token</text>
+
+          <!-- api -> db -->
+          <line class="edge" x1="780" y1="190" x2="858" y2="190" marker-end="url(#arr)"/>
+          <text class="lbl" x="820" y="180">looks up</text>
+          <text class="lbl" x="820" y="210">SHA-256</text>
+
+          <!-- api -> providers -->
+          <line class="edge" x1="680" y1="150" x2="680" y2="92" marker-end="url(#arr)"/>
+          <text class="lbl" x="690" y="125" style="text-anchor:start">exchanges code, checks ID token</text>
+
+          <!-- browser -> providers -->
+          <path class="edge dash" d="M105 150 V55 H578" marker-end="url(#arr)"/>
+          <text class="lbl" x="340" y="45">redirected to sign in (OAuth / SSO)</text>
+
+          <!-- browser -> chat -->
+          <path class="edge dash" d="M105 230 V355 H578" marker-end="url(#arr)"/>
+          <text class="lbl" x="340" y="345">WebSocket with a 10-minute chat JWT</text>
+        </svg>
+      </div>
+      <figcaption>The cookie (red) is the only credential the browser keeps. The two dashed paths are the times the browser talks to something other than Next: a provider's sign-in page, and the chat hub.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Email and password</h2>
+    <p>The session token is a random string, not a JWT. Postgres stores only its SHA-256, so a leaked table holds no usable tokens. Sessions end 7 days after sign-in.</p>
+    <figure>
+      <div class="frame">
+<pre class="mermaid">
+sequenceDiagram
+  participant B as Browser
+  participant N as Next server
+  participant A as API (Identity)
+  participant D as Postgres
+  B->>N: POST /api/auth/login, email + password
+  N->>A: POST /api/auth/login, with the browser IP
+  A->>A: per-IP rate limit, then LoginThrottle reserves 1 of 10 tries per email per 15 min
+  A->>D: find user, verify PasswordHasher hash
+  A->>D: insert session: SHA-256 of token, expires in 7 days
+  A-->>N: opaque token
+  N-->>B: Set-Cookie session, httpOnly
+  Note over B,D: every later request
+  B->>N: GET /trips with the cookie
+  N->>A: Authorization: Bearer token
+  A->>D: look up SHA-256 of token
+  A-->>N: this user's data
+</pre>
+      </div>
+      <figcaption>Gated pages call <code>requireSession</code>, which redirects to <code>/login?next=…</code> without a cookie. API endpoints opt in with <code>.RequireAuthorization()</code>.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Google, GitHub and enterprise SSO</h2>
+    <p>The API runs the whole OAuth / OpenID Connect flow and Next only relays it. State, nonce and the PKCE verifier stay in the API's database; the browser carries only a flow id in the <code>oauth_flow</code> cookie.</p>
+    <figure>
+      <div class="frame">
+<pre class="mermaid">
+sequenceDiagram
+  participant B as Browser
+  participant N as Next server
+  participant A as API (Identity)
+  participant P as Provider
+  B->>N: POST /api/auth/oauth/start, provider or sso + work email
+  N->>A: POST /api/auth/external/start
+  A->>A: save flow: state, nonce, PKCE verifier. Single use, 10 min
+  A-->>N: provider URL + flow id
+  N-->>B: provider URL + oauth_flow cookie
+  B->>P: sign in at Google, GitHub or Keycloak
+  P-->>B: redirect to /api/auth/callback/provider with code + state
+  B->>N: GET callback, oauth_flow cookie
+  N->>A: POST /api/auth/external/callback
+  A->>P: exchange code with PKCE, never retried
+  A->>A: check ID token: signature, issuer, audience, lifetime, nonce
+  A->>A: find or link the account, create a session
+  A-->>N: session token
+  N-->>B: 303 redirect + session cookie
+</pre>
+      </div>
+      <figcaption>On failure the callback redirects with <code>?error=&lt;code&gt;</code> and the page shows fixed text for that code, never text from the URL.</figcaption>
+    </figure>
+    <ul>
+      <li>A provider's email links to an existing account only if that account's email is verified. Password sign-ups never are, so they get <code>account_exists</code> and connect the provider from Login &amp; security.</li>
+      <li>SSO picks the connection from the email's domain (<code>acme.test</code> goes to Keycloak).</li>
+      <li>You can't disconnect your last way to sign in.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Chat tokens</h2>
+    <p>The browser connects to the chat hub directly, so it needs a credential the chat service can check without asking the API.</p>
+    <figure>
+      <div class="frame">
+<pre class="mermaid">
+sequenceDiagram
+  participant B as Browser
+  participant N as Next server
+  participant A as API (Identity)
+  participant G as Gateway
+  participant C as Chat service
+  B->>N: GET /api/chat/token with the cookie
+  N->>A: POST /api/auth/chat-token, Bearer token
+  A-->>N: HS256 JWT. 10 min, aud chat, sub = user id
+  N-->>B: JWT + hub URL
+  B->>G: WebSocket /chat/hub?access_token=JWT
+  G->>C: forward
+  C->>C: verify with the shared key, close the connection when it expires
+</pre>
+      </div>
+      <figcaption>The browser fetches a fresh token on every connect and reconnect. The gateway logs only warnings, because hub URLs carry the token.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Service-to-service keys</h2>
+    <p>Calls between services carry no user. Each carries a secret the AppHost generates and keeps in user secrets.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Header</th><th>From → to</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>X-Service-Key</code></td><td>API → payments, Next → chat</td><td>Internal endpoints</td></tr>
+          <tr><td><code>X-Api-Key</code></td><td>Payments → fake provider</td><td>The stand-in for a Stripe key</td></tr>
+          <tr><td><code>Provider-Signature</code></td><td>Fake provider → payments webhook</td><td>HMAC-SHA256 over the raw body, 5-minute tolerance</td></tr>
+          <tr><td><code>X-Quote-Key</code></td><td>Next → API</td><td>Prices for host-created listings</td></tr>
+          <tr><td><code>X-Admin-Key</code></td><td>Aspire dashboard commands</td><td>Admin endpoints, 404 when no key is set</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Mock mode</h2>
+    <p>With <code>DATA_SOURCE=mock</code>, <code>getAuthGateway()</code> swaps in a mock: any valid email and password signs in, and the <code>/auth/mock-provider</code> page plays every provider. The cookie works the same way, so pages can't tell the difference.</p>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default" });
+</script>
+</body>
+</html>
